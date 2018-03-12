@@ -1,0 +1,15 @@
+@font-face {
+	src: url("SourceSansPro-Bold.ttf");
+}
+
+.wrapper{
+	-fx-background-color: #fff;
+}
+
+.text {
+   -fx-font-family: "Source Sans Pro", sans-serif;
+   -fx-font-size: 18px;
+}
+.button-bg:hover {
+	-fx-background-color: #000;
+}
