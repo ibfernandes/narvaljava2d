@@ -3,14 +3,13 @@ package engine.logic;
 public class Timer {
 	private long startTime;
 	private long currentTime;
-	private long lastTime;
+	private long lastTime = 0;
 	private long elapsedTime;
 	private long dx;
 	private long duration = 1;
 	private double degree = 0;
 	private double dxInSeconds;
 	private double fraction = 1;
-	private boolean arcFoward = true;
 	
 	public static final long SECOND = 1000000000L; //10^9
 	public static final long MILISECOND = 1000000L;//10^6
@@ -50,9 +49,19 @@ public class Timer {
 		dxInSeconds = (double)dx/((double)SECOND*fraction);
 		lastTime = currentTime;
 		
-		elapsedTime = currentTime-startTime;
+		elapsedTime = currentTime-startTime; 
 
-		degree += 360*dxInSeconds;
+		
+		//if(arcFoward)
+			degree += 360*dxInSeconds; //TODO: fix
+		/*else
+			degree -= 360*dxInSeconds;*/
+		
+		
+		if(degree>=360)
+			degree = degree%360;
+	
+
 
 		
 	}

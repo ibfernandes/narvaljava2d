@@ -1,6 +1,6 @@
 #version 330 core
 layout (location = 0) in vec4 vertex; //xy position
-																			//zw Tex coord
+									 //zw Tex coord
 
 out vec2 TexCoords;
 out vec3 FragPos;

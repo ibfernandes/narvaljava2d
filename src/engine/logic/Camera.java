@@ -32,6 +32,7 @@ public class Camera {
 		camera = camera.identity();
 		//camera.scale(0.5f, .5f,0); //TODO: should scale shadow texture as well
 		camera.translate(this.x, this.y,0);
+		
 	}
 
 	public void update(float deltaTime) {
@@ -40,8 +41,12 @@ public class Camera {
 		
 		ResourceManager.getSelf().getShader("animation").use();
 		ResourceManager.getSelf().getShader("animation").setMat4("camera", camera);
+		
 		ResourceManager.getSelf().getShader("shadow").use();
 		ResourceManager.getSelf().getShader("shadow").setMat4("camera", camera);
+		
+		ResourceManager.getSelf().getShader("grass").use();
+		ResourceManager.getSelf().getShader("grass").setMat4("camera", camera);
 	}
 
 	public float getX() {

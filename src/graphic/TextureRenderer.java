@@ -5,6 +5,8 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import java.util.Random;
+
 import engine.graphic.Shader;
 import engine.graphic.Texture;
 import engine.utilities.BufferUtilities;
@@ -39,7 +41,7 @@ public class TextureRenderer {
 		VBO = glGenBuffers();
 		
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, BufferUtilities.createFloatBuffer(vertices), GL_STATIC_DRAW); 
+		glBufferData(GL_ARRAY_BUFFER, BufferUtilities.createFloatBuffer(getVertices(3)), GL_STATIC_DRAW); 
 		
 		glBindVertexArray(quadVAO);
 		glEnableVertexAttribArray(0);
@@ -48,6 +50,29 @@ public class TextureRenderer {
 		glBindVertexArray(0);
 	}
 
+	public float[] getVertices(int layers) {
+		int p = 24;
+		float vertices[] = new float[p*layers];
+		float offset = 1/(float)layers;
+		
+
+		for(int i=layers-1; i>=0; i--) {
+			vertices[i*p + 0] = 0; vertices[i*p + 1] = offset + i*offset; 	vertices[i*p + 2] = 0; vertices[i*p + 3] = offset + i*offset;
+			vertices[i*p + 4] = 1; vertices[i*p + 5] = i*offset; 			vertices[i*p + 6] = 1; vertices[i*p + 7] = i*offset;
+			vertices[i*p + 8] = 0; vertices[i*p + 9] = i*offset; 			vertices[i*p +10] = 0; vertices[i*p +11] = i*offset;
+			
+			vertices[i*p +12] = 0; vertices[i*p +13] = offset + i*offset; 	vertices[i*p +14] = 0; vertices[i*p +15] = offset + i*offset;
+			vertices[i*p +16] = 1; vertices[i*p +17] = offset + i*offset; 	vertices[i*p +18] = 1; vertices[i*p +19] = offset + i*offset;
+			vertices[i*p +20] = 1; vertices[i*p +21] = i*offset; 			vertices[i*p +22] = 1; vertices[i*p +23] = i*offset;
+		}
+		
+
+
+		
+		return vertices;
+	}
+	
+	
 	
 	public void render(Texture texture, Vec2 position, Vec2 size, float rotate, Vec4 color) {
 		shader.use();
@@ -101,7 +126,7 @@ public class TextureRenderer {
 		glBindTexture(GL_TEXTURE_2D, texId);
 		
 		glBindVertexArray(quadVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawArrays(GL_TRIANGLES, 0, 6*3);
 		glBindVertexArray(0);
 	}
 	
@@ -161,7 +186,7 @@ public class TextureRenderer {
 		
 		
 		glBindVertexArray(quadVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawArrays(GL_TRIANGLES, 0, 6*3);
 		glBindVertexArray(0);
 		
 	}

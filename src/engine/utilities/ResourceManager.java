@@ -8,6 +8,7 @@ import java.util.HashMap;
 import engine.graphic.Shader;
 import engine.graphic.Texture;
 import graphic.CubeRenderer;
+import graphic.GrassRenderer;
 import graphic.ShadowRenderer;
 import graphic.TextureRenderer;
 
@@ -18,6 +19,7 @@ public final class ResourceManager {
 	private static CubeRenderer cubeRenderer;
 	private static TextureRenderer textureRenderer;
 	private static ShadowRenderer shadowRenderer;
+	private static GrassRenderer grassRender;
 	
 	private ResourceManager() {
 		
@@ -139,5 +141,12 @@ public final class ResourceManager {
 
 	public void setShadowRenderer(ShadowRenderer shadowRenderer) {
 		ResourceManager.shadowRenderer = shadowRenderer;
+	}
+	
+	public void setGrassRenderer(GrassRenderer grassRender) {
+		ResourceManager.grassRender = grassRender;
+	}
+	public GrassRenderer getGrassRenderer() {
+		return grassRender;
 	}
 }

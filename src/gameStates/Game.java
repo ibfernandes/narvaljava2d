@@ -49,6 +49,7 @@ import engine.input.KeyboardControl;
 import engine.input.MouseControl;
 import engine.logic.Camera;
 import engine.logic.GameObject;
+import engine.logic.HorizontalPool;
 import engine.logic.Timer;
 import engine.noise.FastNoise;
 import engine.utilities.BufferUtilities;
@@ -60,6 +61,7 @@ import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
 import graphic.ASM;
 import graphic.CubeRenderer;
+import graphic.GrassRenderer;
 import graphic.ShadowRenderer;
 import graphic.TextureRenderer;
 import javafx.scene.image.PixelWriter;
@@ -72,7 +74,7 @@ public class Game extends GameState{
 	private ArrayList<GameObject> finalLayer;
 	private Camera camera;
 	
-	//Depth Map
+	//Shadow Map
 	int shadowFBO;
 	int shadowLayerTexture;
 	
@@ -120,9 +122,13 @@ public class Game extends GameState{
 							"shaders/animation.fs",
 							null);
 		ResourceManager.getSelf().loadShader("shadow", 
-				"shaders/shadow.vs",
-				"shaders/shadow.fs",
-				null);
+							"shaders/shadow.vs",
+							"shaders/shadow.fs",
+							null);
+		ResourceManager.getSelf().loadShader("grass", 
+							"shaders/grass.vs",
+							"shaders/grass.fs",
+							null);
 		//==================================
 		//Loads all textures
 		//==================================
@@ -148,17 +154,15 @@ public class Game extends GameState{
 				"sprites/cube.png");
 		ResourceManager.getSelf().loadTexture("bonfire", 
 				"sprites/bonfire.png");
-		ResourceManager.getSelf().loadTexture("terrain", 
-				"textures/terrain.png");
-		
+
 		Mat4 projection = new Mat4();
 		projection = projection.ortho(0, 1280f, 720f, 0, -1f, 1f); //TODO: should get width and height from window
 		
 		camera = new Camera();
 		
 		//Set uniforms
-		ResourceManager.getSelf().getShader("sprite").use().setInteger("image", 0);
-		ResourceManager.getSelf().getShader("sprite").setMat4("projection", projection);
+		//ResourceManager.getSelf().getShader("sprite").use().setInteger("image", 0);
+		//ResourceManager.getSelf().getShader("sprite").setMat4("projection", projection);
 		
 		ResourceManager.getSelf().getShader("cube").use();
 		ResourceManager.getSelf().getShader("cube").setMat4("projection", projection);
@@ -169,6 +173,8 @@ public class Game extends GameState{
 		ResourceManager.getSelf().getShader("shadow").use();
 		ResourceManager.getSelf().getShader("shadow").setMat4("projection", projection);
 		
+		ResourceManager.getSelf().getShader("grass").use();
+		ResourceManager.getSelf().getShader("grass").setMat4("projection", projection);
 		
 		//==================================
 		//Start renderers
@@ -176,11 +182,13 @@ public class Game extends GameState{
 		TextureRenderer t = new TextureRenderer(ResourceManager.getSelf().getShader("animation"));
 		CubeRenderer r = new CubeRenderer(ResourceManager.getSelf().getShader("cube"));
 		ShadowRenderer s = new ShadowRenderer(ResourceManager.getSelf().getShader("shadow"));
+		GrassRenderer g = new GrassRenderer(ResourceManager.getSelf().getShader("grass"));
 		
 		
 		ResourceManager.getSelf().setTextureRenderer(t);
 		ResourceManager.getSelf().setCubeRenderer(r);
 		ResourceManager.getSelf().setShadowRenderer(s);
+		ResourceManager.getSelf().setGrassRenderer(g);
 		
 		//==================================
 		//Instantiate Layers
@@ -220,7 +228,7 @@ public class Game extends GameState{
 		//==================================
 		//Create enemies
 		//==================================
-		//createClerics(8);
+		createClerics(8);
 		
 		//==================================
 		//Create props
@@ -262,7 +270,7 @@ public class Game extends GameState{
 		player.setOrientation(new Vec2(0,0));
 		player.setBaseBox(new Vec2(128, 20));
 		player.setSkew(new Vec2(0,0));
-		player.setPosition(new Vec2(7200,7200));
+		player.setPosition(new Vec2(7550,7320));
 		
 		ASM asm = new ASM();
 		
@@ -306,6 +314,7 @@ public class Game extends GameState{
 		//==================================
 		
 		timerWetSand.setDegree(260);
+		
 	}
 	
 	FastNoise n = new FastNoise();
@@ -324,15 +333,22 @@ public class Game extends GameState{
 		
 		return noise;
 	}
+
 	
-	
-	int perlinWidth = 1280/2;
-	int perlinHeight = 720/2;
+	int divisor = 6;
+	int perlinWidth = 1280/divisor;
+	int perlinHeight = 720/divisor;
 	
 	double noiseArr[][] = new double[perlinWidth][perlinHeight];
+	double whiteNoise[][] = new double[perlinWidth][perlinHeight];
+	
+	double fractalNoise[][] = new double[perlinWidth][perlinHeight];
 	int 	rgb[][] = new int[perlinWidth][perlinHeight];
+	
+	HorizontalPool grassPool = new HorizontalPool(600);
+	
 	Texture terrain;
-	double a = 0.05;
+	double a = 0.15;
 	double b =0.9;
 	double c = 2;
 	double d = 0;
@@ -341,26 +357,35 @@ public class Game extends GameState{
 	
 	int map_width = 12000 ;
 	int map_height = 12000 ;
+	int esmeralda = (255<<24) | (56<<16) | (204<<8) | (113);
+	int darkedEsmeralda = (255<<24) | (52<<16) | (200<<8) | (109);
+	
 	public void generateTerrain() { 
 		timerTest.setDuration(Timer.SECOND*8);
 		timerWetSand.setDuration(Timer.SECOND*8);
 		
 		for(int y=0; y<perlinHeight; y++) {
 			for(int x=0; x<perlinWidth;x++) {
-				int coordX = ((int)camera.getX()*-1)+x;
-				int coordY =  ((int)camera.getY()*-1)+y;
+				int coordX = ((int)camera.getX()*-1)+x*divisor;
+				int coordY =  ((int)camera.getY()*-1)+y*divisor;
 				
 				d = 2*Math.max(Math.abs((float)coordX/map_width - (float)12000/map_width), Math.abs((float)coordY/map_height - (float)12000/map_height)); //as the distance must be normlized,
 				// i simply normalize the data before calculating the distance
 
-				noiseArr[x][y] = noise(coordX,coordY);
+				noiseArr[x][y] = noise(coordX/3,coordY);
+				whiteNoise[x][y] = n.GetWhiteNoise(coordX, coordY); //TODO: it's generating diff noise everytime i move?!
+				
 				noiseArr[x][y] = noiseArr[x][y] + a - b*Math.pow(d, c);
+
+				fractalNoise[x][y] = n.GetPerlinFractal(coordX/4, coordY*2);
 			}
 		}
 		
 		double dx = Math.sin(Math.toRadians(timerTest.getDegree()));
 		double dxWet = Math.sin(Math.toRadians(timerWetSand.getDegree()));
 		boolean syncWave = false;
+		
+		
 		
 		
 		for(int y=0; y<perlinHeight; y++) {
@@ -373,10 +398,21 @@ public class Game extends GameState{
 					syncWave = true;
 				
 				
-				if(noiseArr[x][y]>-.1 )	//land
-					rgb[x][y] = (255<<24) | (56<<16) | (204<<8) | (113); //esmeralda
-				if(noiseArr[x][y]<=-.1)	//sand
+				if(noiseArr[x][y]>-.1 ) {	//land
+					rgb[x][y] = esmeralda; //esmeralda
+					if(fractalNoise[x][y]>0.2) {
+						rgb[x][y] = darkedEsmeralda; //
+					}
+					
+					
+				
+				}
+				
+				if(noiseArr[x][y]<=-.1) {	//sand
 					rgb[x][y] =  (255<<24) | (244<<16) | (234<<8) | (187); //ARGB
+					if(whiteNoise[x][y]>0)
+						rgb[x][y] =  (255<<24) | (234<<16) | (224<<8) | (167); //ARGB
+				}
 				
 				if(noiseArr[x][y]<-.230 + dxWet*.016)	//wet sand
 					rgb[x][y] = (255<<24) | (224<<16) | (214<<8) | (167); //ARGB
@@ -387,11 +423,39 @@ public class Game extends GameState{
 				if(noiseArr[x][y]<-.244 + dx*.016)	//espuma back
 					rgb[x][y] = (255<<24) | (22<<16) | (160<<8) | (133); //green sea
 				
-				if(noiseArr[x][y]<=-.266 + dx*.016) //water
+				if(noiseArr[x][y]<=-.266 + dx*.016)  //water
 					rgb[x][y] = 	(255<<24) | (26<<16) | (188<<8) | (156); //turquesa
+	
 				
 				
 				//valores crescem para baixo
+			}
+		}
+		
+		for(int y=0; y<720-3; y++) {
+			for(int x=0; x<1280-3; x++) {
+				int convertedX = x/divisor;
+				int convertedY = y/divisor;
+				
+				if(whiteNoise[convertedX][convertedY]>0.9999 && (rgb[convertedX][convertedY] == esmeralda || rgb[convertedX][convertedY] == darkedEsmeralda)) {
+					GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
+					o.setSize(new Vec2(256,256));
+					o.setVelocity(0);
+					o.setColor(new Vec4(0.5,1,0.9,1));
+					o.setOrientation(new Vec2(0,0));
+					o.setBaseBox(new Vec2(16, 16));
+					o.setSkew(new Vec2(0,0));
+					o.setPosition(new Vec2(x + (camera.getX()*-1),y + (camera.getY()*-1)));
+					ASM asm = new ASM(); //TODO: setTexutre not working?!
+					
+					Animation a = new Animation("wheat", -1);
+					a.setFrames(1, new Vec2(0,0), new Vec2(32,32));
+					asm.addAnimation("idle_1", a);
+					asm.changeStateTo("idle_1");
+					o.setAnimations(asm);
+					
+					grassPool.add(o, whiteNoise[convertedX][convertedY]);
+				}
 			}
 		}
 		
@@ -410,11 +474,11 @@ public class Game extends GameState{
 			o.setSkew(new Vec2(0,0));
 			o.setOrientation(new Vec2(0,0));
 			o.setBaseBox(new Vec2(128, 20));
-			o.setPosition(new Vec2(200+r.nextInt(500),100+r.nextInt(500)));
+			o.setPosition(new Vec2(7900+r.nextInt(500),7900+r.nextInt(500)));
 			
 			
 			AIController ai =  new AIController();
-			//o.setController(ai);
+			o.setController(ai);
 			
 			ASM asm = new ASM();
 			
@@ -575,6 +639,9 @@ public class Game extends GameState{
 		ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX()*-1,camera.getY()*-1),
 				new Vec2(1280,720), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
 		
+		for(GameObject o: grassPool.getPool())
+			ResourceManager.getSelf().getGrassRenderer().render(o);
+		
 		for(GameObject o: staticLayer) {
 			o.render();
 		}
@@ -583,7 +650,8 @@ public class Game extends GameState{
 			//o.renderDebug();
 			o.render();
 		}
-
+		
+		
 	}
 
 	boolean shouldInc = true;
@@ -592,9 +660,14 @@ public class Game extends GameState{
 		
 		timerTest.update();
 		timerWetSand.update();
+		ResourceManager.getSelf().getShader("grass").use();
+		ResourceManager.getSelf().getShader("grass").setFloat("dx", (float) Math.sin(Math.toRadians(timerTest.getDegree()))*4f);
 		generateTerrain();
 		
 		for(GameObject o: movableLayer)
+			o.update(deltaTime);
+		
+		for(GameObject o: grassPool.getPool())
 			o.update(deltaTime);
 		
 		for(GameObject o: staticLayer) {
@@ -626,37 +699,11 @@ public class Game extends GameState{
 		
 		Collections.sort(movableLayer); //TODO: get a better sort method
 										// excluir os objetos fora da tela. não precisa dar sort neles. só return.
-		Collections.sort(staticLayer); 
+		Collections.sort(staticLayer);
+		
 		
 		camera.update(deltaTime);
-		
-		/*
-		float angle = (getAngle(new Vec2(600,350), player.getPosition()));
-		float distance = getDistance(new Vec2(600,350), player.getPosition());
 
-		shadow.setSize(new Vec2(originalSize.x , originalSize.y * (distance/(1 + Math.pow(distance, 1.2)))));
-		
-		if(angle>=0) { // arco de cima
-			shadow.setRotation((float) Math.toRadians(-180));
-			//shadow.setOrientation(new Vec2(-1,1));
-			shadow.setSkew(new Vec2(
-					-angle-90,
-					0
-					));
-			shadow.setPosition(new Vec2(player.getPosition().x, player.getPosition().y + player.getSize().y - shadow.getSize().y));		
-			
-		}else { //arco de baixo
-			shadow.setRotation((float) Math.toRadians(0));
-			//shadow.setOrientation(new Vec2(1,-1));
-			shadow.setSkew(new Vec2(
-					-angle-90,
-					0
-					));
-			shadow.setPosition(new Vec2(player.getPosition().x, player.getPosition().y + player.getSize().y));		
-			
-		}
-		
-		shadow.update(deltaTime);*/
 	}
 	
 
