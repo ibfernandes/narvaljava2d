@@ -30,12 +30,12 @@ public class Animation {
 	 */
 	public void setFrames(int quantity, Vec2 offset, Vec2 size) {
 		frames = new Vec4[quantity];
-		int width = ResourceManager.getSelf().getTexture(texture).getWidth();
-		int height = ResourceManager.getSelf().getTexture(texture).getWidth();
+		float width = ResourceManager.getSelf().getTexture(texture).getWidth();
+		float height = ResourceManager.getSelf().getTexture(texture).getWidth();
 		
 		for(int i= 0; i< quantity; i++){
 			frames[i] = new Vec4(
-						(i*size.x + offset.x)/width,
+						((float)i*size.x + offset.x)/width,
 						(offset.y)/height,
 						(size.x)/width,
 						(size.y)/height

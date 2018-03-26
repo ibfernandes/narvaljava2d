@@ -11,7 +11,6 @@ uniform mat4 camera;
 uniform vec4 spriteFrame; 	//xy 	top left point of the spriteFrame
 														//zw	width and height
 uniform vec2 flip;
-uniform float dx;
 
 void main(){
 	vec2 tCoords;

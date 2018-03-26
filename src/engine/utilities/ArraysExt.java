@@ -18,4 +18,13 @@ public class ArraysExt{
 	/*public static ArrayList<GameObject> sort(){
 		Arrays.sort
 	}*/
+	
+	public static void reverse(float[] a){
+	    int l = a.length;
+	    for (int j = 0; j < l / 2; j++){
+	        float temp = a[j];
+	        a[j] = a[l - j - 1];
+	        a[l - j - 1] = temp;
+	    }
+	}
 }

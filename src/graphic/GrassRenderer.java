@@ -5,11 +5,13 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import engine.graphic.Shader;
 import engine.graphic.Texture;
 import engine.logic.GameObject;
+import engine.utilities.ArraysExt;
 import engine.utilities.BufferUtilities;
 import engine.utilities.ResourceManager;
 import glm.mat._4.Mat4;
@@ -63,29 +65,53 @@ public class GrassRenderer {
 		float vertices[] = new float[p*layers];
 		float offset = 1/(float)layers;
 		
-		float weight[] = {
-				1f/30f,			//top
-				1f/32f,
-				1f/34f,
-				1f/36f,
-				1f/38f,
-				1f/40f,
+
+		float weight[] = { //ascending order
+				1f/44f,	//base
 				1f/42f,
-				1f/44f			//base
-			};
+				1f/40f,
+				1f/26f,
+				1f/20f,
+				1f/16f,
+				1f/14f,
+				1f/8f	//topo
+		};
+		
+		float baseWeight[] = new float[numOfLayers];
+		float topWeight[] = new float[numOfLayers];
+		
+		Arrays.fill(baseWeight, 0);
+		Arrays.fill(topWeight, 0);
+		
+		for(int i=0; i <numOfLayers; i++) { //baseWeight
+			
+			if(i==0)
+				baseWeight[i] = 0;
+			else
+				baseWeight[i] = topWeight[i-1];
+			
+			
+			if(i==0)
+				topWeight[i] = weight[i];
+			else
+				topWeight[i] = weight[i] + baseWeight[i]; 
+		}
+
+		ArraysExt.reverse(baseWeight);
+		ArraysExt.reverse(topWeight);
+		
 		
 		//for each row,
 		// vertex		texCoord	weight
 		//	x	y		x	y		w
 		for(int i=0; i<numOfLayers; i++){
-			vertices[i*p +  0] = 0; vertices[i*p +  1] = offset + i*offset; 	vertices[i*p + 2] = 0; vertices[i*p + 3] = offset + i*offset; 	vertices[i*p +  4] = (i==0) ? 0 : weight[i-1]/2;
-			vertices[i*p +  5] = 1; vertices[i*p +  6] = i*offset; 				vertices[i*p + 7] = 1; vertices[i*p + 8] = i*offset;			vertices[i*p +  9] = weight[i];
-			vertices[i*p + 10] = 0; vertices[i*p + 11] = i*offset; 				vertices[i*p +12] = 0; vertices[i*p +13] = i*offset;			vertices[i*p + 14] = weight[i];			
+			vertices[i*p +  0] = 0; vertices[i*p +  1] = offset + i*offset; 	vertices[i*p + 2] = 0; vertices[i*p + 3] = offset + i*offset; 	vertices[i*p +  4] = baseWeight[i];
+			vertices[i*p +  5] = 1; vertices[i*p +  6] = i*offset; 				vertices[i*p + 7] = 1; vertices[i*p + 8] = i*offset;			vertices[i*p +  9] = topWeight[i]; //triangle top
+			vertices[i*p + 10] = 0; vertices[i*p + 11] = i*offset; 				vertices[i*p +12] = 0; vertices[i*p +13] = i*offset;			vertices[i*p + 14] = topWeight[i];	//triangle top
 			
-			vertices[i*p +15] = 0; vertices[i*p +16] = offset + i*offset; 		vertices[i*p +17] = 0; vertices[i*p +18] = offset + i*offset;	vertices[i*p + 19] = (i==0) ? 0 : weight[i-1]/2;
-			vertices[i*p +20] = 1; vertices[i*p +21] = offset + i*offset; 		vertices[i*p +22] = 1; vertices[i*p +23] = offset + i*offset;	vertices[i*p + 24] = (i==0) ? 0 : weight[i-1]/2;
-			vertices[i*p +25] = 1; vertices[i*p +26] = i*offset; 				vertices[i*p +27] = 1; vertices[i*p +28] = i*offset;			vertices[i*p + 29] = weight[i];
-			
+			vertices[i*p +15] = 0; vertices[i*p +16] = offset + i*offset; 		vertices[i*p +17] = 0; vertices[i*p +18] = offset + i*offset;	vertices[i*p + 19] = baseWeight[i];
+			vertices[i*p +20] = 1; vertices[i*p +21] = offset + i*offset; 		vertices[i*p +22] = 1; vertices[i*p +23] = offset + i*offset;	vertices[i*p + 24] = baseWeight[i];                                           
+			vertices[i*p +25] = 1; vertices[i*p +26] = i*offset; 				vertices[i*p +27] = 1; vertices[i*p +28] = i*offset;			vertices[i*p + 29] = topWeight[i];	//triangle top
 		}
 	
 		return vertices;
@@ -93,6 +119,7 @@ public class GrassRenderer {
 	
 	
 	/**
+	 * It's recommend that the image is "fully" occupied in it's height. e.g if it has 40px height, then the actual texture occupies from 0 to 40
 	 * spriteFrame must be already normalized.
 	 * @param texture
 	 * @param position

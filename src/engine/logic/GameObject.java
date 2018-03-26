@@ -350,11 +350,11 @@ public class GameObject implements Comparable<GameObject>{
 	// 0 this = obj
 	// 1 this > obj
 	public int compareTo(GameObject obj) {
-		if(position.y > obj.position.y) 
+		if(baseBox.y > obj.baseBox.y) 
 			return 1;
-		if(position.y == obj.position.y) 
+		if(baseBox.y == obj.baseBox.y) 
 			return 0;
-		if(position.y < obj.position.y) 
+		if(baseBox.y < obj.baseBox.y) 
 			return -1;
 		
 		return 0;

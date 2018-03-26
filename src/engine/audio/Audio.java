@@ -17,8 +17,9 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 public class Audio {
+	private int sourcePointer;
 	
-	public Audio() {
+	public Audio(String audioPath) {
 		String defaultDeviceName = alcGetString(0, ALC_DEFAULT_DEVICE_SPECIFIER);
 		long device = alcOpenDevice(defaultDeviceName);
 		
@@ -30,7 +31,7 @@ public class Audio {
 		ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
 
 
-		String fileName = "resources/audio/sunset-lover.ogg";
+		String fileName = "resources/"+audioPath;
 
 		//Allocate space to store return information from the function
 		stackPush();
@@ -66,7 +67,7 @@ public class Audio {
 
 
 		//Request a source
-		int sourcePointer = alGenSources();
+		sourcePointer = alGenSources();
 
 		//Assign the sound we just loaded to the source
 		alSourcei(sourcePointer, AL_BUFFER, bufferPointer);
@@ -76,12 +77,13 @@ public class Audio {
 
 		try {
 		    //Wait for a second
-		    Thread.sleep(3000);
+		    Thread.sleep(4000);
 		} catch(InterruptedException ex) {}
+		alSourcePlay(sourcePointer);
 		
-		int sourcePointer2 = alGenSources();
+		/*int sourcePointer2 = alGenSources();
 		alSourcei(sourcePointer2, AL_BUFFER, bufferPointer);
-		alSourcePlay(sourcePointer2);
+		alSourcePlay(sourcePointer2);*/
 /*
 		//Terminate OpenAL
 		alDeleteSources(sourcePointer);

@@ -30,6 +30,6 @@ void main(){
 	tCoords += spriteFrame.xy;
 
 	TexCoords = tCoords;
-	gl_Position = projection * camera * model *  vec4(vertex.xy, 0.0 , 1.0);
+	gl_Position = projection * camera * model *  vec4(vec2(vertex.x + weight*dx, vertex.y), 0.0 , 1.0);
 	FragPos = vec3(model * vec4(vertex.xy , 0.0, 1.0));
 }

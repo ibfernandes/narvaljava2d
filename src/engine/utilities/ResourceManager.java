@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 
+import engine.audio.Audio;
 import engine.graphic.Shader;
 import engine.graphic.Texture;
 import graphic.CubeRenderer;
@@ -16,6 +17,7 @@ public final class ResourceManager {
 	private static ResourceManager self;
 	private static HashMap<String,  Shader> shaders = new HashMap<String, Shader>();
 	private static HashMap<String,  Texture> textures = new HashMap<String, Texture>();
+	private static HashMap<String,  Audio> audio = new HashMap<String, Audio>();
 	private static CubeRenderer cubeRenderer;
 	private static TextureRenderer textureRenderer;
 	private static ShadowRenderer shadowRenderer;
@@ -29,6 +31,16 @@ public final class ResourceManager {
 		if(self == null) 
 			self = new ResourceManager();
 		return self;
+	}
+	
+	public Audio loadAudio(String name, String audioPath) {
+		if(audio.containsKey(name))
+			return audio.get(name);
+		return audio.put(name, new Audio(audioPath));
+	}
+	
+	public Audio getAudio(String name) {
+		return audio.get(name);
 	}
 	
 	public Shader loadShader(String name, String vertexShaderPath, String fragmentShaderFilPath, String geometryShaderPath) {

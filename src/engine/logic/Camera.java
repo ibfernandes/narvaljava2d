@@ -38,9 +38,10 @@ public class Camera {
 	public void update(float deltaTime) {
 		if(focus !=null)
 			move(focus.getPreviousPosition().x - focus.getX(), focus.getPreviousPosition().y - focus.getY());
+			//move(-50,-5);
 		
-		ResourceManager.getSelf().getShader("animation").use();
-		ResourceManager.getSelf().getShader("animation").setMat4("camera", camera);
+		ResourceManager.getSelf().getShader("texture").use();
+		ResourceManager.getSelf().getShader("texture").setMat4("camera", camera);
 		
 		ResourceManager.getSelf().getShader("shadow").use();
 		ResourceManager.getSelf().getShader("shadow").setMat4("camera", camera);
