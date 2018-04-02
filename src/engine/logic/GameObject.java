@@ -9,6 +9,7 @@ import engine.graphic.Animation;
 import engine.graphic.Texture;
 import engine.input.KeyboardControl;
 import engine.input.MouseControl;
+import engine.utilities.MathExt;
 import engine.utilities.ResourceManager;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
@@ -18,7 +19,7 @@ import graphic.CubeRenderer;
 
 public class GameObject implements Comparable<GameObject>{
 	
-	private Vec2 position;
+	private Vec2 position = new Vec2(0,0);
 	private Vec2 previousPosition = new Vec2(0,0);
 	private Vec2 orientation = new Vec2(0,0); //Default: facing the same as image
 	private Vec2 size		 = new Vec2(0,0);
@@ -71,7 +72,10 @@ public class GameObject implements Comparable<GameObject>{
 	
 	public void render() {
 		 if (texture!=null) {
-			ResourceManager.getSelf().getTextureRenderer().render(ResourceManager.getSelf().getTexture(texture), position, size, rotation, color);
+			 ResourceManager.getSelf().getTextureRenderer().render(
+						ResourceManager.getSelf().getTexture(texture),
+						ResourceManager.getSelf().getTexture(texture+"_normal"),
+						position, size, rotation, color, new Vec4(0,0,1,1), orientation, skew);
 		}else if(animations!=null) {
 			ResourceManager.getSelf().getTextureRenderer().render(
 					ResourceManager.getSelf().getTexture(animations.getCurrentAnimation().getTexture()),
@@ -122,37 +126,42 @@ public class GameObject implements Comparable<GameObject>{
 	}
 	
 	public void resolveCollision(GameObject other) {
-		if((previousPosition.x==position.x && previousPosition.y==position.y) 
+		/*if((previousPosition.x==position.x && previousPosition.y==position.y) 
 				&&
 				(other.getPreviousPosition().x!=other.getPosition().x || other.getPreviousPosition().y!=other.getPosition().y)
 				){ //TODO: may get into a loop
 			other.resolveCollision(this);
 			return;
 		}
-		float xAxis = position.x - other.getPosition().x; 
-		float yAxis = position.y - other.getPosition().y;
 		
-		int side = getIntersectionSide(other.getBaseBox());
+		Vec2 depth = new  Vec2();
+		depth.x = baseBox.x - other.getBaseBox().x; 
+		depth.y = baseBox.y - other.getBaseBox().y;
+		
+		/*int side = getIntersectionSide(other.getBaseBox());
 		int movingDirectionX = getMovingDirectionX();
-		int movingDirectionY = getMovingDirectionY();
+		int movingDirectionY = getMovingDirectionY();*/
 		
 		/*float thisTopLeft = ;
 		float thisTopRight = ;
 		float otherTopRight = ;
-		float otherTopRight = ;*/
-			
+		float otherTopRight = ;
+												//esq		dir
+		float newX = position.x + ((depth.x<=0)? depth.x : depth.x*-1);
+												//acima		abaixo
+		float newY = position.y + ((depth.y<=0)? depth.y : depth.y*-1);
 
-		//está acima e movendo para baixo
-		if(yAxis < 0 && movingDirectionY==BOTTOM && side!=RIGHT && side!=LEFT) 	//colidiu abaixo
-			moveDirectlyTo(position.x, position.y - (other.getBaseBox().height - Math.abs(yAxis)));
-		else if(yAxis>0 && movingDirectionY==TOP)			// colidiu acima
-			moveDirectlyTo(position.x, position.y + (baseBox.height - Math.abs(yAxis)));
-
-		else if(xAxis < 0 && movingDirectionX==RIGHT)	 	// colidiu a direita
-				moveDirectlyTo(position.x - (other.getBaseBox().width - Math.abs(xAxis)), position.y);
-			else if(xAxis>0 && movingDirectionX==LEFT)		//colidiu a esquerda
-				moveDirectlyTo(position.x + (other.getBaseBox().width - Math.abs(xAxis)), position.y);
-		
+		moveDirectlyTo(newX, newY);*/
+		float dx = other.getBaseBox().x - baseBox.x;
+	    float px = (other.getBaseBox().getRadiusX() + baseBox.getRadiusX()) - Math.abs(dx);
+	    
+	    float dy = other.getBaseBox().y - baseBox.y;
+	    float py = (other.getBaseBox().getRadiusY() + baseBox.getRadiusY()) - Math.abs(dy);
+	    
+		Vec2 delta = new Vec2();
+		delta.x = px * MathExt.sign(dx);
+		delta.y = py * MathExt.sign(dy);
+	
 	}
 	
 	/**
@@ -363,7 +372,10 @@ public class GameObject implements Comparable<GameObject>{
 	public Rectangle getBaseBox() {
 		return baseBox;
 	}
-
+	/**
+	 * Sets baseBox width and height
+	 * @param baseBox
+	 */
 	public void setBaseBox(Vec2 baseBox) {
 		this.baseBox.width = baseBox.x;
 		this.baseBox.height = baseBox.y;

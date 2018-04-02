@@ -51,5 +51,9 @@ public class PlayerController  extends Controller{
 		if(ArraysExt.areAllElementsEqual(directions, false)){
 			object.getAnimations().changeStateTo("idle_1");
 		}
+		
+		if(GSM.getSelf().getKeyboard().isKeyPressed(GLFW.GLFW_KEY_E)) {
+			
+		}
 	}
 }

@@ -37,8 +37,9 @@ public class Camera {
 
 	public void update(float deltaTime) {
 		if(focus !=null)
-			move(focus.getPreviousPosition().x - focus.getX(), focus.getPreviousPosition().y - focus.getY());
+			//move(focus.getPreviousPosition().x - focus.getX(), focus.getPreviousPosition().y - focus.getY());
 			//move(-50,-5);
+			moveDirectTo(-focus.getX() +1280/2 - focus.getSize().x/2, -focus.getY() +720/2 - focus.getSize().y/2); //TODO: should use window.width and height
 		
 		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setMat4("camera", camera);
@@ -48,6 +49,9 @@ public class Camera {
 		
 		ResourceManager.getSelf().getShader("grass").use();
 		ResourceManager.getSelf().getShader("grass").setMat4("camera", camera);
+		
+		ResourceManager.getSelf().getShader("cube").use();
+		ResourceManager.getSelf().getShader("cube").setMat4("camera", camera);
 	}
 
 	public float getX() {

@@ -1,7 +1,16 @@
 package engine.engine;
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.openal.ALC10.ALC_DEFAULT_DEVICE_SPECIFIER;
+import static org.lwjgl.openal.ALC10.alcCreateContext;
+import static org.lwjgl.openal.ALC10.alcGetString;
+import static org.lwjgl.openal.ALC10.alcMakeContextCurrent;
+import static org.lwjgl.openal.ALC10.alcOpenDevice;
 import static org.lwjgl.opengl.GL11.*;
 
+import org.lwjgl.openal.AL;
+import org.lwjgl.openal.ALC;
+import org.lwjgl.openal.ALCCapabilities;
+import org.lwjgl.openal.ALCapabilities;
 import org.lwjgl.opengl.GL;
 
 import engine.input.KeyboardControl;
@@ -22,9 +31,22 @@ public class Engine implements Runnable{
 		window = w;
 	}
 	
+	public void initAudioSystem() {
+		String defaultDeviceName = alcGetString(0, ALC_DEFAULT_DEVICE_SPECIFIER);
+		long device = alcOpenDevice(defaultDeviceName);
+		
+		int[] attributes = {0};
+		long context = alcCreateContext(device, attributes);
+		alcMakeContextCurrent(context);
+
+		ALCCapabilities alcCapabilities = ALC.createCapabilities(device);
+		ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
+	}
+	
 	public void init() {
 		window.init();
-			
+		initAudioSystem();
+		
 		GSM.getSelf().changeStateTo(GSM.GAME_STATE);
 		
 		keyboard = new KeyboardControl();

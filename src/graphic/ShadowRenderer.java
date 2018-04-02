@@ -65,6 +65,7 @@ public class ShadowRenderer {
 	 */
 	public void render(GameObject obj) {
 		shader.use();
+		shadow.setTexture(obj.getTexture());
 		shadow.setRotation(obj.getRotation());
 		shadow.setOrientation(obj.getOrientation());
 		shadow.setAnimations(obj.getAnimations());
@@ -77,7 +78,7 @@ public class ShadowRenderer {
 		
 		if(angle<=0) { // arco de cima
 			shadow.setRotation((float) Math.toRadians(-180));
-			shadow.setOrientation(new Vec2(0,1));
+			shadow.setOrientation(new Vec2(obj.getOrientation().x,1));
 			shadow.setSkew(new Vec2(
 					-angle-90,
 					0
@@ -86,7 +87,7 @@ public class ShadowRenderer {
 			
 		}else { //arco de baixo
 			shadow.setRotation((float) Math.toRadians(0));
-			shadow.setOrientation(new Vec2(0,1));
+			shadow.setOrientation(new Vec2(obj.getOrientation().x,1));
 			shadow.setSkew(new Vec2(
 					-angle-90,
 					0
@@ -126,16 +127,25 @@ public class ShadowRenderer {
 		shader.setMat4("model", model);
 		shader.setVec4("spriteColor", color);
 		shader.setVec2("flip", shadow.getOrientation());
-		shader.setVec4("spriteFrame", shadow.getAnimations().getCurrentAnimation().getCurrentFrame());
+		if(shadow.getAnimations()!=null)
+			shader.setVec4("spriteFrame", shadow.getAnimations().getCurrentAnimation().getCurrentFrame());
+		else
+			shader.setVec4("spriteFrame", new Vec4(0,0,1,1));
 		
 		shader.setInteger("image", 0);
 		shader.setInteger("normalTex", 1);
 		
 		glActiveTexture(GL_TEXTURE0);
-		ResourceManager.getSelf().getTexture(shadow.getAnimations().getCurrentAnimation().getTexture()).bind();
+		if(shadow.getAnimations()!=null)
+			ResourceManager.getSelf().getTexture(shadow.getAnimations().getCurrentAnimation().getTexture()).bind();
+		else
+			ResourceManager.getSelf().getTexture(shadow.getTexture()).bind();
 		
 		glActiveTexture(GL_TEXTURE1);
-		ResourceManager.getSelf().getTexture(shadow.getAnimations().getCurrentAnimation().getTexture()).bind();
+		if(shadow.getAnimations()!=null)
+			ResourceManager.getSelf().getTexture(shadow.getAnimations().getCurrentAnimation().getTexture()).bind();
+		else
+			ResourceManager.getSelf().getTexture(shadow.getTexture()).bind();
 		
 		
 		glBindVertexArray(quadVAO);

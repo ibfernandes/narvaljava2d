@@ -1,13 +1,19 @@
 package engine.utilities;
 
+import static org.lwjgl.openal.AL10.*;
+import static org.lwjgl.openal.AL11.*;
+
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 
 import engine.audio.Audio;
+import engine.audio.AudioSource;
 import engine.graphic.Shader;
 import engine.graphic.Texture;
+import glm.vec._2.Vec2;
 import graphic.CubeRenderer;
 import graphic.GrassRenderer;
 import graphic.ShadowRenderer;
@@ -43,11 +49,22 @@ public final class ResourceManager {
 		return audio.get(name);
 	}
 	
+	/*
+	 * Returns the sourcePointer generated
+	 */
+	public int playAudio(String name, Vec2 pos, float maxDistance) {
+		AudioSource a = new AudioSource(audio.get(name).getBufferPointer(), pos, maxDistance);
+		a.play();
+		
+		return a.getSourcePointer();
+	}
+	
 	public Shader loadShader(String name, String vertexShaderPath, String fragmentShaderFilPath, String geometryShaderPath) {
 		if(shaders.containsKey(name))
 			return shaders.get(name);
 		return shaders.put(name, loadShaderFromFile(vertexShaderPath, fragmentShaderFilPath, geometryShaderPath));
 	}
+	
 	
 	/**
 	 * The file must be inside resource folder. (i.e resources/shaders/pongshader.vs)

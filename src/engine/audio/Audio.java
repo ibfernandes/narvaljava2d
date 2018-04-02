@@ -17,20 +17,9 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 public class Audio {
-	private int sourcePointer;
+	private int bufferPointer;
 	
 	public Audio(String audioPath) {
-		String defaultDeviceName = alcGetString(0, ALC_DEFAULT_DEVICE_SPECIFIER);
-		long device = alcOpenDevice(defaultDeviceName);
-		
-		int[] attributes = {0};
-		long context = alcCreateContext(device, attributes);
-		alcMakeContextCurrent(context);
-
-		ALCCapabilities alcCapabilities = ALC.createCapabilities(device);
-		ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
-
-
 		String fileName = "resources/"+audioPath;
 
 		//Allocate space to store return information from the function
@@ -52,35 +41,22 @@ public class Audio {
 		int format = -1;
 		if(channels == 1) {
 		    format = AL_FORMAT_MONO16;
+		    System.out.println("mono");
 		} else if(channels == 2) {
 		    format = AL_FORMAT_STEREO16;
 		}
 
 		//Request space for the buffer
-		int bufferPointer = alGenBuffers();
+		bufferPointer = alGenBuffers();
 
 		//Send the data to OpenAL
-		alBufferData(bufferPointer, format, rawAudioBuffer, sampleRate);
+		alBufferData(bufferPointer, AL_FORMAT_MONO16, rawAudioBuffer, sampleRate);
 
 		//Free the memory allocated by STB
 		free(rawAudioBuffer);
 
 
-		//Request a source
-		sourcePointer = alGenSources();
 
-		//Assign the sound we just loaded to the source
-		alSourcei(sourcePointer, AL_BUFFER, bufferPointer);
-
-		//Play the sound
-		alSourcePlay(sourcePointer);
-
-		try {
-		    //Wait for a second
-		    Thread.sleep(4000);
-		} catch(InterruptedException ex) {}
-		alSourcePlay(sourcePointer);
-		
 		/*int sourcePointer2 = alGenSources();
 		alSourcei(sourcePointer2, AL_BUFFER, bufferPointer);
 		alSourcePlay(sourcePointer2);*/
@@ -92,12 +68,13 @@ public class Audio {
 		alcCloseDevice(device);*/
 	}
 	
-	public void play() {
-		
+	public int getBufferPointer() {
+		return bufferPointer;
 	}
 	
-	public void stop() {
-		alSourceStop(sourcePointer);
+	public void destroy() {
+		//alDeleteSources(sourcePointer);
+		alDeleteBuffers(bufferPointer);
 	}
 	
 }

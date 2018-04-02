@@ -22,6 +22,8 @@ import static org.lwjgl.opengl.GL11.glTexImage2D;
 import static org.lwjgl.opengl.GL11.glTexParameteri;
 import static org.lwjgl.opengl.GL11.glViewport;
 
+import static org.lwjgl.openal.AL10.*;
+
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +45,7 @@ import engine.audio.Audio;
 import engine.controllers.AIController;
 import engine.controllers.PlayerController;
 import engine.engine.GameState;
+import engine.geometry.Rectangle;
 import engine.graphic.Animation;
 import engine.graphic.Texture;
 import engine.input.KeyboardControl;
@@ -52,6 +55,7 @@ import engine.logic.GameObject;
 import engine.logic.HorizontalPool;
 import engine.logic.Timer;
 import engine.noise.FastNoise;
+import engine.physics.Hit;
 import engine.utilities.BufferUtilities;
 import engine.utilities.ResourceManager;
 import gameObjects.Player;
@@ -73,6 +77,7 @@ public class Game extends GameState{
 	private ArrayList<GameObject> staticLayer;
 	private ArrayList<GameObject> finalLayer;
 	private Camera camera;
+	private GameObject player;
 	
 	//Shadow Map
 	int shadowFBO;
@@ -137,6 +142,11 @@ public class Game extends GameState{
 				"sprites/flower_red.png");
 		ResourceManager.getSelf().loadTexture("tree", 
 				"sprites/tree.png");
+		
+		ResourceManager.getSelf().loadTexture("house", 
+				"sprites/house.png");
+		ResourceManager.getSelf().loadTexture("ranger_swimming", 
+				"sprites/ranger_swimming.png");
 
 		//==================================
 		//Set all Uniforms
@@ -217,7 +227,7 @@ public class Game extends GameState{
 		//==================================
 		//createGrass(25);
 		//createWheat(6);
-		createProps(13);
+		//createProps(13);
 		
 		//Create fire
 		GameObject bonfire = new GameObject();
@@ -239,12 +249,26 @@ public class Game extends GameState{
 		bonfire.setAnimations(asmb);
 		
 		staticLayer.add(bonfire);
+		
+		
+		GameObject house = new GameObject();
+		house.setSize(new Vec2(520,660));
+		house.setVelocity(1200);
+		house.setColor(new Vec4(1,1,1,1));
+		house.setController(null);
+		house.setOrientation(new Vec2(0,0));
+		house.setBaseBox(new Vec2(520, 300));
+		house.setSkew(new Vec2(0,0));
+		house.setPosition(new Vec2(35000,35500));
+		house.setTexture("house");
+		staticLayer.add(house);
+		
 		//==================================
 		//Creates player
 		//==================================
 		PlayerController playerController =  new PlayerController();
 		
-		GameObject player = new GameObject();
+		player = new GameObject();
 		player.setSize(new Vec2(128,128));
 		player.setVelocity(1200);
 		player.setColor(new Vec4(1,1,1,1));
@@ -256,30 +280,30 @@ public class Game extends GameState{
 		
 		ASM asm = new ASM();
 		
-		Animation a = new Animation("rogue", 150);
+		Animation a = new Animation("ranger", 150);
 		a.setFrames(10, new Vec2(0,0), new Vec2(32,32));
 		asm.addAnimation("idle_1", a);
 		
-		a = new Animation("rogue", 150);
+		a = new Animation("ranger", 150);
 		a.setFrames(10, new Vec2(0,32), new Vec2(32,32));
 		asm.addAnimation("idle_2", a);
 		
-		a = new Animation("rogue", 150);
+		a = new Animation("ranger", 150);
 		a.setFrames(10, new Vec2(0,64), new Vec2(32,32));
 		asm.addAnimation("walking", a);
 		
-		a = new Animation("rogue", 150);
+		a = new Animation("ranger", 150);
 		a.setFrames(10, new Vec2(0,96), new Vec2(32,32));
 		asm.addAnimation("attacking", a);
 		
-		a = new Animation("rogue", 150);
+		a = new Animation("ranger", 150);
 		a.setFrames(10, new Vec2(0,128), new Vec2(32,32));
 		asm.addAnimation("dying", a);
 		
 		asm.changeStateTo("idle_1");
 		
 		player.setAnimations(asm);
-		movableLayer.add(player);
+		//movableLayer.add(player);
 		
 	
 		camera = new Camera();
@@ -288,9 +312,10 @@ public class Game extends GameState{
 		//==================================
 		//Loads all Audio
 		//==================================
-		//Audio audio = new Audio();
-		
-		
+		ResourceManager.getSelf().loadAudio("test","audio/sunset-lover.ogg" );
+		//sourcePointer = ResourceManager.getSelf().playAudio("test", new Vec2(35000,35000),1000);
+
+
 		//==================================
 		//Tests
 		//==================================
@@ -298,6 +323,7 @@ public class Game extends GameState{
 		timerWetSand.setDegree(260);
 		
 	}
+	
 	
 	private void initShadowLayer() {
 		shadowFBO = glGenFramebuffers();
@@ -367,6 +393,7 @@ public class Game extends GameState{
 	int esmeralda = (255<<24) | (56<<16) | (204<<8) | (113);
 	int darkedEsmeralda = (255<<24) | (52<<16) | (200<<8) | (109);
 	int white = (255<<24) | (255<<16) | (255<<8) | (255);
+	int turkish = (255<<24) | (26<<16) | (188<<8) | (156);
 	
 	public void generateTerrain() { 
 		timerTest.setDuration(Timer.SECOND*8);
@@ -421,7 +448,7 @@ public class Game extends GameState{
 				}
 				
 				if(noiseArr[x][y]<=-.1)  //preenche tudo com água
-					rgb[x][y] = 	(255<<24) | (26<<16) | (188<<8) | (156); //turquesa
+					rgb[x][y] = 	turkish; //turquesa
 				
 				
 				if(noiseArr[x][y]<=-.1) {	//sand
@@ -477,7 +504,7 @@ public class Game extends GameState{
 						o.setOrientation(new Vec2(0,0));
 					else
 						o.setOrientation(new Vec2(1,0));
-					o.setBaseBox(new Vec2(256, 16));
+					o.setBaseBox(new Vec2(512, 16));
 					o.setSkew(new Vec2(0,0));
 					o.setPosition(new Vec2(x + (camera.getX()*-1),y + (camera.getY()*-1)));
 					ASM asm = new ASM(); //TODO: setTexutre not working?!
@@ -500,7 +527,7 @@ public class Game extends GameState{
 						o.setOrientation(new Vec2(0,0));
 					else
 						o.setOrientation(new Vec2(1,0));
-					o.setBaseBox(new Vec2(16, 16));
+					o.setBaseBox(new Vec2(60, 16));
 					o.setSkew(new Vec2(0,0));
 					o.setPosition(new Vec2(x + (camera.getX()*-1),y + (camera.getY()*-1)));
 					ASM asm = new ASM(); //TODO: setTexutre not working?!
@@ -538,7 +565,7 @@ public class Game extends GameState{
 			o.setSkew(new Vec2(0,0));
 			o.setOrientation(new Vec2(0,0));
 			o.setBaseBox(new Vec2(128, 20));
-			o.setPosition(new Vec2(7900+r.nextInt(500),7900+r.nextInt(500)));
+			o.setPosition(new Vec2(35000+r.nextInt(500),35000+r.nextInt(500)));
 			
 			
 			AIController ai =  new AIController();
@@ -711,18 +738,23 @@ public class Game extends GameState{
 		}*/
 		
 		for(GameObject o: finalLayer) {
+			//o.renderDebug();
 			if(grassPool.getPool().contains(o))
 				ResourceManager.getSelf().getGrassRenderer().render(o);
 			else
 				o.render();
 		}
-		
-		
+
 	}
 
 	boolean shouldInc = true;
+	int sourcePointer;
+	float dist = 0;
 	@Override
 	public void update(float deltaTime) {
+		
+		alListener3f(AL_POSITION, camera.getX()*-1,camera.getY()*-1,0); //TODO: change to players Position instead of camera.
+		
 		
 		timerTest.update();
 		timerWetSand.update();
@@ -730,7 +762,7 @@ public class Game extends GameState{
 		float sin = (float) Math.sin(Math.toRadians(timerTest.getDegree()))*1f;
 		ResourceManager.getSelf().getShader("grass").setFloat("dx", (sin<0) ? sin*-1: sin);
 		generateTerrain();
-		
+		player.update(deltaTime);
 		for(GameObject o: movableLayer)
 			o.update(deltaTime);
 		
@@ -757,24 +789,66 @@ public class Game extends GameState{
 		}
 		
 		
-		for(int i=0; i<movableLayer.size(); i++) {
-			for(int k=i+1;k<movableLayer.size();k++) {
-				if(movableLayer.get(i).checkBaseBoxCollisionAABB(movableLayer.get(k))) //TODO: dividir os espaços usando uma quadtree
-					movableLayer.get(i).resolveCollision(movableLayer.get(k));
-			}
-		}
+		
 		
 		finalLayer.clear();
 		finalLayer.addAll(movableLayer);
 		finalLayer.addAll(staticLayer);
 		finalLayer.addAll(grassPool.getPool());
+		finalLayer.add(player);
 		Collections.sort(finalLayer); //TODO: get a better sort method
 										// excluir os objetos fora da tela. não precisa dar sort neles. só return.
+		Hit h;
+		/*for(int i=0; i<finalLayer.size(); i++) {
+			for(int k=i+1;k<finalLayer.size();k++) {
+				h = finalLayer.get(i).getBaseBox().intersectAABB(finalLayer.get(k).getBaseBox());
+				if(h!=null) {
+					//finalLayer.get(k).getBaseBox().x = h.pos.x;
+					//finalLayer.get(k).getBaseBox().y = h.pos.y;
+					finalLayer.get(k).move(h.delta.x, h.delta.y);
+				}
+				//if(finalLayer.get(i).checkBaseBoxCollisionAABB(finalLayer.get(k))) //TODO: dividir os espaços usando uma quadtree
+					//finalLayer.get(i).resolveCollision(finalLayer.get(k));
+			}
+		}*/
 
+		for(int i=0; i<finalLayer.size(); i++) {
+			if(finalLayer.get(i)==player)
+				continue;
+			
+			h = finalLayer.get(i).getBaseBox().intersectAABB(player.getBaseBox());
+			Rectangle r = new Rectangle(
+					player.getPreviousPosition().x, 
+					player.getPreviousPosition().y + player.getSize().y - player.getBaseBox().height,
+					player.getBaseBox().width,
+					player.getBaseBox().height);
+			
+
+			/*h = finalLayer.get(i).getBaseBox().sweepIntersectsAABB(r,
+					new Vec2(player.getPosition().x - player.getPreviousPosition().x,
+							player.getPosition().y - player.getPreviousPosition().y));*/
+			if(h!=null) {
+				player.move(h.delta.x, h.delta.y);
+				//player.moveDirectlyTo(h.pos.x - player.getBaseBox().getRadiusX(), h.pos.y - player.getBaseBox().getRadiusY() - (player.getSize().y - player.getBaseBox().height));
+	
+			}
+		}
 		
+		int coordXMap = Math.abs((int) (camera.getX()*-1 - player.getBaseBox().getCenterX()));
+		int coordYMap = Math.abs((int) (camera.getY()*-1 - player.getBaseBox().getCenterY()));
+
+		if(rgb[coordXMap/divisor][coordYMap/divisor]==turkish) {
+			player.setTexture("ranger_swimming");
+			player.setVelocity(150);
+		}else {
+			player.setTexture(null);
+			player.setVelocity(600);
+		}
 		
 		camera.update(deltaTime);
-
+		
+		
+		
 	}
 	
 
