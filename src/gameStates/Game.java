@@ -41,6 +41,7 @@ import org.lwjgl.opengl.GL32;
 import static org.lwjgl.opengl.GL30.*;
 
 import editor.Editor;
+import engine.ai.DStarLite;
 import engine.audio.Audio;
 import engine.controllers.AIController;
 import engine.controllers.PlayerController;
@@ -75,8 +76,8 @@ public class Game extends GameState{
 	//Layers
 	private ArrayList<GameObject> movableLayer;
 	private ArrayList<GameObject> staticLayer;
-	private ArrayList<GameObject> finalLayer;
-	private Camera camera;
+	public ArrayList<GameObject> finalLayer;
+	public Camera camera;
 	private GameObject player;
 	
 	//Shadow Map
@@ -275,6 +276,7 @@ public class Game extends GameState{
 		player.setController(playerController);
 		player.setOrientation(new Vec2(0,0));
 		player.setBaseBox(new Vec2(128, 20));
+		player.setSightBox(new Vec2(512, 512));
 		player.setSkew(new Vec2(0,0));
 		player.setPosition(new Vec2(35500,35500));
 		
@@ -367,7 +369,7 @@ public class Game extends GameState{
 	}
 
 	
-	int divisor = 4;
+	public int divisor = 4;
 	int perlinWidth = 1280/divisor;
 	int perlinHeight = 720/divisor;
 	
@@ -558,9 +560,11 @@ public class Game extends GameState{
 		Random r = new Random();
 		for(int i =0; i<qtd; i++) {
 			GameObject o = new GameObject();
+			o.setGroup("cleric");
 			o.setSize(new Vec2(128,128));
 			o.setVelocity(200);
 			o.setColor(new Vec4(1,1,1,1));
+			o.setSightBox(new Vec2(512, 512));
 			o.setRotation(0);
 			o.setSkew(new Vec2(0,0));
 			o.setOrientation(new Vec2(0,0));
@@ -700,6 +704,44 @@ public class Game extends GameState{
 			staticLayer.add(o);
 		}
 	}
+	
+	public boolean obstacleMap[][] = new boolean[perlinWidth][perlinHeight];
+	public void generateGraph() {
+		obstacleMap = new boolean[perlinWidth][perlinHeight];
+
+		
+		for(GameObject o: finalLayer) {
+			
+
+			int coordXMapS = (int) (camera.getX()*-1 - o.getBaseBox().getX())*-1/divisor;
+			int coordYMapS = (int) (camera.getY()*-1 - o.getBaseBox().getY())*-1/divisor;
+			int sizeX = (int) (o.getBaseBox().width/divisor);
+			int sizeY = (int) (o.getBaseBox().height/divisor);
+	
+		
+			
+			if(coordXMapS<0 || coordYMapS<0) //TODO: Should consider the INTERVAL, not just the start and fisnish poitn
+				continue;
+			
+			//if(player==o)
+				//System.out.println("S"+coordXMapS+"  F"+sizeX);
+
+			
+			for(int y=coordYMapS; y< coordYMapS+sizeY; y++)
+				for(int x=coordXMapS; x<coordXMapS + sizeX; x++)
+					if(x<obstacleMap.length && y<obstacleMap[0].length)
+						obstacleMap[x][y] = true;
+			
+		}
+		
+
+		/*for(int y=0; y< obstacleMap[0].length;y++) {
+			for(int x=0; x< obstacleMap.length;x++)
+				System.out.printf((obstacleMap[x][y])? "1":"0" );
+			System.out.println("\n");
+		}*/
+		//System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+	}
 
 	@Override
 	public void render() {
@@ -752,7 +794,8 @@ public class Game extends GameState{
 	float dist = 0;
 	@Override
 	public void update(float deltaTime) {
-		
+		generateGraph();
+	
 		alListener3f(AL_POSITION, camera.getX()*-1,camera.getY()*-1,0); //TODO: change to players Position instead of camera.
 		
 		
@@ -762,12 +805,12 @@ public class Game extends GameState{
 		float sin = (float) Math.sin(Math.toRadians(timerTest.getDegree()))*1f;
 		ResourceManager.getSelf().getShader("grass").setFloat("dx", (sin<0) ? sin*-1: sin);
 		generateTerrain();
-		player.update(deltaTime);
+		player.update(deltaTime, this);
 		for(GameObject o: movableLayer)
-			o.update(deltaTime);
+			o.update(deltaTime, this);
 		
 		for(GameObject o: grassPool.getPool())
-			o.update(deltaTime);
+			o.update(deltaTime, this);
 		
 		for(GameObject o: staticLayer) {
 			float inc = 0;
@@ -785,7 +828,7 @@ public class Game extends GameState{
 				inc = -.5f;
 	
 			//o.setSkew(new Vec2(o.getSkew().x+inc, o.getSkew().y));
-			o.update(deltaTime);
+			o.update(deltaTime, this);
 		}
 		
 		
@@ -812,7 +855,7 @@ public class Game extends GameState{
 			}
 		}*/
 
-		for(int i=0; i<finalLayer.size(); i++) {
+		for(int i=0; i<finalLayer.size(); i++) { //TODO: verify only objects on screen
 			if(finalLayer.get(i)==player)
 				continue;
 			
@@ -834,7 +877,7 @@ public class Game extends GameState{
 			}
 		}
 		
-		int coordXMap = Math.abs((int) (camera.getX()*-1 - player.getBaseBox().getCenterX()));
+		int coordXMap = Math.abs((int) (camera.getX()*-1 - player.getBaseBox().getCenterX())); // TODO: it'll get an error when the object is outsied the camera Width and height view
 		int coordYMap = Math.abs((int) (camera.getY()*-1 - player.getBaseBox().getCenterY()));
 
 		if(rgb[coordXMap/divisor][coordYMap/divisor]==turkish) {

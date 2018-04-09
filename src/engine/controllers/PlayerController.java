@@ -10,6 +10,7 @@ import engine.input.MouseControl;
 import engine.logic.GameObject;
 import engine.utilities.ArraysExt;
 import gameStates.GSM;
+import gameStates.Game;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 
@@ -19,7 +20,7 @@ public class PlayerController  extends Controller{
 	private boolean directions[] = new boolean[4]; 
 	
 	@Override
-	public void update(float deltaTime, GameObject object) {
+	public void update(float deltaTime, GameObject object, Game context) {
 		Arrays.fill(directions, false); // TODO: for now i could use only one boolean (isMoving)
 		float xMove =0;
 		float yMove =0;

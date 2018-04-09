@@ -11,6 +11,7 @@ import engine.input.KeyboardControl;
 import engine.input.MouseControl;
 import engine.utilities.MathExt;
 import engine.utilities.ResourceManager;
+import gameStates.Game;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
@@ -19,11 +20,13 @@ import graphic.CubeRenderer;
 
 public class GameObject implements Comparable<GameObject>{
 	
+	private String group;
 	private Vec2 position = new Vec2(0,0);
 	private Vec2 previousPosition = new Vec2(0,0);
 	private Vec2 orientation = new Vec2(0,0); //Default: facing the same as image
 	private Vec2 size		 = new Vec2(0,0);
 	private Rectangle boundingBox = new Rectangle(0,0,0,0);
+	private Rectangle sightBox = new Rectangle(0,0,0,0);
 	private Rectangle baseBox	 = new Rectangle(0,0,0,0); //Used to collide objects in motion
 	private Vec2 anchorPoint = new Vec2(0,0); //Default: ANCHOR_TOP_LEFT
 	private Vec2 skew 		= new Vec2(0,0);
@@ -91,9 +94,9 @@ public class GameObject implements Comparable<GameObject>{
 		ResourceManager.getSelf().getCubeRenderer().render(baseBox, 0, new Vec3(1,0,0));
 	}
 	
-	public void update(float deltaTime) {
+	public void update(float deltaTime, Game game) {//TODO: remove Game as paramater
 		if(controller!=null)
-			controller.update(deltaTime, this);
+			controller.update(deltaTime, this, game);
 		if(animations!=null)
 			animations.getCurrentAnimation().update();
 	}
@@ -105,6 +108,8 @@ public class GameObject implements Comparable<GameObject>{
 		position.y = y;
 		baseBox.x =  x;
 		baseBox.y =  (position.y + size.y - baseBox.height);
+		sightBox.x = x;
+		sightBox.y = y;
 	}
 	
 	/**
@@ -119,6 +124,8 @@ public class GameObject implements Comparable<GameObject>{
 		position.y += y;
 		baseBox.x +=  x;
 		baseBox.y += y;
+		sightBox.x +=  x;
+		sightBox.y += y;
 	}
 
 	public boolean checkBaseBoxCollisionAABB(GameObject other) { 
@@ -249,6 +256,8 @@ public class GameObject implements Comparable<GameObject>{
 		this.previousPosition =  new Vec2(position.x , position.y);
 		baseBox.x =  position.x;
 		baseBox.y = (position.y + size.y - baseBox.height);
+		sightBox.x =  position.x;
+		sightBox.y = position.y; //TODO: not correctly calculated
 	}
 	
 	public float getX() {
@@ -390,5 +399,23 @@ public class GameObject implements Comparable<GameObject>{
 				+
 				Math.pow(position.y - pb.y, 2)
 				);
+	}
+
+	public Rectangle getSightBox() {
+		return sightBox;
+	}
+
+	public void setSightBox(Vec2 sightBox) {
+		this.sightBox.width = sightBox.x;
+		this.sightBox.height =  sightBox.y;
+
+	}
+
+	public String getGroup() {
+		return group;
+	}
+
+	public void setGroup(String group) {
+		this.group = group;
 	}
 }
