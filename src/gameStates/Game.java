@@ -221,7 +221,7 @@ public class Game extends GameState{
 		//==================================
 		//Create enemies
 		//==================================
-		createClerics(8);
+		createClerics(1);
 		
 		//==================================
 		//Create props
@@ -569,7 +569,8 @@ public class Game extends GameState{
 			o.setSkew(new Vec2(0,0));
 			o.setOrientation(new Vec2(0,0));
 			o.setBaseBox(new Vec2(128, 20));
-			o.setPosition(new Vec2(35000+r.nextInt(500),35000+r.nextInt(500)));
+			//o.setPosition(new Vec2(35350+r.nextInt(500),35500+r.nextInt(500)));
+			o.setPosition(new Vec2(36000,35700));
 			
 			
 			AIController ai =  new AIController();
@@ -705,18 +706,30 @@ public class Game extends GameState{
 		}
 	}
 	
-	public boolean obstacleMap[][] = new boolean[perlinWidth][perlinHeight];
-	public void generateGraph() {
-		obstacleMap = new boolean[perlinWidth][perlinHeight];
+	public int graphDivisor = 8;
+	public int graphSizeX = 1280/graphDivisor;
+	public int graphSizeY = 720/graphDivisor;
+	public boolean obstacleMap[][];
+	
+	
+	public boolean[][] generateGraph(GameObject obj) {
+		obstacleMap = new boolean[graphSizeX][graphSizeY];
+		
+		/*for(int x=0;x<obstacleMap.length;x++)
+		    for(int y=0;y<obstacleMap[x].length;y++)
+		    	obstacleMap[x][y] = true;*/
 
 		
 		for(GameObject o: finalLayer) {
 			
+			if(obj==o)
+				continue;
 
-			int coordXMapS = (int) (camera.getX()*-1 - o.getBaseBox().getX())*-1/divisor;
-			int coordYMapS = (int) (camera.getY()*-1 - o.getBaseBox().getY())*-1/divisor;
-			int sizeX = (int) (o.getBaseBox().width/divisor);
-			int sizeY = (int) (o.getBaseBox().height/divisor);
+			int coordXMapS = (int) (camera.getX()*-1 - o.getBaseBox().getX())*-1/graphDivisor;
+			int coordYMapS = (int) (camera.getY()*-1 - o.getBaseBox().getY())*-1/graphDivisor;
+			int sizeX = (int) (o.getBaseBox().width/graphDivisor) + 1;
+			int sizeY = (int) (o.getBaseBox().height/graphDivisor) +1;
+			
 	
 		
 			
@@ -730,8 +743,8 @@ public class Game extends GameState{
 			for(int y=coordYMapS; y< coordYMapS+sizeY; y++)
 				for(int x=coordXMapS; x<coordXMapS + sizeX; x++)
 					if(x<obstacleMap.length && y<obstacleMap[0].length)
-						obstacleMap[x][y] = true;
-			
+						obstacleMap[x][y] = true; 	// true onde ta bloqueado
+
 		}
 		
 
@@ -739,8 +752,9 @@ public class Game extends GameState{
 			for(int x=0; x< obstacleMap.length;x++)
 				System.out.printf((obstacleMap[x][y])? "1":"0" );
 			System.out.println("\n");
-		}*/
-		//System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+		}
+		System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n");*/
+		return obstacleMap;
 	}
 
 	@Override
@@ -781,11 +795,25 @@ public class Game extends GameState{
 		
 		for(GameObject o: finalLayer) {
 			//o.renderDebug();
+			if(o.getController()!=null)
+				o.getController().renderDebug();
+			
 			if(grassPool.getPool().contains(o))
 				ResourceManager.getSelf().getGrassRenderer().render(o);
 			else
 				o.render();
 		}
+		
+		if(obstacleMap!=null)
+			for(int y=0; y< obstacleMap[0].length; y++)
+				for(int x=0; x< obstacleMap.length; x++) {
+					
+					int rx = (int) (camera.getX()*-1 + x*graphDivisor);
+					int ry = (int) (camera.getY()*-1 + y*graphDivisor);
+					
+					//if(obstacleMap[x][y])
+					//	ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(8,8), 0, new Vec3(1,0,0));
+				}
 
 	}
 
@@ -794,7 +822,7 @@ public class Game extends GameState{
 	float dist = 0;
 	@Override
 	public void update(float deltaTime) {
-		generateGraph();
+		//generateGraph();
 	
 		alListener3f(AL_POSITION, camera.getX()*-1,camera.getY()*-1,0); //TODO: change to players Position instead of camera.
 		
@@ -856,7 +884,37 @@ public class Game extends GameState{
 		}*/
 
 		for(int i=0; i<finalLayer.size(); i++) { //TODO: verify only objects on screen
-			if(finalLayer.get(i)==player)
+			
+			
+			if(finalLayer.get(i).getPosition().x!=finalLayer.get(i).getPreviousPosition().x || finalLayer.get(i).getPosition().y!=finalLayer.get(i).getPreviousPosition().y)
+				for(int k=0; k<finalLayer.size(); k++) {
+					
+					
+					
+					if(k==i) 
+						continue;
+						
+					h = finalLayer.get(k).getBaseBox().intersectAABB(finalLayer.get(i).getBaseBox());
+					Rectangle r = new Rectangle(
+							finalLayer.get(i).getPreviousPosition().x, 
+							finalLayer.get(i).getPreviousPosition().y + finalLayer.get(i).getSize().y - finalLayer.get(i).getBaseBox().height,
+							finalLayer.get(i).getBaseBox().width,
+							finalLayer.get(i).getBaseBox().height);
+					
+	
+					/*h = finalLayer.get(i).getBaseBox().sweepIntersectsAABB(r,
+							new Vec2(player.getPosition().x - player.getPreviousPosition().x,
+									player.getPosition().y - player.getPreviousPosition().y));*/
+					if(h!=null) {
+						finalLayer.get(i).move(h.delta.x, h.delta.y);
+						//player.moveDirectlyTo(h.pos.x - player.getBaseBox().getRadiusX(), h.pos.y - player.getBaseBox().getRadiusY() - (player.getSize().y - player.getBaseBox().height));
+			
+					}
+					
+				}
+			
+			
+			/*if(finalLayer.get(i)==player)
 				continue;
 			
 			h = finalLayer.get(i).getBaseBox().intersectAABB(player.getBaseBox());
@@ -864,17 +922,17 @@ public class Game extends GameState{
 					player.getPreviousPosition().x, 
 					player.getPreviousPosition().y + player.getSize().y - player.getBaseBox().height,
 					player.getBaseBox().width,
-					player.getBaseBox().height);
+					player.getBaseBox().height);*/
 			
 
 			/*h = finalLayer.get(i).getBaseBox().sweepIntersectsAABB(r,
 					new Vec2(player.getPosition().x - player.getPreviousPosition().x,
 							player.getPosition().y - player.getPreviousPosition().y));*/
-			if(h!=null) {
+			/*if(h!=null) {
 				player.move(h.delta.x, h.delta.y);
 				//player.moveDirectlyTo(h.pos.x - player.getBaseBox().getRadiusX(), h.pos.y - player.getBaseBox().getRadiusY() - (player.getSize().y - player.getBaseBox().height));
 	
-			}
+			}*/
 		}
 		
 		int coordXMap = Math.abs((int) (camera.getX()*-1 - player.getBaseBox().getCenterX())); // TODO: it'll get an error when the object is outsied the camera Width and height view

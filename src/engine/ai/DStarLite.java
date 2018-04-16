@@ -35,6 +35,11 @@ public class DStarLite implements java.io.Serializable{
 	//Change back to private****
 	public HashMap<State, CellInfo>	cellHash = new HashMap<State, CellInfo>();
 	private HashMap<State, Float>		openHash = new HashMap<State, Float>();
+	
+	private int widthSize = 128/8;
+	private int heightSize = 20/8;
+	
+	private boolean obstacleMap[][];
 
 	//Constants
 	private double M_SQRT2 = Math.sqrt(2.0);
@@ -42,14 +47,17 @@ public class DStarLite implements java.io.Serializable{
 	//Default constructor
 	public DStarLite()
 	{
-		maxSteps	= 80000;
+		maxSteps	= 8000;
 		C1			= 1;
 	}
 	
-	public void initImpassibleCells(boolean cells[][]) {
+	public void initBlockingCells(boolean cells[][]) {
+		this.obstacleMap = cells;
 		for(int y=0; y< cells[0].length; y++) {
 			for(int x=0; x<cells.length;x++) {
-				updateCell(x,y,-1);
+				if(cells[x][y])
+					updateCell(x,y,-1);
+				
 			}
 		}
 	}
@@ -179,14 +187,17 @@ public class DStarLite implements java.io.Serializable{
 			System.out.println("No Path to Goal");
 			return false;
 		}
+		boolean skip = false;
+		while (cur.neq(s_goal)) { //enquanto não chegar no objetivo
 
-		while (cur.neq(s_goal))
-		{
 			path.add(cur);
 			n = new LinkedList<State>();
-			n = getSucc(cur);
+			
 
-			if (n.isEmpty())
+			
+			n = getSucc(cur); //pega todos os grids do entorno do atual
+
+			if (n.isEmpty()) // significa que o estado corrente é bloqueado
 			{
 				System.out.println("No Path to Goal");
 				return false;
@@ -196,11 +207,12 @@ public class DStarLite implements java.io.Serializable{
 			double tmin = 0;   
 			State smin = new State();
 
-			for (State i : n)
+			for (State i : n) //Evaluation do entorno do current
 			{
-				double val  = cost(cur, i);
-				double val2 = trueDist(i,s_goal) + trueDist(s_start, i);
+				double val  = cost(cur, i); 
+				double val2 = trueDist(i,s_goal) + trueDist(s_start, i); // f = h + g         trueDist = sqr(A-B)
 				val += getG(i);
+
 
 				if (close(val,cmin)) {
 					if (tmin > val2) {
@@ -215,7 +227,7 @@ public class DStarLite implements java.io.Serializable{
 				}
 			}
 			n.clear();
-			cur = new State(smin);
+			cur = new State(smin); //atual agora é o  com menor valor F
 			//cur = smin;
 		}
 		path.add(s_goal);
@@ -261,7 +273,7 @@ public class DStarLite implements java.io.Serializable{
 			openHash.remove(u);
 
 			State k_old = new State(u);
-
+			
 			if (k_old.lt(calculateKey(u))) { //u is out of date
 				insert(u);
 			} else if (getG(u) > getRHS(u)) { //needs update (got better)
@@ -282,7 +294,23 @@ public class DStarLite implements java.io.Serializable{
 		} //while
 		return 0;
 	}
-
+	
+	private boolean checkIfSizeIsOccupied(State u) {
+		State tempState = new State(u.x , u.y, new Pair(-1.0,-1.0));
+		
+		for(int y=0; y<heightSize; y++) {
+			for(int x=0; x<widthSize; x++) {
+				tempState.x = u.x + x;
+				tempState.y = u.y + y;
+				
+				if(occupied(tempState))
+					return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	/*
 	 * Returns a list of successor states for state u, since this is an
 	 * 8-way graph this list contains all of a cells neighbours. Unless
@@ -294,9 +322,69 @@ public class DStarLite implements java.io.Serializable{
 		State tempState;
 
 		if (occupied(u)) return s;
+		//if (checkIfSizeIsOccupied(u)) return s;
+		
 
 		//Generate the successors, starting at the immediate right,
 		//Moving in a clockwise manner
+		
+		// h.w + h.2 + w.2 + 4 = grids do entorno
+		
+			
+		//right bar
+		/*for(int y=0; y<heightSize; y++) {
+			tempState = new State(u.x + widthSize, u.y + y, new Pair(-1.0,-1.0));
+			if(!occupied(tempState))
+				s.addFirst(tempState);
+		}
+		
+		//bottom bar
+		for(int x=widthSize+1; x>=-1; x--) {
+			tempState = new State(u.x + x, u.y +heightSize, new Pair(-1.0,-1.0));
+			if(!occupied(tempState))
+				s.addFirst(tempState);
+		}
+		
+		//left bar
+		for(int y=heightSize; y>=0; y--) {
+			tempState = new State(u.x - 1, u.y + y, new Pair(-1.0,-1.0));
+			if(!occupied(tempState))
+				s.addFirst(tempState);
+		}
+		
+		//top bar
+		for(int x=-1; x<widthSize +1; x++) {
+			tempState = new State(u.x + x, u.y - 1, new Pair(-1.0,-1.0));
+			if(!occupied(tempState))
+				s.addFirst(tempState);
+		}*/
+		
+		
+		/*tempState = new State(u.x + 1, u.y, new Pair(-1.0,-1.0));
+		if(!occupied(tempState))
+			s.addFirst(tempState);
+		tempState = new State(u.x + 1, u.y + 1, new Pair(-1.0,-1.0));
+		if(!occupied(tempState))
+			s.addFirst(tempState);
+		tempState = new State(u.x, u.y + 1, new Pair(-1.0,-1.0));
+		if(!occupied(tempState))
+			s.addFirst(tempState);
+		tempState = new State(u.x - 1, u.y + 1, new Pair(-1.0,-1.0));
+		if(!occupied(tempState))
+			s.addFirst(tempState);
+		tempState = new State(u.x - 1, u.y, new Pair(-1.0,-1.0));
+		if(!occupied(tempState))
+			s.addFirst(tempState);
+		tempState = new State(u.x - 1, u.y - 1, new Pair(-1.0,-1.0));
+		if(!occupied(tempState))
+			s.addFirst(tempState);
+		tempState = new State(u.x, u.y - 1, new Pair(-1.0,-1.0));
+		if(!occupied(tempState))
+			s.addFirst(tempState);
+		tempState = new State(u.x + 1, u.y - 1, new Pair(-1.0,-1.0));
+		if(!occupied(tempState))
+			s.addFirst(tempState);*/
+		
 		tempState = new State(u.x + 1, u.y, new Pair(-1.0,-1.0));
 		s.addFirst(tempState);
 		tempState = new State(u.x + 1, u.y + 1, new Pair(-1.0,-1.0));
@@ -326,8 +414,37 @@ public class DStarLite implements java.io.Serializable{
 	{
 		LinkedList<State> s = new LinkedList<State>();
 		State tempState;
+		
+		
+		//right bar
+		for(int y=0; y<heightSize; y++) {
+			tempState = new State(u.x + widthSize, u.y + y, new Pair(-1.0,-1.0));
+			if(!occupied(tempState))
+				s.addFirst(tempState);
+		}
+		
+		//bottom bar
+		for(int x=widthSize+1; x>=-1; x--) {
+			tempState = new State(u.x + x, u.y +heightSize, new Pair(-1.0,-1.0));
+			if(!occupied(tempState))
+				s.addFirst(tempState);
+		}
+		
+		//left bar
+		for(int y=heightSize; y>=0; y--) {
+			tempState = new State(u.x - 1, u.y + y, new Pair(-1.0,-1.0));
+			if(!occupied(tempState))
+				s.addFirst(tempState);
+		}
+		
+		//top bar
+		for(int x=-1; x<widthSize +1; x++) {
+			tempState = new State(u.x + x, u.y - 1, new Pair(-1.0,-1.0));
+			if(!occupied(tempState))
+			s.addFirst(tempState);
+		}
 
-		tempState = new State(u.x + 1, u.y, new Pair(-1.0,-1.0));
+		/*tempState = new State(u.x + 1, u.y, new Pair(-1.0,-1.0));
 		if (!occupied(tempState)) s.addFirst(tempState);
 		tempState = new State(u.x + 1, u.y + 1, new Pair(-1.0,-1.0));
 		if (!occupied(tempState)) s.addFirst(tempState);
@@ -342,7 +459,7 @@ public class DStarLite implements java.io.Serializable{
 		tempState = new State(u.x, u.y - 1, new Pair(-1.0,-1.0));
 		if (!occupied(tempState)) s.addFirst(tempState);
 		tempState = new State(u.x + 1, u.y - 1, new Pair(-1.0,-1.0));
-		if (!occupied(tempState)) s.addFirst(tempState);
+		if (!occupied(tempState)) s.addFirst(tempState);*/
 
 		return s;
 	}
@@ -584,7 +701,7 @@ public class DStarLite implements java.io.Serializable{
 	}
 
 
-	public static void main(String[] args)
+/*	public static void main(String[] args)
 	{
 		DStarLite pf = new DStarLite();
 		pf.init(0,1,3,1);
@@ -610,13 +727,13 @@ public class DStarLite implements java.io.Serializable{
 			System.out.println("x: " + i.x + " y: " + i.y);
 		}
 
-	}
+	}*/
 }
 
 class CellInfo implements java.io.Serializable
 {
 	public double g=0;
-	public double rhs=0;
+	public double rhs=0; // heuristic
 	public double cost=0;
 }
 

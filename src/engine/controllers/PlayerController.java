@@ -57,4 +57,8 @@ public class PlayerController  extends Controller{
 			
 		}
 	}
+
+	@Override
+	public void renderDebug() {
+	}
 }

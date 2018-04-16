@@ -92,6 +92,8 @@ public class GameObject implements Comparable<GameObject>{
 	public void renderDebug() {
 		//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(position.x, position.y + size.y - baseBox.y), baseBox, 0, new Vec3(1,0,0));
 		ResourceManager.getSelf().getCubeRenderer().render(baseBox, 0, new Vec3(1,0,0));
+		if(controller!=null)
+			controller.renderDebug();
 	}
 	
 	public void update(float deltaTime, Game game) {//TODO: remove Game as paramater
