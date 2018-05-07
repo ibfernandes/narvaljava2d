@@ -25,25 +25,27 @@ public class Engine implements Runnable{
 	private MouseControl mouse;
 	public static final long SECOND = 1000000000L; //10^9
 	public static final long MILISECOND = 1000000L;//10^6
+	private static Engine self;
 	
+	private Engine() {}
 	
-	public Engine(Window w) {
-		window = w;
-	}
-	
-	public void initAudioSystem() {
-		String defaultDeviceName = alcGetString(0, ALC_DEFAULT_DEVICE_SPECIFIER);
-		long device = alcOpenDevice(defaultDeviceName);
+	public static Engine getSelf() {
+		if(self==null) 
+			self = new Engine();
 		
-		int[] attributes = {0};
-		long context = alcCreateContext(device, attributes);
-		alcMakeContextCurrent(context);
-
-		ALCCapabilities alcCapabilities = ALC.createCapabilities(device);
-		ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
+		return self;
 	}
 	
-	public void init() {
+	/**
+	 * Attach a window only and only once.
+	 * @param w
+	 */
+	public void attachWindow(Window w) {
+		if(window==null)
+			window = w;
+	}
+	
+	private void init() {
 		window.init();
 		initAudioSystem();
 		
@@ -59,7 +61,19 @@ public class Engine implements Runnable{
 		GSM.getSelf().setMouse(mouse);
 	}
 	
-	public void update() {
+	private void initAudioSystem() {
+		String defaultDeviceName = alcGetString(0, ALC_DEFAULT_DEVICE_SPECIFIER);
+		long device = alcOpenDevice(defaultDeviceName);
+		
+		int[] attributes = {0};
+		long context = alcCreateContext(device, attributes);
+		alcMakeContextCurrent(context);
+
+		ALCCapabilities alcCapabilities = ALC.createCapabilities(device);
+		ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
+	}
+	
+	private void update() {
 		currentFrame = System.nanoTime(); 
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
@@ -69,7 +83,7 @@ public class Engine implements Runnable{
 		GSM.getSelf().update((float)deltaTime/(float)SECOND);
 	}
 	
-	public void render() {
+	private void render() {
 		//glClearColor(1,0,1,1);
 		//glClear(GL_COLOR_BUFFER_BIT);
 		
@@ -103,5 +117,9 @@ public class Engine implements Runnable{
 			}
 			
 		}
+	}
+
+	public Window getWindow() {
+		return window;
 	}
 }

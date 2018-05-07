@@ -22,7 +22,7 @@ public class AudioSource {
 		//Assign the sound we just loaded to the source
 		alSourcei(sourcePointer, AL_BUFFER, bufferPointer); //TODO: check if not null
 		
-		alSourcef(sourcePointer, AL_PITCH, 2f); //sound speed
+		alSourcef(sourcePointer, AL_PITCH, 1f); //sound speed
 		alSourcef(sourcePointer,AL_GAIN, 1f);	//volume
 		alSource3f(sourcePointer, AL_POSITION, pos.x, pos.y , 0f);
 		alSource3f(sourcePointer, AL_VELOCITY, 0, 0 , 0.1f);

@@ -9,5 +9,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="glm-1.0.1.jar" sourcepath="/glm-master/src/main/java"/>
+	<classpathentry kind="lib" path="jafama.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

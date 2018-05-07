@@ -45,6 +45,7 @@ import engine.ai.DStarLite;
 import engine.audio.Audio;
 import engine.controllers.AIController;
 import engine.controllers.PlayerController;
+import engine.engine.Engine;
 import engine.engine.GameState;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
@@ -58,8 +59,8 @@ import engine.logic.Timer;
 import engine.noise.FastNoise;
 import engine.physics.Hit;
 import engine.utilities.BufferUtilities;
+import engine.utilities.MathExt;
 import engine.utilities.ResourceManager;
-import gameObjects.Player;
 import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
@@ -70,28 +71,70 @@ import graphic.GrassRenderer;
 import graphic.ShadowRenderer;
 import graphic.TextureRenderer;
 import javafx.scene.image.PixelWriter;
+import net.jafama.FastMath;
 
 public class Game extends GameState{
 	
 	//Layers
 	private ArrayList<GameObject> movableLayer;
 	private ArrayList<GameObject> staticLayer;
-	public ArrayList<GameObject> finalLayer;
-	public Camera camera;
+	private ArrayList<GameObject> regionLayer;
+	private ArrayList<GameObject> finalLayer; //composes all other layers into one, so it can be properly sorted and drawn
+	private Camera camera;
+	private Rectangle screenView;
 	private GameObject player;
 	
 	//Shadow Map
-	int shadowFBO;
-	int shadowLayerTexture;
+	private int shadowFBO;
+	private int shadowLayerTexture;
+	
+	//Map PCG
+	private FastNoise fastNoise = new FastNoise();
+	private int seed = new Random().nextInt(2000);
+	
+	private float noiseDivisor = 5f;
+	private int noiseWidth  = (int) ((float)Engine.getSelf().getWindow().getWidth()/noiseDivisor);
+	private int noiseHeight = (int) ((float)Engine.getSelf().getWindow().getHeight()/noiseDivisor);
+	
+	private float perlinNoise[][] = new float[noiseWidth][noiseHeight];
+	private float whiteNoise[][] = new float[noiseWidth][noiseHeight];
+	private float fractalNoise[][] = new float[noiseWidth][noiseHeight];
+	
+	private int 	noiseRGB[][] = new int[noiseWidth][noiseHeight];
+	
+	private HorizontalPool grassPool = new HorizontalPool(500);
+	
+	//Island formula used along with Noise generation.
+	private Texture terrain;
+	private float a = 0.15f;
+	private float b = 0.9f;
+	private float c = 2f;
+	private float d = 0f;
+	private Timer timer = new Timer();
+	private Timer timerWetSand = new Timer();
+	private Random random = new Random();
+	
+	private int map_width = 60000;
+	private int map_height = 60000;
+	public static final int ESMERALDA = (255<<24) | (56<<16) | (204<<8) | (113); //TODO: Move to a Color class;
+	public static final int DARKED_ESMERALDA = (255<<24) | (52<<16) | (200<<8) | (109);
+	public static final int WHITE = (255<<24) | (255<<16) | (255<<8) | (255);
+	public static final int TURKISH = (255<<24) | (26<<16) | (188<<8) | (156);
+	
+	//Graph
+	public int graphDivisor = 8;
+	public int graphSizeX = Engine.getSelf().getWindow().getWidth()/graphDivisor;
+	public int graphSizeY = Engine.getSelf().getWindow().getWidth()/graphDivisor;
+	public boolean obstacleMap[][];
 	
 	@Override
 	public void init() {
 		initShadowLayer();
+		screenView = new Rectangle(0,0,Engine.getSelf().getWindow().getWidth(),Engine.getSelf().getWindow().getHeight());
 		
 		//==================================
 		//Loads all shaders
 		//==================================
-	
 		ResourceManager.getSelf().loadShader("cube", 
 							"shaders/cube.vs",
 							"shaders/cube.fs",
@@ -112,7 +155,6 @@ public class Game extends GameState{
 		//==================================
 		//Loads all textures
 		//==================================
-		
 		ResourceManager.getSelf().loadTexture("rogue", 
 				"sprites/rogue.png");
 		ResourceManager.getSelf().loadTexture("rogue_normal", 
@@ -143,18 +185,21 @@ public class Game extends GameState{
 				"sprites/flower_red.png");
 		ResourceManager.getSelf().loadTexture("tree", 
 				"sprites/tree.png");
-		
 		ResourceManager.getSelf().loadTexture("house", 
 				"sprites/house.png");
 		ResourceManager.getSelf().loadTexture("ranger_swimming", 
 				"sprites/ranger_swimming.png");
+		
+		//==================================
+		//Loads all Audio
+		//==================================
+		ResourceManager.getSelf().loadAudio("ocean_waves","audio/ocean_waves.ogg" );
 
 		//==================================
 		//Set all Uniforms
 		//==================================
-		
 		Mat4 projection = new Mat4();
-		projection = projection.ortho(0, 1280f, 720f, 0, -1f, 1f); //TODO: should get width and height from window
+		projection = projection.ortho(0, Engine.getSelf().getWindow().getWidth(), Engine.getSelf().getWindow().getHeight(), 0, -1f, 1f);
 
 		ResourceManager.getSelf().getShader("cube").use();
 		ResourceManager.getSelf().getShader("cube").setMat4("projection", projection);
@@ -176,7 +221,6 @@ public class Game extends GameState{
 		ShadowRenderer s = new ShadowRenderer(ResourceManager.getSelf().getShader("shadow"));
 		GrassRenderer g = new GrassRenderer(ResourceManager.getSelf().getShader("grass"));
 		
-		
 		ResourceManager.getSelf().setTextureRenderer(t);
 		ResourceManager.getSelf().setCubeRenderer(r);
 		ResourceManager.getSelf().setShadowRenderer(s);
@@ -187,41 +231,18 @@ public class Game extends GameState{
 		//==================================
 		movableLayer = new ArrayList<>();
 		staticLayer = new ArrayList<>();
+		regionLayer = new ArrayList<>();
 		finalLayer = new ArrayList<>();
 		
 		//==================================
 		//Creates other GameObjects
 		//==================================
-		/*GameObject shadow = new GameObject(	new Vec2(200,200), 		//Pos
-				new Vec2(128,128), 		//size
-				450, 					//Velocity
-				new Vec3(0,0,0),		//Color
-				0, 						//Rotation
-				true,					//isSolid
-				null
-				);
-		shadow.setOrientation(new Vec2(0,1));
-		shadow.setSkew(new Vec2(0,0));
-		originalSize = shadow.getSize();
-		shadow.setAnimations(asm);*/
-		
-		
-		
-		GameObject grass = new GameObject(	new Vec2(0,0), 		//Pos
-				new Vec2(1280,720), 		//size
-				0, 					//Velocity
-				new Vec4(1,1,1,1),		//Color
-				0, 						//Rotation
-				true,					//isSolid
-				"grass",
-				null
-				);
-		//movableLayer.add(grass);
+
 		
 		//==================================
 		//Create enemies
 		//==================================
-		createClerics(1);
+		createClerics(0);
 		
 		//==================================
 		//Create props
@@ -260,7 +281,7 @@ public class Game extends GameState{
 		house.setOrientation(new Vec2(0,0));
 		house.setBaseBox(new Vec2(520, 300));
 		house.setSkew(new Vec2(0,0));
-		house.setPosition(new Vec2(35000,35500));
+		house.setPosition(new Vec2(46000, 46000));
 		house.setTexture("house");
 		staticLayer.add(house);
 		
@@ -278,7 +299,7 @@ public class Game extends GameState{
 		player.setBaseBox(new Vec2(128, 20));
 		player.setSightBox(new Vec2(512, 512));
 		player.setSkew(new Vec2(0,0));
-		player.setPosition(new Vec2(35500,35500));
+		player.setPosition(new Vec2(45000,45000));
 		
 		ASM asm = new ASM();
 		
@@ -307,35 +328,30 @@ public class Game extends GameState{
 		player.setAnimations(asm);
 		//movableLayer.add(player);
 		
-	
+		//==================================
+		//Camera
+		//==================================
 		camera = new Camera();
 		camera.setFocusOn(player);
 		camera.move(-35000, -35000);
-		//==================================
-		//Loads all Audio
-		//==================================
-		ResourceManager.getSelf().loadAudio("test","audio/sunset-lover.ogg" );
-		//sourcePointer = ResourceManager.getSelf().playAudio("test", new Vec2(35000,35000),1000);
-
-
+		
 		//==================================
 		//Tests
 		//==================================
-		
 		timerWetSand.setDegree(260);
-		
+		//ResourceManager.getSelf().playAudio("ocean_waves", player.getPosition(), 3000);
 	}
-	
 	
 	private void initShadowLayer() {
 		shadowFBO = glGenFramebuffers();
+		
 		glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 		
 		shadowLayerTexture = GL11.glGenTextures();
 		
 		GL11.glBindTexture(GL_TEXTURE_2D, shadowLayerTexture);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1280, 720, 0, GL11.GL_RGBA, GL_UNSIGNED_BYTE, 0); //TODO: get window size
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, Engine.getSelf().getWindow().getWidth(), Engine.getSelf().getWindow().getHeight(), 0, GL11.GL_RGBA, GL_UNSIGNED_BYTE, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
 
@@ -351,153 +367,84 @@ public class Game extends GameState{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 	
-	FastNoise n = new FastNoise();
-	int seed = new Random().nextInt(2000);
-
 	public float noise(float x, float y) { //TODO: I could make it parallel and so increase performance[?]
-		
 		float noise = 0;
-		n.SetSeed(12345);
+		fastNoise.SetSeed(12345);
 		
-		n.SetFrequency(0.0005f); //quanto menor, maior as "ilhas"
-		noise +=  n.GetPerlin(x, y); //one octave
+		fastNoise.SetFrequency(0.0005f);	 //quanto menor, maior as "ilhas"
+		noise +=  fastNoise.GetPerlin(x, y); //first octave
 		
-		n.SetFrequency(0.005f);
-		noise += .1 * n.GetPerlin(x, y); // second octave
+		fastNoise.SetFrequency(0.005f);
+		noise += .1 * fastNoise.GetPerlin(x, y); // second octave
 		
 		return noise;
 	}
 
-	
-	public int divisor = 4;
-	int perlinWidth = 1280/divisor;
-	int perlinHeight = 720/divisor;
-	
-	float noiseArr[][] = new float[perlinWidth][perlinHeight];
-	float whiteNoise[][] = new float[perlinWidth][perlinHeight];
-	
-	float fractalNoise[][] = new float[perlinWidth][perlinHeight];
-	int 	rgb[][] = new int[perlinWidth][perlinHeight];
-	
-	HorizontalPool grassPool = new HorizontalPool(600);
-	
-	Texture terrain;
-	float a = 0.15f;
-	float b =0.9f;
-	float c = 2f;
-	float d = 0f;
-	Timer timerTest = new Timer();
-	Timer timerWetSand = new Timer();
-	Random random = new Random();
-	
-	int map_width = 12000 ;
-	int map_height = 12000 ;
-	int esmeralda = (255<<24) | (56<<16) | (204<<8) | (113);
-	int darkedEsmeralda = (255<<24) | (52<<16) | (200<<8) | (109);
-	int white = (255<<24) | (255<<16) | (255<<8) | (255);
-	int turkish = (255<<24) | (26<<16) | (188<<8) | (156);
-	
 	public void generateTerrain() { 
-		timerTest.setDuration(Timer.SECOND*8);
+		timer.setDuration(Timer.SECOND*8);
 		timerWetSand.setDuration(Timer.SECOND*8);
 		
-		for(int y=0; y<perlinHeight; y++) {
-			for(int x=0; x<perlinWidth;x++) {
-				int coordX = (int)(camera.getX()*-1/divisor) + x ; // getx + x*divisor
-				int coordY = (int)(camera.getY()*-1/divisor) + y ; //
+		for(int y=0; y<noiseHeight; y++) {
+			for(int x=0; x<noiseWidth;x++) {
+				int coordX = (int)(camera.getX()/noiseDivisor) + x ; // getx + x*divisor
+				int coordY = (int)(camera.getY()/noiseDivisor) + y ; //
 				
-				
-				d = 2*Math.max(Math.abs((float)coordX/map_width - (float)12000/map_width), Math.abs((float)coordY/map_height - (float)12000/map_height)); //as the distance must be normlized,
+				d = 2*Math.max(Math.abs((float)coordX/map_width - (float)(map_width/2)/map_width), Math.abs((float)coordY/map_height - (float)(map_height/2)/map_height)); //as the distance must be normlized,
 				// i simply normalize the data before calculating the distance
 
-				noiseArr[x][y] = noise(coordX/3f,coordY);
-				whiteNoise[x][y] = n.GetWhiteNoise(coordX, coordY); //TODO: it's generating diff noise everytime i move?!
+				perlinNoise[x][y] = noise(coordX/3f,coordY);
+				whiteNoise[x][y] = fastNoise.GetWhiteNoise(coordX, coordY); 
+				fractalNoise[x][y] = fastNoise.GetPerlinFractal(coordX/4, coordY); 
 				
-				noiseArr[x][y] = noiseArr[x][y] + a - b*(float)Math.pow(d, c);
-
-				fractalNoise[x][y] = n.GetPerlinFractal(coordX/4, coordY*2);
-			}
-		}
-		
-		
-
-		
-		double dx = Math.sin(Math.toRadians(timerTest.getDegree()));
-		double dxWet = Math.sin(Math.toRadians(timerWetSand.getDegree()));
-		boolean syncWave = false;
-		
-		
-		
-		
-		for(int y=0; y<perlinHeight; y++) {
-			for(int x=0; x<perlinWidth;x++) {
-
+				perlinNoise[x][y] = perlinNoise[x][y] + a - b*(float)Math.pow(d, c);
+	
+				double dx = FastMath.sin(Math.toRadians(timer.getDegree()));
+				double dxWet = FastMath.sin(Math.toRadians(timerWetSand.getDegree()));
 				
-				if(dxWet>dx)
-					syncWave = false;
-				else
-					syncWave = true;
-				
-				
-				if(noiseArr[x][y]>-.1 ) {	//land
-					rgb[x][y] = esmeralda; //esmeralda
-					if(fractalNoise[x][y]>0.2) {
-						rgb[x][y] = darkedEsmeralda; //
-					}
-					
-					
-				
+				if(perlinNoise[x][y]>-.1 ) { 		//land
+					noiseRGB[x][y] = ESMERALDA; //esmeralda
+					if(fractalNoise[x][y]>0.2)
+						noiseRGB[x][y] = DARKED_ESMERALDA;
 				}
+				if(perlinNoise[x][y]<=-.1)  //preenche tudo com água
+					noiseRGB[x][y] = 	TURKISH; //turquesa
 				
-				if(noiseArr[x][y]<=-.1)  //preenche tudo com água
-					rgb[x][y] = 	turkish; //turquesa
-				
-				
-				if(noiseArr[x][y]<=-.1) {	//sand
-					rgb[x][y] =  (255<<24) | (244<<16) | (234<<8) | (187); //ARGB
+				if(perlinNoise[x][y]<=-.1) {	//sand
+					noiseRGB[x][y] =  (255<<24) | (244<<16) | (234<<8) | (187); //ARGB
 					if(whiteNoise[x][y]>0)
-						rgb[x][y] =  (255<<24) | (234<<16) | (224<<8) | (167); //ARGB
+						noiseRGB[x][y] =  (255<<24) | (234<<16) | (224<<8) | (167); //ARGB
 				}
 				
-				if(noiseArr[x][y]<-.230 + dxWet*.016) {	//wet sand
-					rgb[x][y] = (255<<24) | (224<<16) | (214<<8) | (167); //ARGB
+				if(perlinNoise[x][y]<-.230 + dxWet*.016) {	//wet sand
+					noiseRGB[x][y] = (255<<24) | (224<<16) | (214<<8) | (167); //ARGB
 					if(whiteNoise[x][y]>0)
-						rgb[x][y] =  (255<<24) | (234<<16) | (224<<8) | (167); //ARGB
+						noiseRGB[x][y] =  (255<<24) | (234<<16) | (224<<8) | (167); //ARGB
 				}
 				
-				if(noiseArr[x][y]<-.230 + dx*.016) {	//espuma
-					rgb[x][y] = white; //ARGB
-					
-					
-				}
+				if(perlinNoise[x][y]<-.230 + dx*.016) 	//espuma
+					noiseRGB[x][y] = WHITE; //ARGB
 				
-				if(noiseArr[x][y]<-.244 + dx*.016) { 	//espuma back
-						rgb[x][y] = (255<<24) | (22<<16) | (160<<8) | (133); //green se
-						if(noiseArr[x][y]>-.2445 + dx*.016) {
+				if(perlinNoise[x][y]<-.244 + dx*.016) { 	//espuma back
+						noiseRGB[x][y] = (255<<24) | (22<<16) | (160<<8) | (133); //green se
+						if(perlinNoise[x][y]>-.2445 + dx*.016) {
 							if(whiteNoise[x][y]<0.2f)
-								rgb[x][y] = white;
-					
+								noiseRGB[x][y] = WHITE;
 						}
 				}
 				
-				if(noiseArr[x][y]<=-.266 + dx*.016)  //water
-					rgb[x][y] = 	(255<<24) | (26<<16) | (188<<8) | (156); //turquesa
-	
-				
+				if(perlinNoise[x][y]<=-.266 + dx*.016)  //water
+					noiseRGB[x][y] = 	(255<<24) | (26<<16) | (188<<8) | (156); //turquesa
 				
 				//NOTA: valores crescem para baixo
-			}
-		}
 		
-		for(int y=0; y<720-3; y++) {
-			for(int x=0; x<1280-3; x++) {
-				int convertedX = x/divisor;
-				int convertedY = y/divisor;
-				
-				
-				
+		
+				//create scnearion elements
 
-				if(whiteNoise[convertedX][convertedY]>0.9999 && (rgb[convertedX][convertedY] == esmeralda || rgb[convertedX][convertedY] == darkedEsmeralda)) {
+				//TODO: the pool is jsut growing without limit. Need to fix that.
+				if(whiteNoise[x][y]>0.9999 && (noiseRGB[x][y] == ESMERALDA || noiseRGB[x][y] == DARKED_ESMERALDA)) {
+					if(grassPool.contains(whiteNoise[x][y]))
+						continue;
+					
 					GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
 					o.setSize(new Vec2(512,512));
 					o.setVelocity(0);
@@ -508,7 +455,7 @@ public class Game extends GameState{
 						o.setOrientation(new Vec2(1,0));
 					o.setBaseBox(new Vec2(512, 16));
 					o.setSkew(new Vec2(0,0));
-					o.setPosition(new Vec2(x + (camera.getX()*-1),y + (camera.getY()*-1)));
+					o.setPosition(new Vec2(x*noiseDivisor + (camera.getX()),y*noiseDivisor + (camera.getY()))); //TODO: fix that to a proper interval
 					ASM asm = new ASM(); //TODO: setTexutre not working?!
 					
 					Animation a;
@@ -519,8 +466,10 @@ public class Game extends GameState{
 					asm.changeStateTo("idle_1");
 					o.setAnimations(asm);
 					
-					grassPool.add(o, whiteNoise[convertedX][convertedY]);
-				}else if(whiteNoise[convertedX][convertedY]>0.999 && (rgb[convertedX][convertedY] == esmeralda || rgb[convertedX][convertedY] == darkedEsmeralda)) {
+					grassPool.add(o, whiteNoise[x][y]);
+				}else if(whiteNoise[x][y]>0.999 && (noiseRGB[x][y] == ESMERALDA || noiseRGB[x][y] == DARKED_ESMERALDA)) {
+					if(grassPool.contains(whiteNoise[x][y]))
+						continue;
 					GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
 					o.setSize(new Vec2(60,40));
 					o.setVelocity(0);
@@ -531,13 +480,13 @@ public class Game extends GameState{
 						o.setOrientation(new Vec2(1,0));
 					o.setBaseBox(new Vec2(60, 16));
 					o.setSkew(new Vec2(0,0));
-					o.setPosition(new Vec2(x + (camera.getX()*-1),y + (camera.getY()*-1)));
+					o.setPosition(new Vec2(x*noiseDivisor + (camera.getX()),y*noiseDivisor + (camera.getY())));
 					ASM asm = new ASM(); //TODO: setTexutre not working?!
 					
 					Animation a;
-					if(whiteNoise[convertedX][convertedY]>0.9995)
+					if(whiteNoise[x][y]>0.9995)
 						a = new Animation("flower_red", -1);
-					else if(whiteNoise[convertedX][convertedY]>0.9991)
+					else if(whiteNoise[x][y]>0.9991)
 						a = new Animation("flower_blue", -1);
 					else
 						a = new Animation("flower", -1);
@@ -547,12 +496,13 @@ public class Game extends GameState{
 					asm.changeStateTo("idle_1");
 					o.setAnimations(asm);
 					
-					grassPool.add(o, whiteNoise[convertedX][convertedY]);
+					grassPool.add(o, whiteNoise[x][y]);
 				}
+			
 			}
 		}
 		
-		terrain = new Texture(rgb);
+		terrain = new Texture(noiseRGB); //TODO: not create
 		
 	}
 	
@@ -564,14 +514,13 @@ public class Game extends GameState{
 			o.setSize(new Vec2(128,128));
 			o.setVelocity(200);
 			o.setColor(new Vec4(1,1,1,1));
-			o.setSightBox(new Vec2(512, 512));
+			o.setSightBox(new Vec2(3000, 3000));
 			o.setRotation(0);
 			o.setSkew(new Vec2(0,0));
 			o.setOrientation(new Vec2(0,0));
 			o.setBaseBox(new Vec2(128, 20));
 			//o.setPosition(new Vec2(35350+r.nextInt(500),35500+r.nextInt(500)));
-			o.setPosition(new Vec2(36000,35700));
-			
+			o.setPosition(new Vec2(38000,35700));
 			
 			AIController ai =  new AIController();
 			o.setController(ai);
@@ -706,57 +655,35 @@ public class Game extends GameState{
 		}
 	}
 	
-	public int graphDivisor = 8;
-	public int graphSizeX = 1280/graphDivisor;
-	public int graphSizeY = 720/graphDivisor;
-	public boolean obstacleMap[][];
-	
-	
 	public boolean[][] generateGraph(GameObject obj) {
 		obstacleMap = new boolean[graphSizeX][graphSizeY];
-		
-		/*for(int x=0;x<obstacleMap.length;x++)
-		    for(int y=0;y<obstacleMap[x].length;y++)
-		    	obstacleMap[x][y] = true;*/
-
 		
 		for(GameObject o: finalLayer) {
 			
 			if(obj==o)
 				continue;
 
-			int coordXMapS = (int) (camera.getX()*-1 - o.getBaseBox().getX())*-1/graphDivisor;
-			int coordYMapS = (int) (camera.getY()*-1 - o.getBaseBox().getY())*-1/graphDivisor;
+			int coordXMapS = (int) (camera.getX() - o.getBaseBox().getX())/graphDivisor;
+			int coordYMapS = (int) (camera.getY() - o.getBaseBox().getY())/graphDivisor;
 			int sizeX = (int) (o.getBaseBox().width/graphDivisor) + 1;
 			int sizeY = (int) (o.getBaseBox().height/graphDivisor) +1;
 			
-	
-		
-			
 			if(coordXMapS<0 || coordYMapS<0) //TODO: Should consider the INTERVAL, not just the start and fisnish poitn
 				continue;
-			
-			//if(player==o)
-				//System.out.println("S"+coordXMapS+"  F"+sizeX);
-
 			
 			for(int y=coordYMapS; y< coordYMapS+sizeY; y++)
 				for(int x=coordXMapS; x<coordXMapS + sizeX; x++)
 					if(x<obstacleMap.length && y<obstacleMap[0].length)
 						obstacleMap[x][y] = true; 	// true onde ta bloqueado
-
 		}
 		
-
-		/*for(int y=0; y< obstacleMap[0].length;y++) {
-			for(int x=0; x< obstacleMap.length;x++)
-				System.out.printf((obstacleMap[x][y])? "1":"0" );
-			System.out.println("\n");
-		}
-		System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n");*/
 		return obstacleMap;
 	}
 
+	public boolean isOnScreen(GameObject o) {
+		return (screenView.intersects(o.getBoundingBox()));
+	}
+	
 	@Override
 	public void render() {
 		glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);// makes OpenGL reading data from your "framebuffer"
@@ -764,37 +691,20 @@ public class Game extends GameState{
 		glClearColor(1,1,1,0);
 		glClear(GL11.GL_COLOR_BUFFER_BIT);
 		
-		
-		for(GameObject o: finalLayer) {
+		for(GameObject o: finalLayer) 
 			ResourceManager.getSelf().getShadowRenderer().render(o);
-		}
 		
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(1,1,1,1);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		/*ResourceManager.getSelf().getTextureRenderer().render(ResourceManager.getSelf().getTexture("terrain").getId(), new Vec2(0,0),
-				new Vec2(16000,16000), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));*/
-		
-		ResourceManager.getSelf().getTextureRenderer().render(terrain.getId(),new Vec2((int)camera.getX()*-1,(int)camera.getY()*-1),
-				new Vec2(1281,721), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
-		ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX()*-1,camera.getY()*-1),
-				new Vec2(1280,720), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
-		
-		/*for(GameObject o: grassPool.getPool())
-			ResourceManager.getSelf().getGrassRenderer().render(o);
-		
-		for(GameObject o: staticLayer) {
-			o.render();
-		}
-		
-		for(GameObject o: movableLayer) {
-			//o.renderDebug();
-			o.render();
-		}*/
-		
+		ResourceManager.getSelf().getTextureRenderer().render(terrain.getId(),new Vec2((int)camera.getX(),(int)camera.getY()),
+				new Vec2(Engine.getSelf().getWindow().getSize()), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
+		ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
+				Engine.getSelf().getWindow().getSize(), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
+
 		for(GameObject o: finalLayer) {
-			//o.renderDebug();
+			o.renderDebug();
 			if(o.getController()!=null)
 				o.getController().renderDebug();
 			
@@ -808,32 +718,29 @@ public class Game extends GameState{
 			for(int y=0; y< obstacleMap[0].length; y++)
 				for(int x=0; x< obstacleMap.length; x++) {
 					
-					int rx = (int) (camera.getX()*-1 + x*graphDivisor);
-					int ry = (int) (camera.getY()*-1 + y*graphDivisor);
+					int rx = (int) (camera.getX() + x*graphDivisor);
+					int ry = (int) (camera.getY() + y*graphDivisor);
 					
 					//if(obstacleMap[x][y])
-					//	ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(8,8), 0, new Vec3(1,0,0));
+						//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(8,8), 0, new Vec3(1,0,0));
 				}
-
 	}
 
 	boolean shouldInc = true;
-	int sourcePointer;
-	float dist = 0;
 	@Override
 	public void update(float deltaTime) {
 		//generateGraph();
 	
-		alListener3f(AL_POSITION, camera.getX()*-1,camera.getY()*-1,0); //TODO: change to players Position instead of camera.
+		alListener3f(AL_POSITION, camera.getX(),camera.getY(),0); //TODO: change to players Position instead of camera.
 		
 		
-		timerTest.update();
+		timer.update();
 		timerWetSand.update();
 		ResourceManager.getSelf().getShader("grass").use();
-		float sin = (float) Math.sin(Math.toRadians(timerTest.getDegree()))*1f;
+		float sin = (float) Math.sin(Math.toRadians(timer.getDegree()))*1f;
 		ResourceManager.getSelf().getShader("grass").setFloat("dx", (sin<0) ? sin*-1: sin);
 		generateTerrain();
-		player.update(deltaTime, this);
+		/*player.update(deltaTime, this);
 		for(GameObject o: movableLayer)
 			o.update(deltaTime, this);
 		
@@ -857,10 +764,7 @@ public class Game extends GameState{
 	
 			//o.setSkew(new Vec2(o.getSkew().x+inc, o.getSkew().y));
 			o.update(deltaTime, this);
-		}
-		
-		
-		
+		}*/
 		
 		finalLayer.clear();
 		finalLayer.addAll(movableLayer);
@@ -882,75 +786,93 @@ public class Game extends GameState{
 					//finalLayer.get(i).resolveCollision(finalLayer.get(k));
 			}
 		}*/
-
+		player.update(deltaTime, this);
 		for(int i=0; i<finalLayer.size(); i++) { //TODO: verify only objects on screen
 			
-			
-			if(finalLayer.get(i).getPosition().x!=finalLayer.get(i).getPreviousPosition().x || finalLayer.get(i).getPosition().y!=finalLayer.get(i).getPreviousPosition().y)
-				for(int k=0; k<finalLayer.size(); k++) {
-					
-					
-					
-					if(k==i) 
-						continue;
-						
-					h = finalLayer.get(k).getBaseBox().intersectAABB(finalLayer.get(i).getBaseBox());
-					Rectangle r = new Rectangle(
-							finalLayer.get(i).getPreviousPosition().x, 
-							finalLayer.get(i).getPreviousPosition().y + finalLayer.get(i).getSize().y - finalLayer.get(i).getBaseBox().height,
-							finalLayer.get(i).getBaseBox().width,
-							finalLayer.get(i).getBaseBox().height);
-					
-	
-					/*h = finalLayer.get(i).getBaseBox().sweepIntersectsAABB(r,
-							new Vec2(player.getPosition().x - player.getPreviousPosition().x,
-									player.getPosition().y - player.getPreviousPosition().y));*/
-					if(h!=null) {
-						finalLayer.get(i).move(h.delta.x, h.delta.y);
-						//player.moveDirectlyTo(h.pos.x - player.getBaseBox().getRadiusX(), h.pos.y - player.getBaseBox().getRadiusY() - (player.getSize().y - player.getBaseBox().height));
-			
-					}
-					
-				}
-			
-			
-			/*if(finalLayer.get(i)==player)
+			//if(!isOnScreen(finalLayer.get(i)))
+				//continue;
+			if(finalLayer.get(i)==player)
 				continue;
 			
-			h = finalLayer.get(i).getBaseBox().intersectAABB(player.getBaseBox());
-			Rectangle r = new Rectangle(
+			finalLayer.get(i).update(deltaTime, this);
+			
+			Rectangle rec = new Rectangle(
 					player.getPreviousPosition().x, 
 					player.getPreviousPosition().y + player.getSize().y - player.getBaseBox().height,
 					player.getBaseBox().width,
-					player.getBaseBox().height);*/
+					player.getBaseBox().height);
 			
 
-			/*h = finalLayer.get(i).getBaseBox().sweepIntersectsAABB(r,
+			h = finalLayer.get(i).getBaseBox().sweepIntersectsAABB(
+					rec,
 					new Vec2(player.getPosition().x - player.getPreviousPosition().x,
-							player.getPosition().y - player.getPreviousPosition().y));*/
-			/*if(h!=null) {
-				player.move(h.delta.x, h.delta.y);
-				//player.moveDirectlyTo(h.pos.x - player.getBaseBox().getRadiusX(), h.pos.y - player.getBaseBox().getRadiusY() - (player.getSize().y - player.getBaseBox().height));
-	
-			}*/
+							player.getPosition().y - player.getPreviousPosition().y));
+			
+			if(h!=null) {
+				//player.move(h.delta.x, h.delta.y);
+				boolean xAxisBlocked = false;
+				boolean yAxisBlocked = false;
+				int xMoving = player.getMovingDirectionX();
+				int yMoving = player.getMovingDirectionY();
+				
+				//TODO:the problem is here
+
+				player.moveDirectlyTo(h.pos.x - player.getBaseBox().getRadiusX(), 
+						h.pos.y - player.getBaseBox().getRadiusY() - (player.getSize().y - player.getBaseBox().height));
+				
+				
+				if( MathExt.openIntervalIntersect(
+						player.getBaseBox().y, 
+						player.getBaseBox().y+player.getBaseBox().height,
+						finalLayer.get(i).getBaseBox().y,
+						finalLayer.get(i).getBaseBox().y+finalLayer.get(i).getBaseBox().height))
+					xAxisBlocked = true;
+
+
+				if(MathExt.openIntervalIntersect(
+						player.getBaseBox().x, 
+						player.getBaseBox().x+player.getBaseBox().width,
+						finalLayer.get(i).getBaseBox().x,
+						finalLayer.get(i).getBaseBox().x+finalLayer.get(i).getBaseBox().width))
+					yAxisBlocked = true;
+
+				
+				if(!xAxisBlocked && xMoving==player.RIGHT)
+					player.move(player.getVelocity()*deltaTime, 0);
+				if(!xAxisBlocked && xMoving==player.LEFT)
+					player.move(-player.getVelocity()*deltaTime, 0);
+				if(!yAxisBlocked && yMoving==player.TOP)
+					player.move(0, -player.getVelocity()*deltaTime);
+				if(!yAxisBlocked && yMoving==player.BOTTOM)
+					player.move(0, player.getVelocity()*deltaTime);
+			}
 		}
 		
-		int coordXMap = Math.abs((int) (camera.getX()*-1 - player.getBaseBox().getCenterX())); // TODO: it'll get an error when the object is outsied the camera Width and height view
-		int coordYMap = Math.abs((int) (camera.getY()*-1 - player.getBaseBox().getCenterY()));
+		camera.update(deltaTime); //TODO: why should it be after all obj update?
+		screenView.x = camera.getX();
+		screenView.y = camera.getY();
+		
+		int coordXMap = Math.abs((int) (camera.getX() - player.getBaseBox().getCenterX())); // TODO: it'll get an error when the object is outsied the camera Width and height view
+		int coordYMap = Math.abs((int) (camera.getY() - player.getBaseBox().getCenterY()));
 
-		if(rgb[coordXMap/divisor][coordYMap/divisor]==turkish) {
+		if(noiseRGB[(int) ((float)coordXMap/noiseDivisor)][(int) ((float)coordYMap/noiseDivisor)]==TURKISH) {
 			player.setTexture("ranger_swimming");
-			player.setVelocity(150);
+			player.setVelocity(1200);
 		}else {
 			player.setTexture(null);
-			player.setVelocity(600);
+			player.setVelocity(1200);
 		}
-		
-		camera.update(deltaTime);
-		
-		
-		
 	}
-	
 
+	public Camera getCamera() {
+		return camera;
+	}
+
+	public void setCamera(Camera camera) {
+		this.camera = camera;
+	}
+
+	public ArrayList<GameObject> getFinalLayer() {
+		return finalLayer;
+	}
 }

@@ -6,9 +6,12 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 import org.lwjgl.opengl.GL;
 
+import glm.vec._2.Vec2;
+
 public class Window {
 	private int width;
 	private int height;
+	private Vec2 size;
 	private String name;
 	private long id;
 	
@@ -17,7 +20,7 @@ public class Window {
 		this.width = width;
 		this.height = height;
 		this.name = name;
-		
+		size = new Vec2(width,height);
 	}
 	
 	public void init() {
@@ -48,5 +51,17 @@ public class Window {
 
 	public void setId(long id) {
 		this.id = id;
+	}
+
+	public int getWidth() {
+		return width;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+
+	public Vec2 getSize() {
+		return size;
 	}
 }

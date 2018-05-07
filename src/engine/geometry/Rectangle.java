@@ -114,7 +114,7 @@ public class Rectangle {
     	
     	if(hit!=null) {
 
-    		sweepTime = MathExt.clamp(sweepTime - EPSILON, 0, 1);
+    		sweepTime = MathExt.clamp(hit.time - EPSILON, 0, 1);
     		sweepPos.x = boxCenter.x + delta.x * sweepTime; 
     		sweepPos.y = boxCenter.y + delta.y * sweepTime; 
     		Vec2 direction = new Vec2(delta.x, delta.y);
@@ -139,6 +139,14 @@ public class Rectangle {
     	
     	return hit;
     		
+    }
+    
+    public boolean intersectsPoint(Vec2 point) {
+    	
+    	if ( point.x>this.x && point.x<this.x+this.width)
+    		if(point.y>this.y && point.y<this.y + this.height)
+    			return true;
+    	return false;
     }
     
     //TODO: didn't test this yet

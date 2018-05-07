@@ -44,7 +44,11 @@ public class GameObject implements Comparable<GameObject>{
 	public static final int 	TOP    = 0, 
 					  			RIGHT  = 1, 
 					  			BOTTOM = 2,
-					  			LEFT   = 3;
+					  			LEFT   = 3,
+			  					TOP_DIAGONAL_LEFT   = 4,
+								TOP_DIAGONAL_RIGHT   = 5,
+								BOTTOM_DIAGONAL_LEFT  = 6,
+					  			BOTTOM_DIAGONAL_RIGHT  = 7;
 
 	public GameObject() {
 		
@@ -108,6 +112,8 @@ public class GameObject implements Comparable<GameObject>{
 		previousPosition.y = position.y;
 		position.x = x;
 		position.y = y;
+		boundingBox.x = x;
+		boundingBox.y = y;
 		baseBox.x =  x;
 		baseBox.y =  (position.y + size.y - baseBox.height);
 		sightBox.x = x;
@@ -124,6 +130,8 @@ public class GameObject implements Comparable<GameObject>{
 		previousPosition.y = position.y;
 		position.x += x;
 		position.y += y;
+		boundingBox.x += x;
+		boundingBox.y += y;
 		baseBox.x +=  x;
 		baseBox.y += y;
 		sightBox.x +=  x;
@@ -253,11 +261,13 @@ public class GameObject implements Comparable<GameObject>{
 	 * You must first supply the size and baseBox (if any).
 	 * @param position
 	 */
-	public void setPosition(Vec2 position) {
+	public void setPosition(Vec2 position) { //TODO: remove and stay only with moveDirectlyTo
 		this.position = position;
 		this.previousPosition =  new Vec2(position.x , position.y);
 		baseBox.x =  position.x;
 		baseBox.y = (position.y + size.y - baseBox.height);
+		boundingBox.x = position.x;
+		boundingBox.y = position.y;
 		sightBox.x =  position.x;
 		sightBox.y = position.y; //TODO: not correctly calculated
 	}
@@ -278,6 +288,8 @@ public class GameObject implements Comparable<GameObject>{
 	 * @param size
 	 */
 	public void setSize(Vec2 size) {
+		boundingBox.width = size.x;
+		boundingBox.height = size.y;
 		this.size = size;
 	}
 

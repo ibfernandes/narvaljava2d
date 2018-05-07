@@ -6,17 +6,16 @@ import org.lwjgl.opengl.GL;
 import editor.Editor;
 import engine.engine.Engine;
 import engine.engine.Window;
-import tests.MainFrame;
 
 public class Main {
 	public static void main(String args[]) {
 		Window w;
-		w = new Window(1280,720,"Engine Early Alpha");
+		w = new Window(1920,1080,"Engine Early Alpha");
 		
-		Engine e;
-		e = new Engine(w);
+		Engine.getSelf().attachWindow(w);
 		
-		Editor ed = new Editor();
+		
+		//Editor ed = new Editor();
 
 		//ed.run();
 		
@@ -25,7 +24,7 @@ public class Main {
 		
 		//Editor ed = new Editor();
 
-		Thread tr = new Thread(e);
+		Thread tr = new Thread(Engine.getSelf());
 		tr.start();
 		
 		//new MainFrame("http://www.google.com", OS.isLinux(), false);

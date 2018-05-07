@@ -1,7 +1,6 @@
 package engine.audio;
 
 import static org.lwjgl.openal.AL10.*;
-import static org.lwjgl.openal.ALC10.*;
 
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
@@ -19,6 +18,10 @@ import java.nio.ShortBuffer;
 public class Audio {
 	private int bufferPointer;
 	
+	/**
+	 * Audio format must be in .OGG
+	 * @param audioPath
+	 */
 	public Audio(String audioPath) {
 		String fileName = "resources/"+audioPath;
 

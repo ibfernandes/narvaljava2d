@@ -2,6 +2,7 @@ package engine.logic;
 
 import engine.utilities.ResourceManager;
 import glm.mat._4.Mat4;
+import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 
 public class Camera {
@@ -55,10 +56,14 @@ public class Camera {
 	}
 
 	public float getX() {
-		return x;
+		return x*-1;
 	}
 
 	public float getY() {
-		return y;
+		return y*-1;
+	}
+	
+	public Vec2 getPos() {
+		return new Vec2(x*-1,y*-1);
 	}
 }

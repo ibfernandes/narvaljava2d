@@ -7,7 +7,6 @@ import java.util.Random;
 import org.lwjgl.glfw.GLFW;
 
 import engine.ai.AEstrela;
-import engine.ai.AStar;
 import engine.ai.Action;
 import engine.ai.Anode;
 import engine.ai.Consideration;
@@ -40,6 +39,7 @@ public class AIController extends Controller{
 	private List<State> path;
 	private List<Anode> pathAstar;
 	private Game context;
+	private int currentStep;
 	
 	public AIController() {
 		ct.addConsideration(new ConsiderationWander());
@@ -69,17 +69,18 @@ public class AIController extends Controller{
 			
 			long timeNow = System.nanoTime();
 			
-			if(timeNow - before >= Engine.SECOND/6) {
+			int startX = (int) (context.getCamera().getX() - object.getBaseBox().getX())*-1/context.graphDivisor;
+			int startY =  (int) (context.getCamera().getY() - object.getBaseBox().getY())*-1/context.graphDivisor; 
+			int endX =  (int) (context.getCamera().getX() - a.getTarget().getBaseBox().getX())*-1/context.graphDivisor;
+			int endY = (int) (context.getCamera().getY() - a.getTarget().getBaseBox().getY())*-1/context.graphDivisor;
+			
+			if(timeNow - before >= Engine.SECOND/10) {
 				Arrays.fill(directions, false);
 				before = System.nanoTime();
-				
-				int startX = (int) (context.camera.getX()*-1 - object.getBaseBox().getX())*-1/context.graphDivisor;
-				int startY =  (int) (context.camera.getY()*-1 - object.getBaseBox().getY())*-1/context.graphDivisor; 
-				int endX =  (int) (context.camera.getX()*-1 - a.getTarget().getBaseBox().getX())*-1/context.graphDivisor;
-				int endY = (int) (context.camera.getY()*-1 - a.getTarget().getBaseBox().getY())*-1/context.graphDivisor;
+				currentStep = 0;
 				
 				AEstrela as = new AEstrela();
-				pathAstar = as.calculatePath(new Vec2i(startX, startY), new Vec2i(endX, endY), context.obstacleMap);
+				pathAstar = as.calculatePath(new Vec2i(startX, startY), new Vec2i(endX, endY-4), context.generateGraph(object));
 				
 				
 			/*pathFinder.init(
@@ -111,27 +112,28 @@ public class AIController extends Controller{
 					}
 				}*/
 				
-				/*AStar as = new AStar();
-				List<Vec2i> pathAstar = as.findPath(new Vec2i(startX, startY), new Vec2i(endX, endY), 128/context.divisor, 20/context.divisor, context.generateGraph(object)); 
-				
-				if(pathAstar!=null && pathAstar.size()>1) {
-					Vec2i s = pathAstar.get(1);
-					
-					if(s.x>startX)
-						directions[GameObject.RIGHT] = true;
-					else if(s.x<startX)
-						directions[GameObject.LEFT] = true;
-					if(s.y> startY)
-						directions[GameObject.BOTTOM] = true;
-					else if(s.y<startY) 
-						directions[GameObject.TOP] = true;
-					
-					for(State state: path) {
-						state.x = (int) (context.camera.getX()*-1 + state.x*context.graphDivisor);
-						state.y = (int) (context.camera.getY()*-1 + state.y*context.graphDivisor);
-					}
-				}*/
+				//AStar as = new AStar();
+				//List<Vec2i> pathAstar = as.findPath(new Vec2i(startX, startY), new Vec2i(endX, endY), 128/context.divisor, 20/context.divisor, context.generateGraph(object)); 
+	
 			}
+			
+			
+			if(  ((object.getPosition().x - object.getPreviousPosition().x >context.graphDivisor  || object.getPosition().y - object.getPreviousPosition().y >context.graphDivisor) 
+					|| currentStep==0 )&& pathAstar!=null && pathAstar.size()>0 ) {
+				int buffer = pathAstar.size()-2 - currentStep++;
+				int i = (buffer < 0)? 0: buffer;
+				Anode pass = pathAstar.get(i);
+				
+				if(pass.pos.x>startX)
+					directions[GameObject.RIGHT] = true;
+				else if(pass.pos.x<=startX)
+					directions[GameObject.LEFT] = true;
+				if(pass.pos.y> startY)
+					directions[GameObject.BOTTOM] = true;
+				else if(pass.pos.y<=startY) 
+					directions[GameObject.TOP] = true;
+			}
+			
 			move(object, deltaTime);
 		}
 		
@@ -170,14 +172,10 @@ public class AIController extends Controller{
 
 	@Override
 	public void renderDebug() {
-		if(path!=null)
-			for(State state: path) {
-				ResourceManager.getSelf().getCubeRenderer().render(new Vec2(state.x, state.y), new Vec2(8,8), 0, new Vec3(0,1,0));
-			}
+
 		if(pathAstar!=null) {
-			System.out.println(pathAstar.size());
 			for(Anode state: pathAstar) {
-				ResourceManager.getSelf().getCubeRenderer().render(new Vec2(context.camera.getX()*-1 + state.pos.x*context.graphDivisor, context.camera.getY()*-1 + state.pos.y*context.graphDivisor), new Vec2(8,8), 0, new Vec3(0,1,0));
+			//	ResourceManager.getSelf().getCubeRenderer().render(new Vec2(context.getCamera().getX()*-1 + state.pos.x*context.graphDivisor, context.getCamera().getY()*-1 + state.pos.y*context.graphDivisor), new Vec2(8,8), 0, new Vec3(0,1,0));
 			}
 		}
 	}
