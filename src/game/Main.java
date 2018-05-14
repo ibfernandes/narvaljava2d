@@ -6,6 +6,8 @@ import org.lwjgl.opengl.GL;
 import editor.Editor;
 import engine.engine.Engine;
 import engine.engine.Window;
+import engine.logic.Chunk;
+import gameStates.ChunkMap;
 
 public class Main {
 	public static void main(String args[]) {
@@ -26,6 +28,7 @@ public class Main {
 
 		Thread tr = new Thread(Engine.getSelf());
 		tr.start();
+
 		
 		//new MainFrame("http://www.google.com", OS.isLinux(), false);
 	}

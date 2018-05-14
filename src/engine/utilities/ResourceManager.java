@@ -5,9 +5,13 @@ import static org.lwjgl.openal.AL11.*;
 
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
+
+import javax.imageio.ImageIO;
 
 import engine.audio.Audio;
 import engine.audio.AudioSource;
@@ -104,7 +108,11 @@ public final class ResourceManager {
 			StringBuilder stringBuilder = new StringBuilder();
 			BufferedReader bufferedReader;
 			
-			bufferedReader = new BufferedReader(new FileReader("./resources/"+vertexShaderPath)); //
+			
+			
+			bufferedReader = new BufferedReader(new InputStreamReader(
+                    this.getClass().getResourceAsStream("/" + vertexShaderPath)
+                    )); 
 			String line;
 			
 			while((line = bufferedReader.readLine())!=null)
@@ -115,7 +123,10 @@ public final class ResourceManager {
 			
 			//Fragment Code
 			stringBuilder = new StringBuilder();
-			bufferedReader = new BufferedReader(new FileReader("./resources/"+fragmentShaderPath));
+			
+			bufferedReader = new BufferedReader(new InputStreamReader(
+                    this.getClass().getResourceAsStream("/" + fragmentShaderPath)
+                    )); 
 			
 			while((line = bufferedReader.readLine())!=null)
 				stringBuilder.append(line).append("\n");
@@ -126,7 +137,9 @@ public final class ResourceManager {
 			//Geometry Code
 			if(geometryShaderPath!=null){
 				stringBuilder = new StringBuilder();
-				bufferedReader = new BufferedReader(new FileReader("./resources/"+geometryShaderPath));
+				bufferedReader = new BufferedReader(new InputStreamReader(
+	                    this.getClass().getResourceAsStream("/" + geometryShaderPath)
+	                    )); 
 				
 				while((line = bufferedReader.readLine())!=null)
 					stringBuilder.append(line).append("\n");
