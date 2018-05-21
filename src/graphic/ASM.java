@@ -1,12 +1,13 @@
 package graphic;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
 import engine.graphic.Animation;
 
 
 
-public class ASM {
+public class ASM implements Serializable{
 
 	private Animation currentAnimation;
 	private HashMap<String, Animation> animations;

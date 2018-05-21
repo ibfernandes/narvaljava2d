@@ -1,9 +1,10 @@
 package engine.logic;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class HorizontalPool {
+public class HorizontalPool implements Serializable{
 	private int poolSize = 0;
 	private HashMap<Double, GameObject> map;
 	

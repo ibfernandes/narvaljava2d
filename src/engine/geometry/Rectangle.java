@@ -1,12 +1,14 @@
 package engine.geometry;
 
+import java.io.Serializable;
+
 import engine.physics.Hit;
 import engine.utilities.MathExt;
 import engine.utilities.ResourceManager;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 
-public class Rectangle {
+public class Rectangle implements Serializable {
 	public float x,y,width,height;
 	public static final float EPSILON = (float)1e-8;
 	

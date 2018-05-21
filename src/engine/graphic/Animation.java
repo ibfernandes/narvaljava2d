@@ -1,11 +1,13 @@
 package engine.graphic;
 
+import java.io.Serializable;
+
 import engine.engine.Engine;
 import engine.utilities.ResourceManager;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
 
-public class Animation {
+public class Animation implements Serializable{
 	private Vec4 frames[];
 	private int currentFrame = 0;
 	private String texture;

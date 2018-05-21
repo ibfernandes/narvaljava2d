@@ -12,7 +12,7 @@ import gameStates.ChunkMap;
 public class Main {
 	public static void main(String args[]) {
 		Window w;
-		w = new Window(1920,1080,"Engine Early Alpha");
+		w = new Window(1280,720,"Engine Early Alpha");
 		
 		Engine.getSelf().attachWindow(w);
 		
@@ -25,6 +25,8 @@ public class Main {
 		//t.start();
 		
 		//Editor ed = new Editor();
+
+
 
 		Thread tr = new Thread(Engine.getSelf());
 		tr.start();

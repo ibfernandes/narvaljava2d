@@ -53,12 +53,14 @@ import engine.graphic.Texture;
 import engine.input.KeyboardControl;
 import engine.input.MouseControl;
 import engine.logic.Camera;
+import engine.logic.Chunk;
 import engine.logic.GameObject;
 import engine.logic.HorizontalPool;
 import engine.logic.Timer;
 import engine.noise.FastNoise;
 import engine.physics.Hit;
 import engine.utilities.BufferUtilities;
+import engine.utilities.Color;
 import engine.utilities.MathExt;
 import engine.utilities.ResourceManager;
 import glm.mat._4.Mat4;
@@ -90,7 +92,7 @@ public class Game extends GameState{
 	
 	//Map PCG
 	private FastNoise fastNoise = new FastNoise();
-	private int seed = new Random().nextInt(2000);
+	//private int seed = new Random().nextInt(2000);
 	
 	private float noiseDivisor = 5f;
 	private int noiseWidth  = (int) ((float)Engine.getSelf().getWindow().getWidth()/noiseDivisor);
@@ -105,7 +107,6 @@ public class Game extends GameState{
 	private HorizontalPool grassPool = new HorizontalPool(500);
 	
 	//Island formula used along with Noise generation.
-	private Texture terrain;
 	private float a = 0.15f;
 	private float b = 0.9f;
 	private float c = 2f;
@@ -116,10 +117,6 @@ public class Game extends GameState{
 	
 	private int map_width = 60000;
 	private int map_height = 60000;
-	public static final int ESMERALDA = (255<<24) | (56<<16) | (204<<8) | (113); //TODO: Move to a Color class;
-	public static final int DARKED_ESMERALDA = (255<<24) | (52<<16) | (200<<8) | (109);
-	public static final int WHITE = (255<<24) | (255<<16) | (255<<8) | (255);
-	public static final int TURKISH = (255<<24) | (26<<16) | (188<<8) | (156);
 	
 	//Graph
 	public int graphDivisor = 8;
@@ -127,10 +124,14 @@ public class Game extends GameState{
 	public int graphSizeY = Engine.getSelf().getWindow().getWidth()/graphDivisor;
 	public boolean obstacleMap[][];
 	
+	
+	
 	@Override
 	public void init() {
 		initShadowLayer();
 		screenView = new Rectangle(0,0,Engine.getSelf().getWindow().getWidth(),Engine.getSelf().getWindow().getHeight());
+		
+		chunkMap = new ChunkMap(seed);
 		
 		//==================================
 		//Loads all shaders
@@ -340,6 +341,13 @@ public class Game extends GameState{
 		//==================================
 		timerWetSand.setDegree(260);
 		//ResourceManager.getSelf().playAudio("ocean_waves", player.getPosition(), 3000);
+		
+		
+		 previousCameraGridX =  (int) (camera.getX()/chunkWidth); 
+		 previousCameraGridY =  (int) (camera.getY()/chunkHeight); 
+		 currentCameraGridX = (int) (camera.getX()/chunkWidth); 
+		 currentCameraGridY = (int) (camera.getY()/chunkHeight);
+		 
 	}
 	
 	private void initShadowLayer() {
@@ -369,7 +377,7 @@ public class Game extends GameState{
 	
 	public float noise(float x, float y) { //TODO: I could make it parallel and so increase performance[?]
 		float noise = 0;
-		fastNoise.SetSeed(12345);
+		fastNoise.SetSeed(seed);
 		
 		fastNoise.SetFrequency(0.0005f);	 //quanto menor, maior as "ilhas"
 		noise +=  fastNoise.GetPerlin(x, y); //first octave
@@ -402,12 +410,12 @@ public class Game extends GameState{
 				double dxWet = FastMath.sin(Math.toRadians(timerWetSand.getDegree()));
 				
 				if(perlinNoise[x][y]>-.1 ) { 		//land
-					noiseRGB[x][y] = ESMERALDA; //esmeralda
+					noiseRGB[x][y] = Color.ESMERALDA; //esmeralda
 					if(fractalNoise[x][y]>0.2)
-						noiseRGB[x][y] = DARKED_ESMERALDA;
+						noiseRGB[x][y] =  Color.DARKED_ESMERALDA;
 				}
 				if(perlinNoise[x][y]<=-.1)  //preenche tudo com água
-					noiseRGB[x][y] = 	TURKISH; //turquesa
+					noiseRGB[x][y] = 	 Color.TURKISH; //turquesa
 				
 				if(perlinNoise[x][y]<=-.1) {	//sand
 					noiseRGB[x][y] =  (255<<24) | (244<<16) | (234<<8) | (187); //ARGB
@@ -422,13 +430,13 @@ public class Game extends GameState{
 				}
 				
 				if(perlinNoise[x][y]<-.230 + dx*.016) 	//espuma
-					noiseRGB[x][y] = WHITE; //ARGB
+					noiseRGB[x][y] =  Color.WHITE; //ARGB
 				
 				if(perlinNoise[x][y]<-.244 + dx*.016) { 	//espuma back
 						noiseRGB[x][y] = (255<<24) | (22<<16) | (160<<8) | (133); //green se
 						if(perlinNoise[x][y]>-.2445 + dx*.016) {
 							if(whiteNoise[x][y]<0.2f)
-								noiseRGB[x][y] = WHITE;
+								noiseRGB[x][y] =  Color.WHITE;
 						}
 				}
 				
@@ -441,7 +449,7 @@ public class Game extends GameState{
 				//create scnearion elements
 
 				//TODO: the pool is jsut growing without limit. Need to fix that.
-				if(whiteNoise[x][y]>0.9999 && (noiseRGB[x][y] == ESMERALDA || noiseRGB[x][y] == DARKED_ESMERALDA)) {
+				if(whiteNoise[x][y]>0.9999 && (noiseRGB[x][y] ==  Color.ESMERALDA || noiseRGB[x][y] ==  Color.DARKED_ESMERALDA)) {
 					if(grassPool.contains(whiteNoise[x][y]))
 						continue;
 					
@@ -467,7 +475,7 @@ public class Game extends GameState{
 					o.setAnimations(asm);
 					
 					grassPool.add(o, whiteNoise[x][y]);
-				}else if(whiteNoise[x][y]>0.999 && (noiseRGB[x][y] == ESMERALDA || noiseRGB[x][y] == DARKED_ESMERALDA)) {
+				}else if(whiteNoise[x][y]>0.999 && (noiseRGB[x][y] ==  Color.ESMERALDA || noiseRGB[x][y] ==  Color.DARKED_ESMERALDA)) {
 					if(grassPool.contains(whiteNoise[x][y]))
 						continue;
 					GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
@@ -502,7 +510,7 @@ public class Game extends GameState{
 			}
 		}
 		
-		terrain = new Texture(noiseRGB); //TODO: not create
+		//terrain = new Texture(noiseRGB); //TODO: not create
 		
 	}
 	
@@ -698,8 +706,15 @@ public class Game extends GameState{
 		glClearColor(1,1,1,1);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		ResourceManager.getSelf().getTextureRenderer().render(terrain.getId(),new Vec2((int)camera.getX(),(int)camera.getY()),
-				new Vec2(Engine.getSelf().getWindow().getSize()), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
+		for(int y=0; y<chunksOnScreen[0].length; y++) 
+			for(int x=0; x<chunksOnScreen.length; x++) 
+				if(texturenOnScreen[x][y]!=null)
+			ResourceManager.getSelf().getTextureRenderer().render(texturenOnScreen[x][y].getId(),
+					new Vec2(chunksOnScreen[x][y].getX()*chunkWidth, chunksOnScreen[x][y].getY()*chunkHeight),
+					new Vec2(chunkWidth, chunkHeight), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
+		
+			//ResourceManager.getSelf().getTextureRenderer().render(terrain.getId(),new Vec2((int)camera.getX(),(int)camera.getY()),
+					//new Vec2(Engine.getSelf().getWindow().getSize()), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
 		ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
 				Engine.getSelf().getWindow().getSize(), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
 
@@ -727,6 +742,59 @@ public class Game extends GameState{
 	}
 
 	boolean shouldInc = true;
+	
+	
+	private ChunkMap chunkMap;
+	private int seed = 12345;
+	private int chunkWidth = 2048;
+	private int chunkHeight = 2048;
+	
+	int rowSize = (Engine.getSelf().getWindow().getWidth()/chunkWidth) +1 +2; //x
+	int columnSize = (Engine.getSelf().getWindow().getHeight()/chunkHeight) +1 +2; //y
+	
+	Chunk chunksOnScreen[][] = new Chunk[rowSize][columnSize];;
+	Texture texturenOnScreen[][] = new Texture[rowSize][columnSize];
+	
+	int previousCameraGridX;
+	int previousCameraGridY; 
+	int currentCameraGridX;
+	int currentCameraGridY;
+	
+	public void generateChunks() { 
+		
+		previousCameraGridX = currentCameraGridX;
+		previousCameraGridY = currentCameraGridY;
+		currentCameraGridX = (int) (camera.getX()/chunkWidth) ; 
+		currentCameraGridY = (int) (camera.getY()/chunkHeight) ;
+		
+		for(int y=0; y<chunksOnScreen[0].length; y++) 
+			for(int x=0; x<chunksOnScreen.length; x++) 
+				if(chunksOnScreen[x][y]!=null)
+					chunkMap.saveFile(chunksOnScreen[x][y]);
+		
+		
+		for(int y=0; y<chunksOnScreen[0].length; y++) {
+			for(int x=0; x<chunksOnScreen.length; x++) {
+				
+				if(!chunkMap.chunkExists(currentCameraGridX+x -1, currentCameraGridY+y -1)) {
+					
+					if(chunkMap.chunkExistsOnDisk(currentCameraGridX+x -1, currentCameraGridY+y -1))
+						chunkMap.put(chunkMap.loadFromFile(currentCameraGridX+x -1, currentCameraGridY+y -1));
+					else {
+						Chunk c = new Chunk(currentCameraGridX+x -1,currentCameraGridY+y -1, chunkWidth, chunkHeight, map_width, map_height);
+						chunkMap.put(c);
+					}
+				}
+					
+				chunksOnScreen[x][y] = chunkMap.get(currentCameraGridX + x -1, currentCameraGridY + y -1);
+
+				texturenOnScreen[x][y] = new Texture(chunksOnScreen[x][y].getTerrain());
+			}
+		}
+
+	}
+	
+	
 	@Override
 	public void update(float deltaTime) {
 		//generateGraph();
@@ -739,7 +807,11 @@ public class Game extends GameState{
 		ResourceManager.getSelf().getShader("grass").use();
 		float sin = (float) Math.sin(Math.toRadians(timer.getDegree()))*1f;
 		ResourceManager.getSelf().getShader("grass").setFloat("dx", (sin<0) ? sin*-1: sin);
-		generateTerrain();
+		
+		if((int) (camera.getX()/chunkWidth)!=previousCameraGridX || (int) (camera.getY()/chunkHeight)!=previousCameraGridY)
+			generateChunks();
+		//generateTerrain();
+		
 		/*player.update(deltaTime, this);
 		for(GameObject o: movableLayer)
 			o.update(deltaTime, this);
@@ -767,6 +839,13 @@ public class Game extends GameState{
 		}*/
 		
 		finalLayer.clear();
+		
+			for(int y=0; y<chunksOnScreen[0].length; y++) 
+				for(int x=0; x<chunksOnScreen.length; x++)
+					if(chunksOnScreen[x][y]!=null) {
+							finalLayer.addAll(chunksOnScreen[x][y].getStaticLayer());
+					}
+		
 		finalLayer.addAll(movableLayer);
 		finalLayer.addAll(staticLayer);
 		finalLayer.addAll(grassPool.getPool());
@@ -855,7 +934,7 @@ public class Game extends GameState{
 		int coordXMap = Math.abs((int) (camera.getX() - player.getBaseBox().getCenterX())); // TODO: it'll get an error when the object is outsied the camera Width and height view
 		int coordYMap = Math.abs((int) (camera.getY() - player.getBaseBox().getCenterY()));
 
-		if(noiseRGB[(int) ((float)coordXMap/noiseDivisor)][(int) ((float)coordYMap/noiseDivisor)]==TURKISH) {
+		if(noiseRGB[(int) ((float)coordXMap/noiseDivisor)][(int) ((float)coordYMap/noiseDivisor)]==Color.TURKISH) {
 			player.setTexture("ranger_swimming");
 			player.setVelocity(1200);
 		}else {

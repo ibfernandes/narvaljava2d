@@ -1,6 +1,7 @@
 package engine.logic;
 
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 import engine.controllers.Controller;
@@ -18,8 +19,9 @@ import glm.vec._4.Vec4;
 import graphic.ASM;
 import graphic.CubeRenderer;
 
-public class GameObject implements Comparable<GameObject>{
+public class GameObject implements Comparable<GameObject>, Serializable{
 	
+	private static final long serialVersionUID = 1L;
 	private String group;
 	private Vec2 position = new Vec2(0,0);
 	private Vec2 previousPosition = new Vec2(0,0);
