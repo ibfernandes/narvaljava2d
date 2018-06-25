@@ -5,6 +5,7 @@ import java.io.Serializable;
 import engine.engine.Engine;
 import engine.utilities.ResourceManager;
 import glm.vec._2.Vec2;
+import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
 
 public class Animation implements Serializable{
@@ -13,6 +14,7 @@ public class Animation implements Serializable{
 	private String texture;
 	private long frameDuration = -1;
 	private long startTime = System.nanoTime();
+
 	
 	/**
 	 * Frame duration in milliseconds
@@ -31,9 +33,10 @@ public class Animation implements Serializable{
 	 * @param size
 	 */
 	public void setFrames(int quantity, Vec2 offset, Vec2 size) {
+	
 		frames = new Vec4[quantity];
 		float width = ResourceManager.getSelf().getTexture(texture).getWidth();
-		float height = ResourceManager.getSelf().getTexture(texture).getWidth();
+		float height = ResourceManager.getSelf().getTexture(texture).getHeight(); //TODO: there's something wrong in here that is making ()
 		
 		for(int i= 0; i< quantity; i++){
 			frames[i] = new Vec4(

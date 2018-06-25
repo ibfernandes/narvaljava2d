@@ -13,8 +13,7 @@ import static org.lwjgl.stb.STBVorbis.*;
 import static org.lwjgl.system.MemoryStack.stackMallocInt;
 import static org.lwjgl.system.MemoryStack.stackPop;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.libc.Stdlib.free;
-
+import static org.lwjgl.system.libc.LibCStdlib.free;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;

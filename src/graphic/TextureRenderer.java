@@ -74,7 +74,7 @@ public class TextureRenderer {
 	
 	
 	
-	public void render(Texture texture, Vec2 position, Vec2 size, float rotate, Vec4 color) {
+	public void render(Texture texture, Vec2 position, Vec2 size, float rotate, Vec4 color) {//TODO: is this working?
 		shader.use();
 		Mat4 model = new Mat4();
 		

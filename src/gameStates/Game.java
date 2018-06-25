@@ -24,6 +24,7 @@ import static org.lwjgl.opengl.GL11.glViewport;
 
 import static org.lwjgl.openal.AL10.*;
 
+import java.awt.Font;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,11 +55,13 @@ import engine.input.KeyboardControl;
 import engine.input.MouseControl;
 import engine.logic.Camera;
 import engine.logic.Chunk;
+import engine.logic.ChunkMap;
 import engine.logic.GameObject;
 import engine.logic.HorizontalPool;
 import engine.logic.Timer;
 import engine.noise.FastNoise;
 import engine.physics.Hit;
+
 import engine.utilities.BufferUtilities;
 import engine.utilities.Color;
 import engine.utilities.MathExt;
@@ -123,7 +126,6 @@ public class Game extends GameState{
 	public int graphSizeX = Engine.getSelf().getWindow().getWidth()/graphDivisor;
 	public int graphSizeY = Engine.getSelf().getWindow().getWidth()/graphDivisor;
 	public boolean obstacleMap[][];
-	
 	
 	
 	@Override
@@ -243,7 +245,7 @@ public class Game extends GameState{
 		//==================================
 		//Create enemies
 		//==================================
-		createClerics(0);
+		createClerics(3);
 		
 		//==================================
 		//Create props
@@ -300,7 +302,7 @@ public class Game extends GameState{
 		player.setBaseBox(new Vec2(128, 20));
 		player.setSightBox(new Vec2(512, 512));
 		player.setSkew(new Vec2(0,0));
-		player.setPosition(new Vec2(45000,45000));
+		player.setPosition(new Vec2(50000, 45000));
 		
 		ASM asm = new ASM();
 		
@@ -341,13 +343,18 @@ public class Game extends GameState{
 		//==================================
 		timerWetSand.setDegree(260);
 		//ResourceManager.getSelf().playAudio("ocean_waves", player.getPosition(), 3000);
-		
+		/*	try {
+				test = new TrueTypeFont("/SourceSansPro.ttf",24);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}*/
 		
 		 previousCameraGridX =  (int) (camera.getX()/chunkWidth); 
 		 previousCameraGridY =  (int) (camera.getY()/chunkHeight); 
 		 currentCameraGridX = (int) (camera.getX()/chunkWidth); 
 		 currentCameraGridY = (int) (camera.getY()/chunkHeight);
-		 
+
 	}
 	
 	private void initShadowLayer() {
@@ -528,7 +535,7 @@ public class Game extends GameState{
 			o.setOrientation(new Vec2(0,0));
 			o.setBaseBox(new Vec2(128, 20));
 			//o.setPosition(new Vec2(35350+r.nextInt(500),35500+r.nextInt(500)));
-			o.setPosition(new Vec2(38000,35700));
+			o.setPosition(new Vec2(47000,47000));
 			
 			AIController ai =  new AIController();
 			o.setController(ai);
@@ -692,55 +699,6 @@ public class Game extends GameState{
 		return (screenView.intersects(o.getBoundingBox()));
 	}
 	
-	@Override
-	public void render() {
-		glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);// makes OpenGL reading data from your "framebuffer"
-
-		glClearColor(1,1,1,0);
-		glClear(GL11.GL_COLOR_BUFFER_BIT);
-		
-		for(GameObject o: finalLayer) 
-			ResourceManager.getSelf().getShadowRenderer().render(o);
-		
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClearColor(1,1,1,1);
-		glClear(GL_COLOR_BUFFER_BIT);
-		
-		for(int y=0; y<chunksOnScreen[0].length; y++) 
-			for(int x=0; x<chunksOnScreen.length; x++) 
-				if(texturenOnScreen[x][y]!=null)
-			ResourceManager.getSelf().getTextureRenderer().render(texturenOnScreen[x][y].getId(),
-					new Vec2(chunksOnScreen[x][y].getX()*chunkWidth, chunksOnScreen[x][y].getY()*chunkHeight),
-					new Vec2(chunkWidth, chunkHeight), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
-		
-			//ResourceManager.getSelf().getTextureRenderer().render(terrain.getId(),new Vec2((int)camera.getX(),(int)camera.getY()),
-					//new Vec2(Engine.getSelf().getWindow().getSize()), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
-		ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
-				Engine.getSelf().getWindow().getSize(), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
-
-		for(GameObject o: finalLayer) {
-			o.renderDebug();
-			if(o.getController()!=null)
-				o.getController().renderDebug();
-			
-			if(grassPool.getPool().contains(o))
-				ResourceManager.getSelf().getGrassRenderer().render(o);
-			else
-				o.render();
-		}
-		
-		if(obstacleMap!=null)
-			for(int y=0; y< obstacleMap[0].length; y++)
-				for(int x=0; x< obstacleMap.length; x++) {
-					
-					int rx = (int) (camera.getX() + x*graphDivisor);
-					int ry = (int) (camera.getY() + y*graphDivisor);
-					
-					//if(obstacleMap[x][y])
-						//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(8,8), 0, new Vec3(1,0,0));
-				}
-	}
-
 	boolean shouldInc = true;
 	
 	
@@ -794,6 +752,59 @@ public class Game extends GameState{
 
 	}
 	
+	@Override
+	public void render() {
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);// makes OpenGL reading data from your "framebuffer"
+
+		glClearColor(1,1,1,0);
+		glClear(GL11.GL_COLOR_BUFFER_BIT);
+		
+		for(GameObject o: finalLayer) 
+			ResourceManager.getSelf().getShadowRenderer().render(o);
+		
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(1,1,1,1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		
+		for(int y=0; y<chunksOnScreen[0].length; y++) 
+			for(int x=0; x<chunksOnScreen.length; x++) 
+				if(texturenOnScreen[x][y]!=null)
+			ResourceManager.getSelf().getTextureRenderer().render(texturenOnScreen[x][y].getId(),
+					new Vec2(chunksOnScreen[x][y].getX()*chunkWidth, chunksOnScreen[x][y].getY()*chunkHeight),
+					new Vec2(chunkWidth, chunkHeight), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
+		
+			//ResourceManager.getSelf().getTextureRenderer().render(terrain.getId(),new Vec2((int)camera.getX(),(int)camera.getY()),
+					//new Vec2(Engine.getSelf().getWindow().getSize()), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
+		ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
+				Engine.getSelf().getWindow().getSize(), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
+
+		for(GameObject o: finalLayer) {
+			o.renderDebug();
+			if(o.getController()!=null)
+				o.getController().renderDebug();
+			
+			if(grassPool.getPool().contains(o))
+				ResourceManager.getSelf().getGrassRenderer().render(o);
+			else
+				o.render();
+		}
+		
+		if(obstacleMap!=null)
+			for(int y=0; y< obstacleMap[0].length; y++)
+				for(int x=0; x< obstacleMap.length; x++) {
+					
+					int rx = (int) (camera.getX() + x*graphDivisor);
+					int ry = (int) (camera.getY() + y*graphDivisor);
+					
+					//if(obstacleMap[x][y])
+						//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(8,8), 0, new Vec3(1,0,0));
+				}
+		
+	    
+	     //ResourceManager.getSelf().getTextureRenderer().render(test.getTexture(), new Vec2(45000,45000), new Vec2(600,600), 0, new Vec4(1,1,1,1));
+		//engine.ui.Font test = new engine.ui.Font();
+		//test.render("Olá! Eu sou um texto =]\ncom barra n", 45000,45000, new Vec4(1f,0f,0,1f));
+	}
 	
 	@Override
 	public void update(float deltaTime) {
@@ -868,6 +879,8 @@ public class Game extends GameState{
 		player.update(deltaTime, this);
 		for(int i=0; i<finalLayer.size(); i++) { //TODO: verify only objects on screen
 			
+			//if(finalLayer.get(i).getAnimations()!=null)
+			//	System.out.println(finalLayer.get(i).getAnimations().getCurrentAnimation().getCurrentFrame());
 			//if(!isOnScreen(finalLayer.get(i)))
 				//continue;
 			if(finalLayer.get(i)==player)

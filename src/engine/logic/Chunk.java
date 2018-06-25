@@ -24,7 +24,6 @@ public class Chunk implements Serializable{
 	private int mapWidth, mapHeight; //TODO: redundant INFO to save on each chunk
 	private ArrayList<GameObject> objectLayer;
 	private int noiseDivisor = 5;
-	private static final long serialVersionUID = 1L;
 	HorizontalPool grassPool = new HorizontalPool(500);
 	//private Rectangle boundingBox;
 	

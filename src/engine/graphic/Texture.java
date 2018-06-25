@@ -3,6 +3,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
@@ -18,11 +19,29 @@ public class Texture {
 	private static final int BYTES_PER_PIXEL = 4;
 	private int width, height;
 	
+	public Texture(int id) {
+		this.id = id;
+	}
+	
 	public Texture(String path) {
 		id = glGenTextures();
 		
 		try {
 			textureImage = ImageIO.read(getClass().getResourceAsStream(path));
+			width  = textureImage.getWidth();
+			height = textureImage.getHeight();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		init();
+	}
+	
+	public Texture(InputStream is) {
+		id = glGenTextures();
+		
+		try {
+			textureImage = ImageIO.read(is);
 			width  = textureImage.getWidth();
 			height = textureImage.getHeight();
 		} catch (IOException e) {
@@ -57,7 +76,17 @@ public class Texture {
 
         buffer.flip();
         
-        glBindTexture(GL_TEXTURE_2D, id); //Bind texture ID
+        generateTexture(buffer, pixels.length, pixels[0].length);
+   }
+	
+	public Texture(ByteBuffer buffer, int width, int height) {
+		this.width  = width;
+		this.height = height;
+		generateTexture(buffer, width, height);
+	}
+	
+	public void generateTexture(ByteBuffer buffer, int width, int height) {
+		glBindTexture(GL_TEXTURE_2D, id); //Bind texture ID
         
         //Setup wrap mode
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
@@ -68,7 +97,7 @@ public class Texture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         
         //Send texel data to OpenGL
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, pixels.length, pixels[0].length, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
         
         glBindTexture(GL_TEXTURE_2D, 0); //Unbind texture
         textureImage = null; //'free' BufferedImage
