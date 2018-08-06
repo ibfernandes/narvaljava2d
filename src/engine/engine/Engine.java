@@ -25,6 +25,7 @@ public class Engine implements Runnable{
 	private MouseControl mouse;
 	public static final long SECOND = 1000000000L; //10^9
 	public static final long MILISECOND = 1000000L;//10^6
+	public static final int TARGET_UPDATES = 60;
 	private static Engine self;
 	
 	private Engine() {}
@@ -81,6 +82,7 @@ public class Engine implements Runnable{
 		glfwPollEvents();
 		
 		GSM.getSelf().update((float)deltaTime/(float)SECOND);
+		PhysicsEngine.getSelf().update();
 	}
 	
 	private void render() {

@@ -1,10 +1,21 @@
 package engine.logic;
 
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Comparator;
 
+import org.jbox2d.collision.shapes.PolygonShape;
+import org.jbox2d.dynamics.Body;
+import org.jbox2d.dynamics.BodyDef;
+import org.jbox2d.dynamics.BodyType;
+import org.jbox2d.dynamics.FixtureDef;
+import org.jbox2d.dynamics.World;
+
 import engine.controllers.Controller;
+import engine.engine.PhysicsEngine;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
 import engine.graphic.Texture;
@@ -43,15 +54,69 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 							ANCHOR_BOTTOM_LEFT  = 	2,
 							ANCHOR_BOTTOM_RIGHT =	3,
 							ANCHOR_MIDDLE		= 	4;
-	public static final int 	TOP    = 0, 
-					  			RIGHT  = 1, 
-					  			BOTTOM = 2,
-					  			LEFT   = 3,
-			  					TOP_DIAGONAL_LEFT   = 4,
-								TOP_DIAGONAL_RIGHT   = 5,
-								BOTTOM_DIAGONAL_LEFT  = 6,
-					  			BOTTOM_DIAGONAL_RIGHT  = 7;
+	public static final int	TOP    = 0, 
+				  			RIGHT  = 1, 
+				  			BOTTOM = 2,
+				  			LEFT   = 3,
+		  					TOP_DIAGONAL_LEFT   = 4,
+							TOP_DIAGONAL_RIGHT   = 5,
+							BOTTOM_DIAGONAL_LEFT  = 6,
+				  			BOTTOM_DIAGONAL_RIGHT  = 7;
+	
+	//Box2D
+	private org.jbox2d.common.Vec2 b2BaseBoxPosition;
+	private org.jbox2d.common.Vec2 b2Size;
+	private transient Body body;
+	private BodyType type;
+	
+	
+	private void writeObject(ObjectOutputStream oos) throws IOException {
+        oos.defaultWriteObject();
+       // org.jbox2d.serialization.JbSerializer srl;
+       // srl.serialize(body)
+       // oos.writeObject(address.getHouseNumber());
+    }
+		 
+    private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
+        ois.defaultReadObject();
+        createBody(PhysicsEngine.getSelf().getWorld(), type);
+    }
 
+	/**
+	 * First define baseBox variable so the Box2D body can be properly initialized.
+	 * @param world
+	 * @param type
+	 */
+	public void createBody(World world, BodyType type) {
+		this.type = type;
+		BodyDef bodyDef = new BodyDef();
+		bodyDef.type = type;
+		b2BaseBoxPosition = convertPixelsToMeters(baseBox.x, baseBox.y);
+		bodyDef.position.set(b2BaseBoxPosition);
+		
+		body = world.createBody(bodyDef);
+		
+		PolygonShape dShape = new PolygonShape();
+		b2Size = convertPixelsToMeters(((float)this.baseBox.width/2f),((float)this.baseBox.height/2f));
+		
+		dShape.setAsBox(b2Size.x,b2Size.y);
+
+		FixtureDef fixDef = new FixtureDef();
+		fixDef.shape = dShape;
+		//fixDef.density = 10;
+		//fixDef.friction = 0.0f;
+
+		body.createFixture(fixDef);
+	}
+	
+	public org.jbox2d.common.Vec2 convertPixelsToMeters(float x, float y){
+		return new org.jbox2d.common.Vec2(x/PhysicsEngine.BOX2D_SCALE_FACTOR, y/PhysicsEngine.BOX2D_SCALE_FACTOR);
+	}
+	
+	public Vec2 convertMetersToPixels(float x, float y){
+		return new Vec2(x*PhysicsEngine.BOX2D_SCALE_FACTOR, y*PhysicsEngine.BOX2D_SCALE_FACTOR);
+	}
+	
 	public GameObject() {
 		
 	}
@@ -80,6 +145,8 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 	}
 	
 	public void render() {
+		
+		
 		 if (texture!=null) {
 			 ResourceManager.getSelf().getTextureRenderer().render(
 						ResourceManager.getSelf().getTexture(texture),
@@ -102,7 +169,18 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 			controller.renderDebug();
 	}
 	
+	public void updateCoordinateSystems() {
+		if(body!=null) {
+			Vec2 pos = convertMetersToPixels(body.getPosition().x, body.getPosition().y);
+			pos.y = (pos.y - size.y + baseBox.height/2);
+			pos.x = pos.x - baseBox.width/2;
+			setPosition(pos);
+		}
+	}
+	
 	public void update(float deltaTime, Game game) {//TODO: remove Game as paramater
+		updateCoordinateSystems();
+		
 		if(controller!=null)
 			controller.update(deltaTime, this, game);
 		if(animations!=null)
@@ -293,6 +371,14 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 		boundingBox.width = size.x;
 		boundingBox.height = size.y;
 		this.size = size;
+	}
+
+	public Body getBody() {
+		return body;
+	}
+
+	public void setBody(Body body) {
+		this.body = body;
 	}
 
 	public Vec2 getOrientation() {

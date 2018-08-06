@@ -36,5 +36,8 @@
 	<classpathentry kind="lib" path="lib/lwjgl-zstd-natives-windows.jar"/>
 	<classpathentry kind="lib" path="lib/lwjgl-zstd-sources.jar"/>
 	<classpathentry kind="lib" path="lib/lwjgl-zstd.jar"/>
+	<classpathentry kind="lib" path="lib/jbox2d-library-2.3.1-SNAPSHOT.jar" sourcepath="lib/jbox2d-library/src/main"/>
+	<classpathentry kind="lib" path="lib/jbox2d-library/target/jbox2d-library-2.3.1-SNAPSHOT.jar" sourcepath="lib/jbox2d-library/src"/>
+	<classpathentry kind="lib" path="lib/jbox2d-serialization-2.3.1-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

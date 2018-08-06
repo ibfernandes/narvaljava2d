@@ -33,6 +33,12 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
 
+import org.jbox2d.collision.shapes.PolygonShape;
+import org.jbox2d.dynamics.Body;
+import org.jbox2d.dynamics.BodyDef;
+import org.jbox2d.dynamics.BodyType;
+import org.jbox2d.dynamics.FixtureDef;
+import org.jbox2d.dynamics.World;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -48,6 +54,7 @@ import engine.controllers.AIController;
 import engine.controllers.PlayerController;
 import engine.engine.Engine;
 import engine.engine.GameState;
+import engine.engine.PhysicsEngine;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
 import engine.graphic.Texture;
@@ -121,38 +128,40 @@ public class Game extends GameState{
 	private int map_width = 60000;
 	private int map_height = 60000;
 	
-	//Graph
+	//Graph used for pathfinding
 	public int graphDivisor = 8;
 	public int graphSizeX = Engine.getSelf().getWindow().getWidth()/graphDivisor;
 	public int graphSizeY = Engine.getSelf().getWindow().getWidth()/graphDivisor;
 	public boolean obstacleMap[][];
-	
+
 	
 	@Override
 	public void init() {
 		initShadowLayer();
+		
 		screenView = new Rectangle(0,0,Engine.getSelf().getWindow().getWidth(),Engine.getSelf().getWindow().getHeight());
 		
 		chunkMap = new ChunkMap(seed);
+		
 		
 		//==================================
 		//Loads all shaders
 		//==================================
 		ResourceManager.getSelf().loadShader("cube", 
-							"shaders/cube.vs",
-							"shaders/cube.fs",
+							"shaders/cube.vert",
+							"shaders/cube.frag",
 							null);
 		ResourceManager.getSelf().loadShader("texture", 
-							"shaders/texture.vs",
-							"shaders/texture.fs",
+							"shaders/texture.vert",
+							"shaders/texture.frag",
 							null);
 		ResourceManager.getSelf().loadShader("shadow", 
-							"shaders/shadow.vs",
-							"shaders/shadow.fs",
+							"shaders/shadow.vert",
+							"shaders/shadow.frag",
 							null);
 		ResourceManager.getSelf().loadShader("grass", 
-							"shaders/grass.vs",
-							"shaders/grass.fs",
+							"shaders/grass.vert",
+							"shaders/grass.frag",
 							null);
 		
 		//==================================
@@ -209,6 +218,7 @@ public class Game extends GameState{
 		
 		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setMat4("projection", projection);
+		ResourceManager.getSelf().getShader("texture").setPointLight(0, new Vec3(500,500, 200), new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
 		
 		ResourceManager.getSelf().getShader("shadow").use();
 		ResourceManager.getSelf().getShader("shadow").setMat4("projection", projection);
@@ -272,6 +282,7 @@ public class Game extends GameState{
 		asmb.changeStateTo("idle_1");
 		
 		bonfire.setAnimations(asmb);
+		bonfire.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
 		
 		staticLayer.add(bonfire);
 		
@@ -286,6 +297,7 @@ public class Game extends GameState{
 		house.setSkew(new Vec2(0,0));
 		house.setPosition(new Vec2(46000, 46000));
 		house.setTexture("house");
+		house.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
 		staticLayer.add(house);
 		
 		//==================================
@@ -295,14 +307,16 @@ public class Game extends GameState{
 		
 		player = new GameObject();
 		player.setSize(new Vec2(128,128));
-		player.setVelocity(1200);
+		player.setVelocity(300);
 		player.setColor(new Vec4(1,1,1,1));
 		player.setController(playerController);
 		player.setOrientation(new Vec2(0,0));
 		player.setBaseBox(new Vec2(128, 20));
 		player.setSightBox(new Vec2(512, 512));
 		player.setSkew(new Vec2(0,0));
-		player.setPosition(new Vec2(50000, 45000));
+		//player.setPosition(new Vec2(50000, 45000));
+		player.setPosition(new Vec2(0, 0));
+		player.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
 		
 		ASM asm = new ASM();
 		
@@ -349,6 +363,54 @@ public class Game extends GameState{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}*/
+		
+		//Tree 1
+		GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
+		o.setSize(new Vec2(512,512));
+		o.setVelocity(0);
+		o.setColor(new Vec4(1,1,1,1));
+		if(random.nextBoolean())
+			o.setOrientation(new Vec2(0,0));
+		else
+			o.setOrientation(new Vec2(1,0));
+		o.setBaseBox(new Vec2(512, 16));
+		o.setSkew(new Vec2(0,0));
+		o.setPosition(new Vec2(800,0)); 
+		o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
+		asm = new ASM();
+		
+		Animation an;
+		an = new Animation("tree", -1);
+		
+		an.setFrames(1, new Vec2(0,0), new Vec2(64,64)); // TODO: cuting lastline´, something to with squared size?
+		asm.addAnimation("idle_1", an);
+		asm.changeStateTo("idle_1");
+		o.setAnimations(asm);
+		staticLayer.add(o);
+		
+		//Tree 2
+		o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
+		o.setSize(new Vec2(512,512));
+		o.setVelocity(0);
+		o.setColor(new Vec4(1,1,1,1));
+		if(random.nextBoolean())
+			o.setOrientation(new Vec2(0,0));
+		else
+			o.setOrientation(new Vec2(1,0));
+		o.setBaseBox(new Vec2(512, 60));
+		o.setSkew(new Vec2(0,0));
+		o.setPosition(new Vec2(1412,0)); 
+		o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
+		asm = new ASM();
+
+		an = new Animation("tree", -1);
+		
+		an.setFrames(1, new Vec2(0,0), new Vec2(64,64)); // TODO: cuting lastline´, something to with squared size?
+		asm.addAnimation("idle_1", an);
+		asm.changeStateTo("idle_1");
+		o.setAnimations(asm);
+		staticLayer.add(o);
+		
 		
 		 previousCameraGridX =  (int) (camera.getX()/chunkWidth); 
 		 previousCameraGridY =  (int) (camera.getY()/chunkHeight); 
@@ -809,9 +871,9 @@ public class Game extends GameState{
 	@Override
 	public void update(float deltaTime) {
 		//generateGraph();
-	
-		alListener3f(AL_POSITION, camera.getX(),camera.getY(),0); //TODO: change to players Position instead of camera.
 		
+		alListener3f(AL_POSITION, camera.getX(),camera.getY(),0); //TODO: change to players Position instead of camera.
+		PhysicsEngine.getSelf().update();
 		
 		timer.update();
 		timerWetSand.update();
@@ -877,6 +939,8 @@ public class Game extends GameState{
 			}
 		}*/
 		player.update(deltaTime, this);
+
+		
 		for(int i=0; i<finalLayer.size(); i++) { //TODO: verify only objects on screen
 			
 			//if(finalLayer.get(i).getAnimations()!=null)
@@ -900,7 +964,7 @@ public class Game extends GameState{
 					new Vec2(player.getPosition().x - player.getPreviousPosition().x,
 							player.getPosition().y - player.getPreviousPosition().y));
 			
-			if(h!=null) {
+			/*if(h!=null) {
 				//player.move(h.delta.x, h.delta.y);
 				boolean xAxisBlocked = false;
 				boolean yAxisBlocked = false;
@@ -937,7 +1001,7 @@ public class Game extends GameState{
 					player.move(0, -player.getVelocity()*deltaTime);
 				if(!yAxisBlocked && yMoving==player.BOTTOM)
 					player.move(0, player.getVelocity()*deltaTime);
-			}
+			}*/
 		}
 		
 		camera.update(deltaTime); //TODO: why should it be after all obj update?
@@ -946,14 +1010,15 @@ public class Game extends GameState{
 		
 		int coordXMap = Math.abs((int) (camera.getX() - player.getBaseBox().getCenterX())); // TODO: it'll get an error when the object is outsied the camera Width and height view
 		int coordYMap = Math.abs((int) (camera.getY() - player.getBaseBox().getCenterY()));
-
-		if(noiseRGB[(int) ((float)coordXMap/noiseDivisor)][(int) ((float)coordYMap/noiseDivisor)]==Color.TURKISH) {
+		
+		
+		/*if(noiseRGB[(int) ((float)coordXMap/noiseDivisor)][(int) ((float)coordYMap/noiseDivisor)]==Color.TURKISH) {
 			player.setTexture("ranger_swimming");
 			player.setVelocity(1200);
 		}else {
 			player.setTexture(null);
 			player.setVelocity(1200);
-		}
+		}*/
 	}
 
 	public Camera getCamera() {

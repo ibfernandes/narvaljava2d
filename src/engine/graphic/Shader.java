@@ -121,4 +121,13 @@ public class Shader {
 		glUniformMatrix4fv(glGetUniformLocation(id,name), false, BufferUtilities.createFloatBuffer(m));
 	}
 	
+	public void setPointLight(int index, Vec3 pos, Vec3 ambientColor, Vec3 lightColor, float constant, float linear, float quadratic) {
+		glUniform3f(glGetUniformLocation(id, "pointLights["+index+"].position"), pos.x, pos.y, pos.z);
+		glUniform3f(glGetUniformLocation(id, "pointLights["+index+"].ambient"), ambientColor.x, ambientColor.y, ambientColor.z);
+		glUniform3f(glGetUniformLocation(id, "pointLights["+index+"].lightColor"), lightColor.x, lightColor.y, lightColor.z);
+		glUniform1f(glGetUniformLocation(id, "pointLights["+index+"].constant"), constant);
+		glUniform1f(glGetUniformLocation(id, "pointLights["+index+"].linear"), linear);
+		glUniform1f(glGetUniformLocation(id, "pointLights["+index+"].quadratic"), quadratic);
+	}
+	
 }

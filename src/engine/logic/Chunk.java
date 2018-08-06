@@ -4,7 +4,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.jbox2d.dynamics.BodyType;
+
 import engine.engine.Engine;
+import engine.engine.PhysicsEngine;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
 import engine.noise.FastNoise;
@@ -132,7 +135,7 @@ public class Chunk implements Serializable{
 				}
 				
 				if(perlinNoise[x][y]<=-.266 + dx*.016)  //water
-					mapRGB[x][y] = 	(255<<24) | (26<<16) | (188<<8) | (156); //turquesa
+					mapRGB[x][y] = Color.TURKISH; //turquesa
 				
 				//NOTA: valores crescem para baixo
 		
@@ -164,6 +167,7 @@ public class Chunk implements Serializable{
 					asm.addAnimation("idle_1", an);
 					asm.changeStateTo("idle_1");
 					o.setAnimations(asm);
+					o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
 					
 					grassPool.add(o, whiteNoise[x][y]);
 				}else if(whiteNoise[x][y]>0.999 && (mapRGB[x][y] == Color.ESMERALDA || mapRGB[x][y] == Color.DARKED_ESMERALDA)) {
@@ -194,6 +198,7 @@ public class Chunk implements Serializable{
 					asm.addAnimation("idle_1", an);
 					asm.changeStateTo("idle_1");
 					o.setAnimations(asm);
+					o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
 					
 					grassPool.add(o, whiteNoise[x][y]);
 				}
