@@ -9,7 +9,7 @@ public class ConsiderationAttack implements Consideration{
 	@Override
 	public float evaluate(GameObject obj, Game game) {
 		for(GameObject o: game.getFinalLayer()) {
-			if(obj!=o && obj.getGroup()!=o.getGroup() && obj.getSightBox().intersects(o.getSightBox())) {
+			if(obj!=o && o.getGroup()!=null && obj.getGroup()!=o.getGroup() && o.getGroup().equals("player") && obj.getSightBox().intersects(o.getSightBox())) {
 				a.setTarget(o);
 				return 0.2f;
 			}

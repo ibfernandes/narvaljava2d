@@ -3,41 +3,18 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/glm-1.0.1.jar"/>
-	<classpathentry kind="lib" path="lib/jafama.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-assimp-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-assimp-natives-windows.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-assimp-sources.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-assimp.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-glfw-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-glfw-natives-windows.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-glfw-sources.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-glfw.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-jawt-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-jawt-sources.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-jawt.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-natives-windows.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-openal-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-openal-natives-windows.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-openal-sources.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-openal.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-opengl-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-opengl-natives-windows.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-opengl-sources.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-opengl.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-sources.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-stb-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-stb-natives-windows.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-stb-sources.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-stb.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-zstd-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-zstd-natives-windows.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-zstd-sources.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-zstd.jar"/>
-	<classpathentry kind="lib" path="lib/jbox2d-library-2.3.1-SNAPSHOT.jar" sourcepath="lib/jbox2d-library/src/main"/>
-	<classpathentry kind="lib" path="lib/jbox2d-library/target/jbox2d-library-2.3.1-SNAPSHOT.jar" sourcepath="lib/jbox2d-library/src"/>
-	<classpathentry kind="lib" path="lib/jbox2d-serialization-2.3.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="lib/glm_modified to serialaze/glm-1.0.1.jar" sourcepath="/glm-master/src"/>
+	<classpathentry kind="lib" path="lib/jafama/jafama.jar" sourcepath="lib/jafama/src/main"/>
+	<classpathentry kind="lib" path="lib/jbox2d-library/target/jbox2d-library-2.3.1-SNAPSHOT.jar" sourcepath="lib/jbox2d-library/src/main"/>
+	<classpathentry kind="lib" path="lib/lwjgl/lwjgl.jar" sourcepath="lib/lwjgl/lwjgl-sources.jar"/>
+	<classpathentry kind="lib" path="lib/lwjgl/lwjgl-glfw.jar" sourcepath="lib/lwjgl/lwjgl-glfw-sources.jar"/>
+	<classpathentry kind="lib" path="lib/lwjgl/lwjgl-openal.jar"/>
+	<classpathentry kind="lib" path="lib/lwjgl/lwjgl-opengl.jar" sourcepath="lib/lwjgl/lwjgl-opengl-sources.jar"/>
+	<classpathentry kind="lib" path="lib/lwjgl/lwjgl-glfw-natives-windows.jar"/>
+	<classpathentry kind="lib" path="lib/lwjgl/lwjgl-openal-natives-windows.jar"/>
+	<classpathentry kind="lib" path="lib/lwjgl/lwjgl-opengl-natives-windows.jar"/>
+	<classpathentry kind="lib" path="lib/lwjgl/lwjgl-natives-windows.jar"/>
+	<classpathentry kind="lib" path="lib/lwjgl/lwjgl-stb-natives-windows.jar"/>
+	<classpathentry kind="lib" path="lib/lwjgl/lwjgl-stb.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

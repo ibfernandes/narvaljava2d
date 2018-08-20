@@ -24,8 +24,9 @@ public class ASM implements Serializable{
 		if(animations.get(state)!=null && currentAnimation!=animations.get(state))
 			currentAnimation = animations.get(state);
 		
-		if(animations.get(state)==null)
-			System.err.println("Animation "+state+" doesn't exists");
+		//if(animations.get(state)==null)
+		//	System.err.println("Animation "+state+" doesn't exists"); 
+		//TODO: Use a default animation to express error on screen?
 	}
 	public Animation getCurrentAnimation() {
 		return currentAnimation;

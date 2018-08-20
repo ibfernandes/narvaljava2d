@@ -38,6 +38,7 @@ public class Window {
 	    glfwSetWindowPos(id, 2000, 60); //TODO: [NOTE]Set it to my second monitor (for debug purposes)
 	    glfwShowWindow(id);
 		GL.createCapabilities();
+		glfwSwapInterval(1);//VSYNC
 	    
 	    glViewport(0,0, width, height);
 	    glEnable(GL_CULL_FACE);
@@ -64,4 +65,5 @@ public class Window {
 	public Vec2 getSize() {
 		return size;
 	}
+
 }

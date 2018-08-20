@@ -67,7 +67,7 @@ public class CubeRenderer {
 		glBindVertexArray(0);
 	}
 	
-public void render(Rectangle r, float rotate, Vec3 color) {
+	public void render(Rectangle r, float rotate, Vec3 color) {
 		
 		shader.use();
 		Mat4 model = new Mat4();

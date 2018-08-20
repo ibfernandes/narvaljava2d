@@ -18,8 +18,8 @@ public class PhysicsEngine {
 		return (self==null) ? self = new PhysicsEngine(): self;
 	}
 	
-	public void update() {
-		world.step(1f/(float)Engine.TARGET_UPDATES, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
+	public void update(float deltatime) {
+		world.step(deltatime, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
 	}
 	
 	public World getWorld() {

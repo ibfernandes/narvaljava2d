@@ -38,6 +38,7 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 	private Vec2 previousPosition = new Vec2(0,0);
 	private Vec2 orientation = new Vec2(0,0); //Default: facing the same as image
 	private Vec2 size		 = new Vec2(0,0);
+	private Vec2 interationRange = new Vec2(0,0); //boundingBox + interationRange indicates the full interationBox
 	private Rectangle boundingBox = new Rectangle(0,0,0,0);
 	private Rectangle sightBox = new Rectangle(0,0,0,0);
 	private Rectangle baseBox	 = new Rectangle(0,0,0,0); //Used to collide objects in motion
@@ -163,8 +164,9 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 	}
 	
 	public void renderDebug() {
-		//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(position.x, position.y + size.y - baseBox.y), baseBox, 0, new Vec3(1,0,0));
 		ResourceManager.getSelf().getCubeRenderer().render(baseBox, 0, new Vec3(1,0,0));
+		ResourceManager.getSelf().getCubeRenderer().render(boundingBox, 0, new Vec3(1,1,0));
+		ResourceManager.getSelf().getCubeRenderer().render(getInterationBox(), 0, new Vec3(0,0,1));
 		if(controller!=null)
 			controller.renderDebug();
 	}
@@ -350,6 +352,7 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 		boundingBox.y = position.y;
 		sightBox.x =  position.x;
 		sightBox.y = position.y; //TODO: not correctly calculated
+		
 	}
 	
 	public float getX() {
@@ -466,6 +469,7 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 	}
 
 	@Override
+	//TODO: what if the object doesnt have a baseBox?
 	// -1 this < obj
 	// 0 this = obj
 	// 1 this > obj
@@ -519,5 +523,20 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 
 	public void setGroup(String group) {
 		this.group = group;
+	}
+
+	public Vec2 getInterationRange() {
+		return interationRange;
+	}
+	/**
+	 * BoundingBox + interationRange specifies the range in which this object is able to interact with another
+	 * @param interationRange
+	 */
+	public void setInterationRange(Vec2 interationRange) {
+		this.interationRange = interationRange;
+	}
+	
+	public Rectangle getInterationBox() {
+		return new Rectangle(boundingBox.x-interationRange.x/2, boundingBox.y - interationRange.y/2, boundingBox.width+interationRange.x,boundingBox.height+interationRange.y);
 	}
 }

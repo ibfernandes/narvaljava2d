@@ -47,22 +47,13 @@ public class Timer {
 		currentTime = System.nanoTime(); 
 		dx = currentTime - lastTime;
 		dxInSeconds = (double)dx/((double)SECOND*fraction);
+		
 		lastTime = currentTime;
-		
 		elapsedTime = currentTime-startTime; 
-
 		
-		//if(arcFoward)
-			degree += 360*dxInSeconds; //TODO: fix
-		/*else
-			degree -= 360*dxInSeconds;*/
-		
+		degree += 360*dxInSeconds; //TODO: fix
 		
 		if(degree>=360)
 			degree = degree%360;
-	
-
-
-		
 	}
 }

@@ -6,16 +6,16 @@ import java.util.Random;
 
 import org.lwjgl.glfw.GLFW;
 
-import engine.ai.AEstrela;
+import engine.ai.AStar;
 import engine.ai.Action;
 import engine.ai.Anode;
 import engine.ai.Consideration;
 import engine.ai.ConsiderationAttack;
 import engine.ai.ConsiderationTree;
 import engine.ai.ConsiderationWander;
-import engine.ai.DStarLite;
 import engine.ai.State;
 import engine.engine.Engine;
+import engine.engine.PhysicsEngine;
 import engine.logic.GameObject;
 import engine.utilities.ArraysExt;
 import engine.utilities.ResourceManager;
@@ -34,9 +34,7 @@ public class AIController extends Controller{
 	private Vec2 faceLeft = new Vec2(1,0);
 	private Vec2 faceRight = new Vec2(0,0);
 	private ConsiderationTree ct = new ConsiderationTree();
-	private DStarLite pathFinder = new DStarLite();
 	private long before = System.nanoTime();
-	private List<State> path;
 	private List<Anode> pathAstar;
 	private Game context;
 	private int currentStep;
@@ -52,7 +50,7 @@ public class AIController extends Controller{
 		Action a = ct.calculateAction(object, context);
 		
 		if(a.getActionName()=="wander") {
-			path = null;
+			pathAstar = null;
 			
 			long now = System.nanoTime();
 			
@@ -79,42 +77,9 @@ public class AIController extends Controller{
 				before = System.nanoTime();
 				currentStep = 0;
 				
-				AEstrela as = new AEstrela();
-				pathAstar = as.calculatePath(new Vec2i(startX, startY), new Vec2i(endX, endY-4), context.generateGraph(object));
-				
-				
-			/*pathFinder.init(
-						 startX,
-						 startY,
-						 endX,
-						 endY); //TODO: should use updateGoal and upStart
-				pathFinder.initBlockingCells(context.generateGraph(object)); 
-				pathFinder.replan();
+				AStar as = new AStar();
+				pathAstar = as.calculatePath(new Vec2i(startX, startY), new Vec2i(endX, endY-4), context.getPointOfViewCollisionGraph(object));
 			
-				path = pathFinder.getPath();
-				
-				
-				if(path.size()>1) {
-					State s = path.get(1);
-			
-					if(s.x>startX)
-						directions[GameObject.RIGHT] = true;
-					else if(s.x<startX)
-						directions[GameObject.LEFT] = true;
-					if(s.y> startY)
-						directions[GameObject.BOTTOM] = true;
-					else if(s.y<startY) 
-						directions[GameObject.TOP] = true;
-					
-					for(State state: path) {
-						state.x = (int) (context.camera.getX()*-1 + state.x*context.graphDivisor);
-						state.y = (int) (context.camera.getY()*-1 + state.y*context.graphDivisor);
-					}
-				}*/
-				
-				//AStar as = new AStar();
-				//List<Vec2i> pathAstar = as.findPath(new Vec2i(startX, startY), new Vec2i(endX, endY), 128/context.divisor, 20/context.divisor, context.generateGraph(object)); 
-	
 			}
 			
 			
@@ -143,22 +108,27 @@ public class AIController extends Controller{
 			
 		float xMove = 0;
 		float yMove = 0;
+		org.jbox2d.common.Vec2  speed = new  org.jbox2d.common.Vec2(0, 0);
 		
 		if(directions[GameObject.TOP]) {
 			yMove = -object.getVelocity()*deltaTime;
+			speed.y = -object.getVelocity()/PhysicsEngine.BOX2D_SCALE_FACTOR;
 			object.getAnimations().changeStateTo("walking");
 		}
 		if(directions[GameObject.BOTTOM]) {
 			yMove = object.getVelocity()*deltaTime;
+			speed.y = object.getVelocity()/PhysicsEngine.BOX2D_SCALE_FACTOR;
 			object.getAnimations().changeStateTo("walking");
 		}
 		if(directions[GameObject.RIGHT]) {
 			xMove = object.getVelocity()*deltaTime;
+			speed.x = object.getVelocity()/PhysicsEngine.BOX2D_SCALE_FACTOR;
 			object.setOrientation(faceRight);
 			object.getAnimations().changeStateTo("walking");
 		}
 		if(directions[GameObject.LEFT]) {
 			xMove = -object.getVelocity()*deltaTime;
+			speed.x = -object.getVelocity()/PhysicsEngine.BOX2D_SCALE_FACTOR;
 			object.setOrientation(faceLeft);
 			object.getAnimations().changeStateTo("walking");
 		}
@@ -166,8 +136,7 @@ public class AIController extends Controller{
 		if(ArraysExt.areAllElementsEqual(directions, false)){
 			object.getAnimations().changeStateTo("idle_1");
 		}
-		
-		object.move(xMove, yMove);
+		object.getBody().setLinearVelocity(speed);
 	}
 
 	@Override
@@ -175,7 +144,7 @@ public class AIController extends Controller{
 
 		if(pathAstar!=null) {
 			for(Anode state: pathAstar) {
-			//	ResourceManager.getSelf().getCubeRenderer().render(new Vec2(context.getCamera().getX()*-1 + state.pos.x*context.graphDivisor, context.getCamera().getY()*-1 + state.pos.y*context.graphDivisor), new Vec2(8,8), 0, new Vec3(0,1,0));
+				ResourceManager.getSelf().getCubeRenderer().render(new Vec2(context.getCamera().getX() + state.pos.x*context.graphDivisor, context.getCamera().getY() + state.pos.y*context.graphDivisor), new Vec2(8,8), 0, new Vec3(0,1,0));
 			}
 		}
 	}

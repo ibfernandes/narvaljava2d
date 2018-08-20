@@ -167,40 +167,45 @@ public class Chunk implements Serializable{
 					asm.addAnimation("idle_1", an);
 					asm.changeStateTo("idle_1");
 					o.setAnimations(asm);
-					o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
+					//o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
+					o.setGroup("vegetation");
 					
 					grassPool.add(o, whiteNoise[x][y]);
-				}else if(whiteNoise[x][y]>0.999 && (mapRGB[x][y] == Color.ESMERALDA || mapRGB[x][y] == Color.DARKED_ESMERALDA)) {
+				}else if(whiteNoise[x][y]>0.99 && (mapRGB[x][y] == Color.ESMERALDA || mapRGB[x][y] == Color.DARKED_ESMERALDA)) {
 					if(grassPool.contains(whiteNoise[x][y]))
 						continue;
 					GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
-					o.setSize(new Vec2(60,40));
+					o.setSize(new Vec2(30,24));
 					o.setVelocity(0);
 					o.setColor(new Vec4(1,1,1,1));
 					if(random.nextBoolean())
 						o.setOrientation(new Vec2(0,0));
 					else
 						o.setOrientation(new Vec2(1,0));
-					o.setBaseBox(new Vec2(60, 16));
 					o.setSkew(new Vec2(0,0));
 					o.setPosition(new Vec2(x*noiseDivisor + this.x*chunkWidth,y*noiseDivisor + this.y*chunkHeight));
 					ASM asm = new ASM(); //TODO: setTexutre not working?!
 					
 					Animation an;
-					if(whiteNoise[x][y]>0.9995)
+					/*if(whiteNoise[x][y]>0.9995)
 						an = new Animation("flower_red", -1);
 					else if(whiteNoise[x][y]>0.9991)
 						an = new Animation("flower_blue", -1);
 					else
-						an = new Animation("flower", -1);
+						an = new Animation("flower", -1);*/
+				
+					an = new Animation("grass", -1);
 					
-					an.setFrames(1, new Vec2(0,0), new Vec2(12,12)); // TODO: cuting lastline´, something to with squared size?
+					//an.setFrames(1, new Vec2(0,0), new Vec2(12,12)); // TODO: cuting lastline´, something to with squared size?
+					an.setFrames(1, new Vec2(0,0), new Vec2(10,8)); // TODO: cuting lastline´, something to with squared size?
 					asm.addAnimation("idle_1", an);
 					asm.changeStateTo("idle_1");
 					o.setAnimations(asm);
-					o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
+					//o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
+					o.setGroup("vegetation");
 					
 					grassPool.add(o, whiteNoise[x][y]);
+					
 				}
 			
 			}
@@ -236,11 +241,15 @@ public class Chunk implements Serializable{
 	}
 	
 	public String getFileName() {
-		return x+"_"+y+".chunck";
+		return x+"_"+y+".chunk";
 	}
 	
 	public static String getFileName(int x, int y) {
-		return x+"_"+y+".chunck";
+		return x+"_"+y+".chunk";
+	}
+	
+	public static String getID(int x, int y) {
+		return x+"_"+y;
 	}
 
 	/*public Rectangle getBoundingBox() {

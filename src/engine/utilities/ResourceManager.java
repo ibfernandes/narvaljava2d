@@ -17,6 +17,7 @@ import engine.audio.Audio;
 import engine.audio.AudioSource;
 import engine.graphic.Shader;
 import engine.graphic.Texture;
+import engine.ui.Font;
 import glm.vec._2.Vec2;
 import graphic.CubeRenderer;
 import graphic.GrassRenderer;
@@ -28,6 +29,7 @@ public final class ResourceManager {
 	private static HashMap<String,  Shader> shaders = new HashMap<String, Shader>();
 	private static HashMap<String,  Texture> textures = new HashMap<String, Texture>();
 	private static HashMap<String,  Audio> audio = new HashMap<String, Audio>();
+	private static HashMap<String,  Font> fonts = new HashMap<String, Font>();
 	private static CubeRenderer cubeRenderer;
 	private static TextureRenderer textureRenderer;
 	private static ShadowRenderer shadowRenderer;
@@ -53,6 +55,16 @@ public final class ResourceManager {
 		return audio.get(name);
 	}
 	
+	public Font loadFont(String name, String fontPath) {
+		if(fonts.containsKey(name))
+			return fonts.get(name);
+		return fonts.put(name, new Font());
+	}
+	
+	public Font getFont(String name) {
+		return fonts.get(name);
+	}
+	
 	/*
 	 * Returns the sourcePointer generated
 	 */
@@ -63,6 +75,14 @@ public final class ResourceManager {
 		return a.getSourcePointer();
 	}
 	
+	/**
+	 * Loads the file @param name from the resources folder
+	 * @param name
+	 * @param vertexShaderPath
+	 * @param fragmentShaderFilPath
+	 * @param geometryShaderPath
+	 * @return
+	 */
 	public Shader loadShader(String name, String vertexShaderPath, String fragmentShaderFilPath, String geometryShaderPath) {
 		if(shaders.containsKey(name))
 			return shaders.get(name);

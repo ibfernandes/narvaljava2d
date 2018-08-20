@@ -24,7 +24,6 @@ import static org.lwjgl.opengl.GL11.glViewport;
 
 import static org.lwjgl.openal.AL10.*;
 
-import java.awt.Font;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,10 +47,10 @@ import org.lwjgl.opengl.GL32;
 import static org.lwjgl.opengl.GL30.*;
 
 import editor.Editor;
-import engine.ai.DStarLite;
 import engine.audio.Audio;
 import engine.controllers.AIController;
 import engine.controllers.PlayerController;
+import engine.controllers.StaticNPCController;
 import engine.engine.Engine;
 import engine.engine.GameState;
 import engine.engine.PhysicsEngine;
@@ -68,10 +67,12 @@ import engine.logic.HorizontalPool;
 import engine.logic.Timer;
 import engine.noise.FastNoise;
 import engine.physics.Hit;
-
+import engine.ui.Font;
+import engine.ui.UIObject;
 import engine.utilities.BufferUtilities;
 import engine.utilities.Color;
 import engine.utilities.MathExt;
+import engine.utilities.QuadTree;
 import engine.utilities.ResourceManager;
 import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
@@ -90,8 +91,9 @@ public class Game extends GameState{
 	//Layers
 	private ArrayList<GameObject> movableLayer;
 	private ArrayList<GameObject> staticLayer;
-	private ArrayList<GameObject> regionLayer;
 	private ArrayList<GameObject> finalLayer; //composes all other layers into one, so it can be properly sorted and drawn
+	private ArrayList<UIObject> UILayer;
+	private QuadTree quadTree; // Contains all objects currently on screen
 	private Camera camera;
 	private Rectangle screenView;
 	private GameObject player;
@@ -99,50 +101,41 @@ public class Game extends GameState{
 	//Shadow Map
 	private int shadowFBO;
 	private int shadowLayerTexture;
-	
-	//Map PCG
-	private FastNoise fastNoise = new FastNoise();
-	//private int seed = new Random().nextInt(2000);
-	
-	private float noiseDivisor = 5f;
-	private int noiseWidth  = (int) ((float)Engine.getSelf().getWindow().getWidth()/noiseDivisor);
-	private int noiseHeight = (int) ((float)Engine.getSelf().getWindow().getHeight()/noiseDivisor);
-	
-	private float perlinNoise[][] = new float[noiseWidth][noiseHeight];
-	private float whiteNoise[][] = new float[noiseWidth][noiseHeight];
-	private float fractalNoise[][] = new float[noiseWidth][noiseHeight];
-	
-	private int 	noiseRGB[][] = new int[noiseWidth][noiseHeight];
-	
-	private HorizontalPool grassPool = new HorizontalPool(500);
-	
-	//Island formula used along with Noise generation.
-	private float a = 0.15f;
-	private float b = 0.9f;
-	private float c = 2f;
-	private float d = 0f;
+
 	private Timer timer = new Timer();
 	private Timer timerWetSand = new Timer();
 	private Random random = new Random();
 	
-	private int map_width = 60000;
-	private int map_height = 60000;
+	//Map
+	private ChunkMap chunkMap;
+	private int seed = 12345;
+
+	private int rowSize = (Engine.getSelf().getWindow().getWidth()/ChunkMap.CHUNK_WIDTH) +1 +2; //chunks along y axis
+	private int columnSize = (Engine.getSelf().getWindow().getHeight()/ChunkMap.CHUNK_HEIGHT) +1 +2; //chunks along x axis
+	private Chunk chunksOnScreen[][] = new Chunk[rowSize][columnSize];;
+	private Texture texturenOnScreen[][] = new Texture[rowSize][columnSize];
+	private int previousCameraGridX;
+	private int previousCameraGridY; 
+	private int currentCameraGridX;
+	private int currentCameraGridY;
+	
+	
 	
 	//Graph used for pathfinding
 	public int graphDivisor = 8;
 	public int graphSizeX = Engine.getSelf().getWindow().getWidth()/graphDivisor;
 	public int graphSizeY = Engine.getSelf().getWindow().getWidth()/graphDivisor;
 	public boolean obstacleMap[][];
-
+	
+	//Others
+	private Vec2 startPoint = new Vec2(48500, 46000);
 	
 	@Override
 	public void init() {
 		initShadowLayer();
 		
 		screenView = new Rectangle(0,0,Engine.getSelf().getWindow().getWidth(),Engine.getSelf().getWindow().getHeight());
-		
 		chunkMap = new ChunkMap(seed);
-		
 		
 		//==================================
 		//Loads all shaders
@@ -201,11 +194,28 @@ public class Game extends GameState{
 				"sprites/house.png");
 		ResourceManager.getSelf().loadTexture("ranger_swimming", 
 				"sprites/ranger_swimming.png");
+		ResourceManager.getSelf().loadTexture("e_button", 
+				"sprites/e_button.png");
+		ResourceManager.getSelf().loadTexture("yellow_bird", 
+				"sprites/yellow_bird.png");
+		ResourceManager.getSelf().loadTexture("black_bird", 
+				"sprites/black_bird.png");
+		ResourceManager.getSelf().loadTexture("red_bird", 
+				"sprites/red_bird.png");
+		ResourceManager.getSelf().loadTexture("orange_bird", 
+				"sprites/orange_bird.png");
+		ResourceManager.getSelf().loadTexture("blue_bird", 
+				"sprites/blue_bird.png");
 		
 		//==================================
 		//Loads all Audio
 		//==================================
 		ResourceManager.getSelf().loadAudio("ocean_waves","audio/ocean_waves.ogg" );
+		
+		//==================================
+		//Loads all Audio
+		//==================================
+		ResourceManager.getSelf().loadFont("monospace","NOT IMPLEMENTED" );//TODO Implement font loading from file
 
 		//==================================
 		//Set all Uniforms
@@ -218,7 +228,9 @@ public class Game extends GameState{
 		
 		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setMat4("projection", projection);
-		ResourceManager.getSelf().getShader("texture").setPointLight(0, new Vec3(500,500, 200), new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
+		ResourceManager.getSelf().getShader("texture").setPointLight(0, new Vec3(250,500, 300), new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
+		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1f);
+		ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0,0,0));
 		
 		ResourceManager.getSelf().getShader("shadow").use();
 		ResourceManager.getSelf().getShader("shadow").setMat4("projection", projection);
@@ -244,25 +256,14 @@ public class Game extends GameState{
 		//==================================
 		movableLayer = new ArrayList<>();
 		staticLayer = new ArrayList<>();
-		regionLayer = new ArrayList<>();
 		finalLayer = new ArrayList<>();
-		
-		//==================================
-		//Creates other GameObjects
-		//==================================
+		UILayer = new ArrayList<>();
 
-		
 		//==================================
-		//Create enemies
+		//Create GameObjects
 		//==================================
-		createClerics(3);
-		
-		//==================================
-		//Create props
-		//==================================
-		//createGrass(25);
-		//createWheat(6);
-		//createProps(13);
+		//createClerics(4);
+		createBirds(300);
 		
 		//Create fire
 		GameObject bonfire = new GameObject();
@@ -271,7 +272,7 @@ public class Game extends GameState{
 		bonfire.setColor(new Vec4(1,1,1,1));
 		bonfire.setOrientation(new Vec2(0,0));
 		bonfire.setSkew(new Vec2(0,0));
-		bonfire.setPosition(new Vec2(600,350));
+		bonfire.setPosition(new Vec2(500,500));
 		
 		ASM asmb = new ASM();
 		
@@ -297,7 +298,7 @@ public class Game extends GameState{
 		house.setSkew(new Vec2(0,0));
 		house.setPosition(new Vec2(46000, 46000));
 		house.setTexture("house");
-		house.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
+		house.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
 		staticLayer.add(house);
 		
 		//==================================
@@ -307,36 +308,38 @@ public class Game extends GameState{
 		
 		player = new GameObject();
 		player.setSize(new Vec2(128,128));
-		player.setVelocity(300);
+		player.setVelocity(600);
 		player.setColor(new Vec4(1,1,1,1));
 		player.setController(playerController);
 		player.setOrientation(new Vec2(0,0));
 		player.setBaseBox(new Vec2(128, 20));
 		player.setSightBox(new Vec2(512, 512));
 		player.setSkew(new Vec2(0,0));
-		//player.setPosition(new Vec2(50000, 45000));
-		player.setPosition(new Vec2(0, 0));
+		player.setPosition(startPoint);
+		//player.setPosition(new Vec2(0, 0));
+		player.setInterationRange(new Vec2(80,40));
+		player.setGroup("player");
 		player.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
 		
 		ASM asm = new ASM();
 		
-		Animation a = new Animation("ranger", 150);
+		Animation a = new Animation("rogue", 150);
 		a.setFrames(10, new Vec2(0,0), new Vec2(32,32));
 		asm.addAnimation("idle_1", a);
 		
-		a = new Animation("ranger", 150);
+		a = new Animation("rogue", 150);
 		a.setFrames(10, new Vec2(0,32), new Vec2(32,32));
 		asm.addAnimation("idle_2", a);
 		
-		a = new Animation("ranger", 150);
+		a = new Animation("rogue", 150);
 		a.setFrames(10, new Vec2(0,64), new Vec2(32,32));
 		asm.addAnimation("walking", a);
 		
-		a = new Animation("ranger", 150);
+		a = new Animation("rogue", 150);
 		a.setFrames(10, new Vec2(0,96), new Vec2(32,32));
 		asm.addAnimation("attacking", a);
 		
-		a = new Animation("ranger", 150);
+		a = new Animation("rogue", 150);
 		a.setFrames(10, new Vec2(0,128), new Vec2(32,32));
 		asm.addAnimation("dying", a);
 		
@@ -344,7 +347,7 @@ public class Game extends GameState{
 		
 		player.setAnimations(asm);
 		//movableLayer.add(player);
-		
+				
 		//==================================
 		//Camera
 		//==================================
@@ -356,67 +359,47 @@ public class Game extends GameState{
 		//Tests
 		//==================================
 		timerWetSand.setDegree(260);
+		timer.setDuration(timer.SECOND*8);
+		timerWetSand.setDuration(timer.SECOND*80);
 		//ResourceManager.getSelf().playAudio("ocean_waves", player.getPosition(), 3000);
-		/*	try {
-				test = new TrueTypeFont("/SourceSansPro.ttf",24);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}*/
+
+		//NPC interaction test
+		GameObject NPC = new GameObject();
+		NPC.setSize(new Vec2(128,128));
+		NPC.setVelocity(600);
+		NPC.setColor(new Vec4(1,1,1,1));
+		NPC.setController(new StaticNPCController());
+		NPC.setOrientation(new Vec2(0,0));
+		NPC.setBaseBox(new Vec2(128, 20));
+		NPC.setSightBox(new Vec2(512, 512));
+		NPC.setSkew(new Vec2(0,0));
+		NPC.setPosition(new Vec2(49000, 46000));
+		NPC.setInterationRange(new Vec2(80,40));
+		NPC.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.KINEMATIC);
 		
-		//Tree 1
-		GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
-		o.setSize(new Vec2(512,512));
-		o.setVelocity(0);
-		o.setColor(new Vec4(1,1,1,1));
-		if(random.nextBoolean())
-			o.setOrientation(new Vec2(0,0));
-		else
-			o.setOrientation(new Vec2(1,0));
-		o.setBaseBox(new Vec2(512, 16));
-		o.setSkew(new Vec2(0,0));
-		o.setPosition(new Vec2(800,0)); 
-		o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
 		asm = new ASM();
 		
-		Animation an;
-		an = new Animation("tree", -1);
+		a = new Animation("rogue", 150);
+		a.setFrames(10, new Vec2(0,0), new Vec2(32,32));
+		asm.addAnimation("idle_1", a);
 		
-		an.setFrames(1, new Vec2(0,0), new Vec2(64,64)); // TODO: cuting lastline´, something to with squared size?
-		asm.addAnimation("idle_1", an);
 		asm.changeStateTo("idle_1");
-		o.setAnimations(asm);
-		staticLayer.add(o);
 		
-		//Tree 2
-		o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
-		o.setSize(new Vec2(512,512));
-		o.setVelocity(0);
-		o.setColor(new Vec4(1,1,1,1));
-		if(random.nextBoolean())
-			o.setOrientation(new Vec2(0,0));
-		else
-			o.setOrientation(new Vec2(1,0));
-		o.setBaseBox(new Vec2(512, 60));
-		o.setSkew(new Vec2(0,0));
-		o.setPosition(new Vec2(1412,0)); 
-		o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
-		asm = new ASM();
-
-		an = new Animation("tree", -1);
+		NPC.setAnimations(asm);
+		movableLayer.add(NPC);
 		
-		an.setFrames(1, new Vec2(0,0), new Vec2(64,64)); // TODO: cuting lastline´, something to with squared size?
-		asm.addAnimation("idle_1", an);
-		asm.changeStateTo("idle_1");
-		o.setAnimations(asm);
-		staticLayer.add(o);
+		previousCameraGridX =  (int) (camera.getX()/ChunkMap.CHUNK_WIDTH); 
+		previousCameraGridY =  (int) (camera.getY()/ChunkMap.CHUNK_HEIGHT); 
+		currentCameraGridX = (int) (camera.getX()/ChunkMap.CHUNK_WIDTH); 
+		currentCameraGridY = (int) (camera.getY()/ChunkMap.CHUNK_HEIGHT);
+		initQuadTree(screenView);
+	}
+	
+	private void initQuadTree(Rectangle screenView) {
+		quadTree = new QuadTree(screenView);
 		
-		
-		 previousCameraGridX =  (int) (camera.getX()/chunkWidth); 
-		 previousCameraGridY =  (int) (camera.getY()/chunkHeight); 
-		 currentCameraGridX = (int) (camera.getX()/chunkWidth); 
-		 currentCameraGridY = (int) (camera.getY()/chunkHeight);
-
+		for(GameObject o: finalLayer)
+			quadTree.insert(o);
 	}
 	
 	private void initShadowLayer() {
@@ -444,143 +427,35 @@ public class Game extends GameState{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 	
-	public float noise(float x, float y) { //TODO: I could make it parallel and so increase performance[?]
-		float noise = 0;
-		fastNoise.SetSeed(seed);
-		
-		fastNoise.SetFrequency(0.0005f);	 //quanto menor, maior as "ilhas"
-		noise +=  fastNoise.GetPerlin(x, y); //first octave
-		
-		fastNoise.SetFrequency(0.005f);
-		noise += .1 * fastNoise.GetPerlin(x, y); // second octave
-		
-		return noise;
-	}
-
-	public void generateTerrain() { 
-		timer.setDuration(Timer.SECOND*8);
-		timerWetSand.setDuration(Timer.SECOND*8);
-		
-		for(int y=0; y<noiseHeight; y++) {
-			for(int x=0; x<noiseWidth;x++) {
-				int coordX = (int)(camera.getX()/noiseDivisor) + x ; // getx + x*divisor
-				int coordY = (int)(camera.getY()/noiseDivisor) + y ; //
-				
-				d = 2*Math.max(Math.abs((float)coordX/map_width - (float)(map_width/2)/map_width), Math.abs((float)coordY/map_height - (float)(map_height/2)/map_height)); //as the distance must be normlized,
-				// i simply normalize the data before calculating the distance
-
-				perlinNoise[x][y] = noise(coordX/3f,coordY);
-				whiteNoise[x][y] = fastNoise.GetWhiteNoise(coordX, coordY); 
-				fractalNoise[x][y] = fastNoise.GetPerlinFractal(coordX/4, coordY); 
-				
-				perlinNoise[x][y] = perlinNoise[x][y] + a - b*(float)Math.pow(d, c);
-	
-				double dx = FastMath.sin(Math.toRadians(timer.getDegree()));
-				double dxWet = FastMath.sin(Math.toRadians(timerWetSand.getDegree()));
-				
-				if(perlinNoise[x][y]>-.1 ) { 		//land
-					noiseRGB[x][y] = Color.ESMERALDA; //esmeralda
-					if(fractalNoise[x][y]>0.2)
-						noiseRGB[x][y] =  Color.DARKED_ESMERALDA;
-				}
-				if(perlinNoise[x][y]<=-.1)  //preenche tudo com água
-					noiseRGB[x][y] = 	 Color.TURKISH; //turquesa
-				
-				if(perlinNoise[x][y]<=-.1) {	//sand
-					noiseRGB[x][y] =  (255<<24) | (244<<16) | (234<<8) | (187); //ARGB
-					if(whiteNoise[x][y]>0)
-						noiseRGB[x][y] =  (255<<24) | (234<<16) | (224<<8) | (167); //ARGB
-				}
-				
-				if(perlinNoise[x][y]<-.230 + dxWet*.016) {	//wet sand
-					noiseRGB[x][y] = (255<<24) | (224<<16) | (214<<8) | (167); //ARGB
-					if(whiteNoise[x][y]>0)
-						noiseRGB[x][y] =  (255<<24) | (234<<16) | (224<<8) | (167); //ARGB
-				}
-				
-				if(perlinNoise[x][y]<-.230 + dx*.016) 	//espuma
-					noiseRGB[x][y] =  Color.WHITE; //ARGB
-				
-				if(perlinNoise[x][y]<-.244 + dx*.016) { 	//espuma back
-						noiseRGB[x][y] = (255<<24) | (22<<16) | (160<<8) | (133); //green se
-						if(perlinNoise[x][y]>-.2445 + dx*.016) {
-							if(whiteNoise[x][y]<0.2f)
-								noiseRGB[x][y] =  Color.WHITE;
-						}
-				}
-				
-				if(perlinNoise[x][y]<=-.266 + dx*.016)  //water
-					noiseRGB[x][y] = 	(255<<24) | (26<<16) | (188<<8) | (156); //turquesa
-				
-				//NOTA: valores crescem para baixo
-		
-		
-				//create scnearion elements
-
-				//TODO: the pool is jsut growing without limit. Need to fix that.
-				if(whiteNoise[x][y]>0.9999 && (noiseRGB[x][y] ==  Color.ESMERALDA || noiseRGB[x][y] ==  Color.DARKED_ESMERALDA)) {
-					if(grassPool.contains(whiteNoise[x][y]))
-						continue;
-					
-					GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
-					o.setSize(new Vec2(512,512));
-					o.setVelocity(0);
-					o.setColor(new Vec4(1,1,1,1));
-					if(random.nextBoolean())
-						o.setOrientation(new Vec2(0,0));
-					else
-						o.setOrientation(new Vec2(1,0));
-					o.setBaseBox(new Vec2(512, 16));
-					o.setSkew(new Vec2(0,0));
-					o.setPosition(new Vec2(x*noiseDivisor + (camera.getX()),y*noiseDivisor + (camera.getY()))); //TODO: fix that to a proper interval
-					ASM asm = new ASM(); //TODO: setTexutre not working?!
-					
-					Animation a;
-					a = new Animation("tree", -1);
-					
-					a.setFrames(1, new Vec2(0,0), new Vec2(64,64)); // TODO: cuting lastline´, something to with squared size?
-					asm.addAnimation("idle_1", a);
-					asm.changeStateTo("idle_1");
-					o.setAnimations(asm);
-					
-					grassPool.add(o, whiteNoise[x][y]);
-				}else if(whiteNoise[x][y]>0.999 && (noiseRGB[x][y] ==  Color.ESMERALDA || noiseRGB[x][y] ==  Color.DARKED_ESMERALDA)) {
-					if(grassPool.contains(whiteNoise[x][y]))
-						continue;
-					GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
-					o.setSize(new Vec2(60,40));
-					o.setVelocity(0);
-					o.setColor(new Vec4(1,1,1,1));
-					if(random.nextBoolean())
-						o.setOrientation(new Vec2(0,0));
-					else
-						o.setOrientation(new Vec2(1,0));
-					o.setBaseBox(new Vec2(60, 16));
-					o.setSkew(new Vec2(0,0));
-					o.setPosition(new Vec2(x*noiseDivisor + (camera.getX()),y*noiseDivisor + (camera.getY())));
-					ASM asm = new ASM(); //TODO: setTexutre not working?!
-					
-					Animation a;
-					if(whiteNoise[x][y]>0.9995)
-						a = new Animation("flower_red", -1);
-					else if(whiteNoise[x][y]>0.9991)
-						a = new Animation("flower_blue", -1);
-					else
-						a = new Animation("flower", -1);
-					
-					a.setFrames(1, new Vec2(0,0), new Vec2(12,12)); // TODO: cuting lastline´, something to with squared size?
-					asm.addAnimation("idle_1", a);
-					asm.changeStateTo("idle_1");
-					o.setAnimations(asm);
-					
-					grassPool.add(o, whiteNoise[x][y]);
-				}
+	public void createBirds(int qtd) {
+		for(int i =0; i<qtd; i++) {
+			GameObject o = new GameObject();
+			o.setGroup("birds");
+			int var = random.nextInt(10);
+			o.setSize(new Vec2(32 -var,32- var));
+			o.setVelocity(200);
+			o.setColor(new Vec4(1,1,1,1));
+			o.setBaseBox(new Vec2(0, 0));
+			o.setPosition(new Vec2(startPoint.x+random.nextInt(500),startPoint.y+random.nextInt(500)));
+			o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
 			
-			}
+			AIController ai =  new AIController();
+			o.setController(ai);
+
+			String bird = "";
+			String options[] = {"blue_bird","black_bird", "red_bird", "yellow_bird", "orange_bird"};
+			int dice = random.nextInt(options.length);
+			
+			ASM asm = new ASM();
+			Animation a = new Animation(options[dice], -1);
+			a.setFrames(1, new Vec2(0,0), new Vec2(9,9));
+			asm.addAnimation("idle_1", a);
+			asm.changeStateTo("idle_1");
+			
+			o.setAnimations(asm);
+			
+			movableLayer.add(o);
 		}
-		
-		//terrain = new Texture(noiseRGB); //TODO: not create
-		
 	}
 	
 	public void createClerics(int qtd) {
@@ -597,7 +472,8 @@ public class Game extends GameState{
 			o.setOrientation(new Vec2(0,0));
 			o.setBaseBox(new Vec2(128, 20));
 			//o.setPosition(new Vec2(35350+r.nextInt(500),35500+r.nextInt(500)));
-			o.setPosition(new Vec2(47000,47000));
+			o.setPosition(new Vec2(startPoint.x + r.nextInt(300),startPoint.y + r.nextInt(300)));
+			o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
 			
 			AIController ai =  new AIController();
 			o.setController(ai);
@@ -632,116 +508,13 @@ public class Game extends GameState{
 		}
 	}
 	
-	public void createGrass(int qtd) {
-		Random r = new Random();
-		for(int i =0; i<qtd; i++) {
-			GameObject o = new GameObject();
-			o.setSize(new Vec2(256,256));
-			o.setVelocity(0);
-			o.setColor(new Vec4(1,1,1,1));
-			o.setRotation(0);
-			o.setSkew(new Vec2(0,0));
-			o.setOrientation(new Vec2(0,0));
-			o.setBaseBox(new Vec2(128, 20));
-			o.setPosition(new Vec2(200+r.nextInt(500),100+r.nextInt(500)));
-			
-			o.setRotation((float) Math.toRadians(-180));
-			o.setOrientation(new Vec2(0,1));
-			o.setSkew(new Vec2(r.nextInt(40),0));
-
-			ASM asm = new ASM();
-			
-			Animation a = new Animation("grass", -1);
-			a.setFrames(1, new Vec2(0,0), new Vec2(32,32));
-			asm.addAnimation("idle_1", a);
-			asm.changeStateTo("idle_1");
-			
-			o.setAnimations(asm);
-			
-			staticLayer.add(o);
-		}
-	}
-	
-	public void createWheat(int qtd) {
-		Random r = new Random();
-		for(int i =0; i<qtd; i++) {
-			GameObject o = new GameObject();
-			o.setSize(new Vec2(256,256));
-			o.setVelocity(0);
-			o.setColor(new Vec4(1,1,1,1));
-			o.setRotation(0);
-			o.setSkew(new Vec2(0,0));
-			o.setOrientation(new Vec2(0,0));
-			o.setBaseBox(new Vec2(128, 20));
-			o.setPosition(new Vec2(200+r.nextInt(500),100+r.nextInt(500)));
-			
-			o.setRotation((float) Math.toRadians(-180));
-			o.setOrientation(new Vec2(0,1));
-			o.setSkew(new Vec2(r.nextInt(40),0));
-
-			ASM asm = new ASM();
-			
-			Animation a = new Animation("wheat", -1);
-			a.setFrames(1, new Vec2(0,0), new Vec2(32,32));
-			asm.addAnimation("idle_1", a);
-			asm.changeStateTo("idle_1");
-			
-			o.setAnimations(asm);
-			
-			staticLayer.add(o);
-		}
-	}
-	
-	public void createProps(int qtd) {
-		Random r = new Random();
-		for(int i =0; i<qtd; i++) {
-			GameObject o = new GameObject();
-			o.setSize(new Vec2(128,128));
-			o.setVelocity(0);
-			o.setColor(new Vec4(1,1,1,1));
-			o.setRotation(0);
-			o.setSkew(new Vec2(0,0));
-			o.setOrientation(new Vec2(0,0));
-			o.setBaseBox(new Vec2(128, 20));
-			o.setPosition(new Vec2(200+r.nextInt(500),100+r.nextInt(500)));
-			
-			o.setRotation((float) Math.toRadians(-180));
-			o.setOrientation(new Vec2(0,1));
-
-			ASM asm = new ASM();
-			
-			String tex = "";
-			switch(r.nextInt(2)) {
-				case 0:
-					tex = "wooden_chair";
-				break;
-				case 1:
-					tex = "wooden_box";
-				break;
-			}
-			
-			
-			Animation a = new Animation(tex, -1);
-			a.setFrames(1, new Vec2(0,0), new Vec2(32,32));
-			asm.addAnimation("idle_1", a);
-			asm.changeStateTo("idle_1");
-			
-			o.setAnimations(asm);
-			
-			staticLayer.add(o);
-		}
-	}
-	
-	public boolean[][] generateGraph(GameObject obj) {
+	public void generateCollisionGraph() {
 		obstacleMap = new boolean[graphSizeX][graphSizeY];
 		
-		for(GameObject o: finalLayer) {
-			
-			if(obj==o)
-				continue;
+		for(GameObject o: quadTree.queryRange(screenView)) {
 
-			int coordXMapS = (int) (camera.getX() - o.getBaseBox().getX())/graphDivisor;
-			int coordYMapS = (int) (camera.getY() - o.getBaseBox().getY())/graphDivisor;
+			int coordXMapS = (int) (-camera.getX() + o.getBaseBox().getX())/graphDivisor;
+			int coordYMapS = (int) (-camera.getY() + o.getBaseBox().getY())/graphDivisor;
 			int sizeX = (int) (o.getBaseBox().width/graphDivisor) + 1;
 			int sizeY = (int) (o.getBaseBox().height/graphDivisor) +1;
 			
@@ -753,99 +526,82 @@ public class Game extends GameState{
 					if(x<obstacleMap.length && y<obstacleMap[0].length)
 						obstacleMap[x][y] = true; 	// true onde ta bloqueado
 		}
+	}
+	
+	public boolean[][] getPointOfViewCollisionGraph(GameObject obj) {
+		boolean temp[][] = obstacleMap.clone();
+
+		int coordXMapS = (int) (- camera.getX() + obj.getBaseBox().getX())/graphDivisor;
+		int coordYMapS = (int) (- camera.getY() + obj.getBaseBox().getY())/graphDivisor;
+		int sizeX = (int) (obj.getBaseBox().width/graphDivisor) + 1;
+		int sizeY = (int) (obj.getBaseBox().height/graphDivisor) +1;
 		
-		return obstacleMap;
+		if(coordXMapS<0 || coordYMapS<0) //TODO: Should consider the INTERVAL, not just the start and fisnish poitn
+			return temp;
+		
+		for(int y=coordYMapS; y< coordYMapS+sizeY; y++)
+			for(int x=coordXMapS; x<coordXMapS + sizeX; x++)
+				if(x<temp.length && y<temp[0].length)
+					temp[x][y] = false;
+		
+		return new boolean[graphSizeX][graphSizeY];
 	}
 
 	public boolean isOnScreen(GameObject o) {
 		return (screenView.intersects(o.getBoundingBox()));
 	}
-	
-	boolean shouldInc = true;
-	
-	
-	private ChunkMap chunkMap;
-	private int seed = 12345;
-	private int chunkWidth = 2048;
-	private int chunkHeight = 2048;
-	
-	int rowSize = (Engine.getSelf().getWindow().getWidth()/chunkWidth) +1 +2; //x
-	int columnSize = (Engine.getSelf().getWindow().getHeight()/chunkHeight) +1 +2; //y
-	
-	Chunk chunksOnScreen[][] = new Chunk[rowSize][columnSize];;
-	Texture texturenOnScreen[][] = new Texture[rowSize][columnSize];
-	
-	int previousCameraGridX;
-	int previousCameraGridY; 
-	int currentCameraGridX;
-	int currentCameraGridY;
-	
+
 	public void generateChunks() { 
 		
 		previousCameraGridX = currentCameraGridX;
 		previousCameraGridY = currentCameraGridY;
-		currentCameraGridX = (int) (camera.getX()/chunkWidth) ; 
-		currentCameraGridY = (int) (camera.getY()/chunkHeight) ;
-		
-		for(int y=0; y<chunksOnScreen[0].length; y++) 
-			for(int x=0; x<chunksOnScreen.length; x++) 
-				if(chunksOnScreen[x][y]!=null)
-					chunkMap.saveFile(chunksOnScreen[x][y]);
-		
-		
+		currentCameraGridX = (int) (camera.getX()/ChunkMap.CHUNK_WIDTH) ; 
+		currentCameraGridY = (int) (camera.getY()/ChunkMap.CHUNK_HEIGHT) ;
+
 		for(int y=0; y<chunksOnScreen[0].length; y++) {
 			for(int x=0; x<chunksOnScreen.length; x++) {
-				
-				if(!chunkMap.chunkExists(currentCameraGridX+x -1, currentCameraGridY+y -1)) {
-					
-					if(chunkMap.chunkExistsOnDisk(currentCameraGridX+x -1, currentCameraGridY+y -1))
-						chunkMap.put(chunkMap.loadFromFile(currentCameraGridX+x -1, currentCameraGridY+y -1));
-					else {
-						Chunk c = new Chunk(currentCameraGridX+x -1,currentCameraGridY+y -1, chunkWidth, chunkHeight, map_width, map_height);
-						chunkMap.put(c);
-					}
-				}
 					
 				chunksOnScreen[x][y] = chunkMap.get(currentCameraGridX + x -1, currentCameraGridY + y -1);
-
-				texturenOnScreen[x][y] = new Texture(chunksOnScreen[x][y].getTerrain());
+				
+				if(chunksOnScreen[x][y]!=null)
+					texturenOnScreen[x][y] = new Texture(chunksOnScreen[x][y].getTerrain());
 			}
 		}
-
 	}
 	
-	@Override
-	public void render() {
+	public void renderShadow() {
 		glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);// makes OpenGL reading data from your "framebuffer"
 
 		glClearColor(1,1,1,0);
 		glClear(GL11.GL_COLOR_BUFFER_BIT);
 		
-		for(GameObject o: finalLayer) 
+		for(GameObject o: quadTree.queryRange(screenView)) 
 			ResourceManager.getSelf().getShadowRenderer().render(o);
-		
+	}
+	
+	@Override
+	public void render() {
+		renderShadow();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(1,1,1,1);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
 		for(int y=0; y<chunksOnScreen[0].length; y++) 
 			for(int x=0; x<chunksOnScreen.length; x++) 
-				if(texturenOnScreen[x][y]!=null)
-			ResourceManager.getSelf().getTextureRenderer().render(texturenOnScreen[x][y].getId(),
-					new Vec2(chunksOnScreen[x][y].getX()*chunkWidth, chunksOnScreen[x][y].getY()*chunkHeight),
-					new Vec2(chunkWidth, chunkHeight), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
-		
-			//ResourceManager.getSelf().getTextureRenderer().render(terrain.getId(),new Vec2((int)camera.getX(),(int)camera.getY()),
-					//new Vec2(Engine.getSelf().getWindow().getSize()), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
+				if(texturenOnScreen[x][y]!=null && chunksOnScreen[x][y]!=null)
+					ResourceManager.getSelf().getTextureRenderer().render(texturenOnScreen[x][y].getId(),
+							new Vec2(chunksOnScreen[x][y].getX()*ChunkMap.CHUNK_WIDTH, chunksOnScreen[x][y].getY()*ChunkMap.CHUNK_HEIGHT),
+							new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
+
 		ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
 				Engine.getSelf().getWindow().getSize(), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
 
-		for(GameObject o: finalLayer) {
+		for(GameObject o: quadTree.queryRange(screenView)) {
 			o.renderDebug();
 			if(o.getController()!=null)
 				o.getController().renderDebug();
 			
-			if(grassPool.getPool().contains(o))
+			if(o.getGroup()!=null && o.getGroup().equals("vegetation"))
 				ResourceManager.getSelf().getGrassRenderer().render(o);
 			else
 				o.render();
@@ -859,166 +615,62 @@ public class Game extends GameState{
 					int ry = (int) (camera.getY() + y*graphDivisor);
 					
 					//if(obstacleMap[x][y])
-						//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(8,8), 0, new Vec3(1,0,0));
+						//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(18,18), 0, new Vec3(1,0,1));
+					//if(!obstacleMap[x][y])
+						//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(18,18), 0, new Vec3(0,1,0));
 				}
-		
 	    
-	     //ResourceManager.getSelf().getTextureRenderer().render(test.getTexture(), new Vec2(45000,45000), new Vec2(600,600), 0, new Vec4(1,1,1,1));
-		//engine.ui.Font test = new engine.ui.Font();
-		//test.render("Olá! Eu sou um texto =]\ncom barra n", 45000,45000, new Vec4(1f,0f,0,1f));
+		for(UIObject o: UILayer) {
+			o.render();
+		}
+		
 	}
 	
 	@Override
 	public void update(float deltaTime) {
-		//generateGraph();
-		
-		alListener3f(AL_POSITION, camera.getX(),camera.getY(),0); //TODO: change to players Position instead of camera.
-		PhysicsEngine.getSelf().update();
+		chunkMap.update();
+		alListener3f(AL_POSITION, player.getX(), player.getY(),0);
 		
 		timer.update();
 		timerWetSand.update();
-		ResourceManager.getSelf().getShader("grass").use();
+		
 		float sin = (float) Math.sin(Math.toRadians(timer.getDegree()))*1f;
-		ResourceManager.getSelf().getShader("grass").setFloat("dx", (sin<0) ? sin*-1: sin);
+		sin = (sin<0) ? sin*-1: sin;
 		
-		if((int) (camera.getX()/chunkWidth)!=previousCameraGridX || (int) (camera.getY()/chunkHeight)!=previousCameraGridY)
+		ResourceManager.getSelf().getShader("grass").use();
+		ResourceManager.getSelf().getShader("grass").setFloat("dx", sin);
+		
+		
+		ResourceManager.getSelf().getShader("texture").use();
+		sin = (float) Math.sin(Math.toRadians(timerWetSand.getDegree()))*1f;
+		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1);
+		//ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0.42f*1/sin,0.06f*1/sin,0.5176f*1/sin));
+		
+		if((int) (camera.getX()/ChunkMap.CHUNK_WIDTH)!=previousCameraGridX || (int) (camera.getY()/ChunkMap.CHUNK_HEIGHT)!=previousCameraGridY)
 			generateChunks();
-		//generateTerrain();
-		
-		/*player.update(deltaTime, this);
-		for(GameObject o: movableLayer)
-			o.update(deltaTime, this);
-		
-		for(GameObject o: grassPool.getPool())
-			o.update(deltaTime, this);
-		
-		for(GameObject o: staticLayer) {
-			float inc = 0;
-			
-			float aux = o.getSkew().x;
-			
-			if(aux<-30)
-				shouldInc = true;
-			if(aux>30)
-				shouldInc = false;
-			
-			if(shouldInc)
-				inc = 0.5f;
-			else
-				inc = -.5f;
-	
-			//o.setSkew(new Vec2(o.getSkew().x+inc, o.getSkew().y));
-			o.update(deltaTime, this);
-		}*/
 		
 		finalLayer.clear();
 		
-			for(int y=0; y<chunksOnScreen[0].length; y++) 
-				for(int x=0; x<chunksOnScreen.length; x++)
-					if(chunksOnScreen[x][y]!=null) {
-							finalLayer.addAll(chunksOnScreen[x][y].getStaticLayer());
-					}
+		for(int y=0; y<chunksOnScreen[0].length; y++) 
+			for(int x=0; x<chunksOnScreen.length; x++)
+				if(chunksOnScreen[x][y]!=null) 
+						finalLayer.addAll(chunksOnScreen[x][y].getStaticLayer());
+				
 		
 		finalLayer.addAll(movableLayer);
 		finalLayer.addAll(staticLayer);
-		finalLayer.addAll(grassPool.getPool());
 		finalLayer.add(player);
 		Collections.sort(finalLayer); //TODO: get a better sort method
 										// excluir os objetos fora da tela. não precisa dar sort neles. só return.
-		Hit h;
-		/*for(int i=0; i<finalLayer.size(); i++) {
-			for(int k=i+1;k<finalLayer.size();k++) {
-				h = finalLayer.get(i).getBaseBox().intersectAABB(finalLayer.get(k).getBaseBox());
-				if(h!=null) {
-					//finalLayer.get(k).getBaseBox().x = h.pos.x;
-					//finalLayer.get(k).getBaseBox().y = h.pos.y;
-					finalLayer.get(k).move(h.delta.x, h.delta.y);
-				}
-				//if(finalLayer.get(i).checkBaseBoxCollisionAABB(finalLayer.get(k))) //TODO: dividir os espaços usando uma quadtree
-					//finalLayer.get(i).resolveCollision(finalLayer.get(k));
-			}
-		}*/
-		player.update(deltaTime, this);
-
 		
-		for(int i=0; i<finalLayer.size(); i++) { //TODO: verify only objects on screen
-			
-			//if(finalLayer.get(i).getAnimations()!=null)
-			//	System.out.println(finalLayer.get(i).getAnimations().getCurrentAnimation().getCurrentFrame());
-			//if(!isOnScreen(finalLayer.get(i)))
-				//continue;
-			if(finalLayer.get(i)==player)
-				continue;
-			
-			finalLayer.get(i).update(deltaTime, this);
-			
-			Rectangle rec = new Rectangle(
-					player.getPreviousPosition().x, 
-					player.getPreviousPosition().y + player.getSize().y - player.getBaseBox().height,
-					player.getBaseBox().width,
-					player.getBaseBox().height);
-			
-
-			h = finalLayer.get(i).getBaseBox().sweepIntersectsAABB(
-					rec,
-					new Vec2(player.getPosition().x - player.getPreviousPosition().x,
-							player.getPosition().y - player.getPreviousPosition().y));
-			
-			/*if(h!=null) {
-				//player.move(h.delta.x, h.delta.y);
-				boolean xAxisBlocked = false;
-				boolean yAxisBlocked = false;
-				int xMoving = player.getMovingDirectionX();
-				int yMoving = player.getMovingDirectionY();
-				
-				//TODO:the problem is here
-
-				player.moveDirectlyTo(h.pos.x - player.getBaseBox().getRadiusX(), 
-						h.pos.y - player.getBaseBox().getRadiusY() - (player.getSize().y - player.getBaseBox().height));
-				
-				
-				if( MathExt.openIntervalIntersect(
-						player.getBaseBox().y, 
-						player.getBaseBox().y+player.getBaseBox().height,
-						finalLayer.get(i).getBaseBox().y,
-						finalLayer.get(i).getBaseBox().y+finalLayer.get(i).getBaseBox().height))
-					xAxisBlocked = true;
-
-
-				if(MathExt.openIntervalIntersect(
-						player.getBaseBox().x, 
-						player.getBaseBox().x+player.getBaseBox().width,
-						finalLayer.get(i).getBaseBox().x,
-						finalLayer.get(i).getBaseBox().x+finalLayer.get(i).getBaseBox().width))
-					yAxisBlocked = true;
-
-				
-				if(!xAxisBlocked && xMoving==player.RIGHT)
-					player.move(player.getVelocity()*deltaTime, 0);
-				if(!xAxisBlocked && xMoving==player.LEFT)
-					player.move(-player.getVelocity()*deltaTime, 0);
-				if(!yAxisBlocked && yMoving==player.TOP)
-					player.move(0, -player.getVelocity()*deltaTime);
-				if(!yAxisBlocked && yMoving==player.BOTTOM)
-					player.move(0, player.getVelocity()*deltaTime);
-			}*/
-		}
+		for(GameObject o: quadTree.queryRange(screenView))  //TODO: verify only objects on screen
+			o.update(deltaTime, this);
 		
 		camera.update(deltaTime); //TODO: why should it be after all obj update?
 		screenView.x = camera.getX();
 		screenView.y = camera.getY();
-		
-		int coordXMap = Math.abs((int) (camera.getX() - player.getBaseBox().getCenterX())); // TODO: it'll get an error when the object is outsied the camera Width and height view
-		int coordYMap = Math.abs((int) (camera.getY() - player.getBaseBox().getCenterY()));
-		
-		
-		/*if(noiseRGB[(int) ((float)coordXMap/noiseDivisor)][(int) ((float)coordYMap/noiseDivisor)]==Color.TURKISH) {
-			player.setTexture("ranger_swimming");
-			player.setVelocity(1200);
-		}else {
-			player.setTexture(null);
-			player.setVelocity(1200);
-		}*/
+		initQuadTree(screenView);
+		generateCollisionGraph();
 	}
 
 	public Camera getCamera() {
@@ -1029,7 +681,21 @@ public class Game extends GameState{
 		this.camera = camera;
 	}
 
+
+	public ArrayList<UIObject> getUiLayer() {
+		return UILayer;
+	}
+
+	public ArrayList<GameObject> getStaticLayer() {
+		return staticLayer;
+	}
+	
+	/**
+	 * Do not modify the finalLayer. It's always mutating in order to the system's work
+	 * @return
+	 */
 	public ArrayList<GameObject> getFinalLayer() {
 		return finalLayer;
 	}
+
 }

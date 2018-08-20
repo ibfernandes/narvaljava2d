@@ -26,6 +26,8 @@ public class Engine implements Runnable{
 	public static final long SECOND = 1000000000L; //10^9
 	public static final long MILISECOND = 1000000L;//10^6
 	public static final int TARGET_UPDATES = 60;
+	public static final float TARGET_DT = 1f/(float)TARGET_UPDATES;
+	private float accumulator = 0;
 	private static Engine self;
 	
 	private Engine() {}
@@ -74,15 +76,30 @@ public class Engine implements Runnable{
 		ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
 	}
 	
-	private void update() {
+	private int update() {
+		int count = 1;
 		currentFrame = System.nanoTime(); 
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 		
-		glfwPollEvents();
+		float deltaTimeMiliSeconds = (float)deltaTime/(float)SECOND;
 		
-		GSM.getSelf().update((float)deltaTime/(float)SECOND);
-		PhysicsEngine.getSelf().update();
+		if(deltaTimeMiliSeconds> TARGET_DT*2)
+			deltaTimeMiliSeconds = TARGET_DT*2;
+		
+		accumulator += deltaTimeMiliSeconds;
+		
+		while (accumulator > TARGET_DT) {
+			count++;
+            accumulator -= deltaTimeMiliSeconds;
+		}
+		
+		for(int i=0; i<count;i++) {
+			glfwPollEvents();
+			GSM.getSelf().update(deltaTimeMiliSeconds);
+			PhysicsEngine.getSelf().update(deltaTimeMiliSeconds);
+		}
+		return count;
 	}
 	
 	private void render() {
@@ -99,8 +116,8 @@ public class Engine implements Runnable{
 		lastSecond = System.nanoTime();
 		
 		while(!glfwWindowShouldClose(window.getId())) {
-			update();
-			updates++;
+			updates += update();
+	
 			
 			render();
 			fps++;

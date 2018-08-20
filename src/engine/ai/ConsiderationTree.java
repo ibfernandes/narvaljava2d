@@ -24,6 +24,9 @@ public class ConsiderationTree {
 			}
 		}
 		
-		return considerationBuffer.getAction();	
+		if(buffer>0)
+			return considerationBuffer.getAction();	
+		else
+			return new Action("");
 	}
 }

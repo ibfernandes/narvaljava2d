@@ -44,13 +44,14 @@ public class Font {
     * Height of the font.
     */
    private int fontHeight;
-
+   private Vec2 boxSize = new Vec2(0,0);
+   
    /**
     * Creates a default antialiased font with monospaced glyphs and default
     * size 16.
     */
    public Font() {
-       this(new java.awt.Font(MONOSPACED, PLAIN, 64), true);
+       this(new java.awt.Font(MONOSPACED, PLAIN, 16), true);
    }
 
    /**
@@ -353,8 +354,6 @@ public class Font {
            drawY += textHeight - fontHeight;
        }
 
-       //texture.bind();
-       //renderer.begin();
        for (int i = 0; i < text.length(); i++) {
            char ch = text.charAt(i);
            if (ch == '\n') {
@@ -368,7 +367,6 @@ public class Font {
                continue;
            }
            Glyph g = glyphs.get(ch);
-           //renderer.drawTextureRegion(texture, drawX, drawY, g.x, g.y, g.width, g.height, color);
           
            float xStart = (float)g.x/(float)texture.getWidth();
            float yStart = (float)g.y/(float)texture.getHeight();
@@ -381,6 +379,14 @@ public class Font {
        }
       // renderer.end();
    }
+
+public Vec2 getBoxSize() {
+	return boxSize;
+}
+
+public void setBoxSize(Vec2 boxSize) {
+	this.boxSize = boxSize;
+}
 
    /**
     * Draw text at the specified position.
