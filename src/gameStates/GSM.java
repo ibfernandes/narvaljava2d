@@ -41,10 +41,13 @@ public final class GSM {
 	public void render() {
 		actualState.render();
 	}
+	
 	public void update(float deltaTime) {
 		actualState.update(deltaTime);
 	}
-
+	public void variableUpdate(float deltaTime) {
+		actualState.variableUpdate(deltaTime);
+	}
 
 	public void setKeyboard(KeyboardControl keyboard) {
 		this.keyboard = keyboard;

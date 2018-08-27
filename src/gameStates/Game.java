@@ -263,7 +263,7 @@ public class Game extends GameState{
 		//Create GameObjects
 		//==================================
 		//createClerics(4);
-		createBirds(300);
+		createBirds(30);
 		
 		//Create fire
 		GameObject bonfire = new GameObject();
@@ -353,7 +353,7 @@ public class Game extends GameState{
 		//==================================
 		camera = new Camera();
 		camera.setFocusOn(player);
-		camera.move(-35000, -35000);
+		camera.move(-startPoint.x, -startPoint.y);
 		
 		//==================================
 		//Tests
@@ -432,15 +432,15 @@ public class Game extends GameState{
 			GameObject o = new GameObject();
 			o.setGroup("birds");
 			int var = random.nextInt(10);
-			o.setSize(new Vec2(32 -var,32- var));
+			o.setSize(new Vec2(160 -var,160- var));
 			o.setVelocity(200);
 			o.setColor(new Vec4(1,1,1,1));
 			o.setBaseBox(new Vec2(0, 0));
-			o.setPosition(new Vec2(startPoint.x+random.nextInt(500),startPoint.y+random.nextInt(500)));
+			o.setPosition(new Vec2(startPoint.x+ i*300,startPoint.y));
 			o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
 			
 			AIController ai =  new AIController();
-			o.setController(ai);
+			//o.setController(ai);
 
 			String bird = "";
 			String options[] = {"blue_bird","black_bird", "red_bird", "yellow_bird", "orange_bird"};
@@ -581,21 +581,23 @@ public class Game extends GameState{
 	
 	@Override
 	public void render() {
-		renderShadow();
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		
+		//renderShadow();
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(1,1,1,1);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		for(int y=0; y<chunksOnScreen[0].length; y++) 
+		/*for(int y=0; y<chunksOnScreen[0].length; y++) 
 			for(int x=0; x<chunksOnScreen.length; x++) 
 				if(texturenOnScreen[x][y]!=null && chunksOnScreen[x][y]!=null)
 					ResourceManager.getSelf().getTextureRenderer().render(texturenOnScreen[x][y].getId(),
 							new Vec2(chunksOnScreen[x][y].getX()*ChunkMap.CHUNK_WIDTH, chunksOnScreen[x][y].getY()*ChunkMap.CHUNK_HEIGHT),
-							new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
+							new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));*/
 
-		ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
-				Engine.getSelf().getWindow().getSize(), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
-
+	//	ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
+		//		Engine.getSelf().getWindow().getSize(), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
+		
+		
 		for(GameObject o: quadTree.queryRange(screenView)) {
 			o.renderDebug();
 			if(o.getController()!=null)
@@ -607,7 +609,7 @@ public class Game extends GameState{
 				o.render();
 		}
 		
-		if(obstacleMap!=null)
+		/*if(obstacleMap!=null)
 			for(int y=0; y< obstacleMap[0].length; y++)
 				for(int x=0; x< obstacleMap.length; x++) {
 					
@@ -618,17 +620,21 @@ public class Game extends GameState{
 						//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(18,18), 0, new Vec3(1,0,1));
 					//if(!obstacleMap[x][y])
 						//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(18,18), 0, new Vec3(0,1,0));
-				}
+				}*/
 	    
 		for(UIObject o: UILayer) {
 			o.render();
 		}
 		
 	}
+	@Override
+	public void variableUpdate(float alpha) {
+		camera.variableUpdate(alpha);
+	}
 	
 	@Override
 	public void update(float deltaTime) {
-		chunkMap.update();
+		//chunkMap.update();
 		alListener3f(AL_POSITION, player.getX(), player.getY(),0);
 		
 		timer.update();
@@ -646,15 +652,15 @@ public class Game extends GameState{
 		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1);
 		//ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0.42f*1/sin,0.06f*1/sin,0.5176f*1/sin));
 		
-		if((int) (camera.getX()/ChunkMap.CHUNK_WIDTH)!=previousCameraGridX || (int) (camera.getY()/ChunkMap.CHUNK_HEIGHT)!=previousCameraGridY)
-			generateChunks();
+		//if((int) (camera.getX()/ChunkMap.CHUNK_WIDTH)!=previousCameraGridX || (int) (camera.getY()/ChunkMap.CHUNK_HEIGHT)!=previousCameraGridY)
+		//	generateChunks();
 		
 		finalLayer.clear();
 		
-		for(int y=0; y<chunksOnScreen[0].length; y++) 
+		/*for(int y=0; y<chunksOnScreen[0].length; y++) 
 			for(int x=0; x<chunksOnScreen.length; x++)
 				if(chunksOnScreen[x][y]!=null) 
-						finalLayer.addAll(chunksOnScreen[x][y].getStaticLayer());
+						finalLayer.addAll(chunksOnScreen[x][y].getStaticLayer());*/
 				
 		
 		finalLayer.addAll(movableLayer);
@@ -670,7 +676,7 @@ public class Game extends GameState{
 		screenView.x = camera.getX();
 		screenView.y = camera.getY();
 		initQuadTree(screenView);
-		generateCollisionGraph();
+		//generateCollisionGraph();
 	}
 
 	public Camera getCamera() {

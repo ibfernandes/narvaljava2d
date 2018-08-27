@@ -145,8 +145,8 @@ public class Rectangle implements Serializable {
     
     public boolean intersectsPoint(Vec2 point) {
     	
-    	if ( point.x>this.x && point.x<this.x+this.width)
-    		if(point.y>this.y && point.y<this.y + this.height)
+    	if ( point.x>=this.x && point.x<=this.x+this.width)
+    		if(point.y>=this.y && point.y<=this.y + this.height)
     			return true;
     	return false;
     }

@@ -14,7 +14,7 @@ import engine.engine.Engine;
 
 public class ReadingChunk {
 	private Future<Integer> promise;
-	private ByteBuffer buffer = ByteBuffer.allocate(1024*1000);
+	private ByteBuffer buffer = ByteBuffer.allocate(ChunkMap.CHUNK_BUFFER_SIZE);
 	private String id;
 	
 	public ReadingChunk(String path, String id) {

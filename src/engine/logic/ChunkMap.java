@@ -29,8 +29,9 @@ public class ChunkMap {
 	private ArrayList<ReadingChunk> loadingChunks = new ArrayList<>();
 	private ArrayList<ReadingChunk> loadingChunksToRemove = new ArrayList<>();
 	
-	public static final int CHUNK_WIDTH = 2048;
-	public static final int CHUNK_HEIGHT = 2048;
+	public static final int CHUNK_WIDTH = 4096;
+	public static final int CHUNK_HEIGHT = 4096;
+	public static final int CHUNK_BUFFER_SIZE = ((CHUNK_WIDTH*CHUNK_HEIGHT)/CHUNK_WIDTH)*1000;
 	public static final int MAP_WIDTH = 60000;
 	public static final int MAP_HEIGHT = 60000;
 	
@@ -88,7 +89,6 @@ public class ChunkMap {
 		
 		System.out.println("\nreadFile: \t"+x+"_"+y+" \t"+(System.nanoTime()-start)/Engine.MILISECOND+"ms");
 	}
-	ByteBuffer saveBuffer = ByteBuffer.allocate(1024*1000);
 	
 	public void saveFile(Chunk chunk) {
 		long start = System.nanoTime();
