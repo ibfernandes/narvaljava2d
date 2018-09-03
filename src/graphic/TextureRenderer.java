@@ -45,7 +45,8 @@ public class TextureRenderer {
 		
 		glBindVertexArray(quadVAO);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0 , 4, GL_FLOAT, false, Float.BYTES *4, 0);
+		glVertexAttribPointer(0 , 4, GL_FLOAT, false, Float.BYTES * 4, 0);
+		
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 	}

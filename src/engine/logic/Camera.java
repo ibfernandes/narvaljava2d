@@ -38,24 +38,21 @@ public class Camera {
 		
 	}
 	
-	//prevX = -focus.getX() +1280/2 - focus.getSize().x/2;
-	//prevY = -focus.getY() +720/2 - focus.getSize().y/2;
-	float buff = 0;
 	public void update(float deltaTime) {
-		buff -= 6;
 		prevX = this.x;
 		prevY = this.y;
 		
 		if(focus !=null)
-			moveDirectTo(-focus.getX() +1280/2 - focus.getSize().x/2 + buff, -focus.getY() +720/2 - focus.getSize().y/2); //TODO: should use window.width and height
+			moveDirectTo(-focus.getX() +1280/2 - focus.getSize().x/2, -focus.getY() +720/2 - focus.getSize().y/2); //TODO: should use window.width and height
 	}
 	
 	Mat4 transform  = new Mat4();
 	public void variableUpdate(float alpha) {
 		float x = this.x*alpha + prevX * (1f - alpha);
 		float y = this.y*alpha + prevY * (1f - alpha);
-		 transform = transform.identity();
-		 transform.translate(x,y,0);
+		
+		transform = transform.identity();
+		transform.translate(x,y,0);
 		
 		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setMat4("camera", transform);

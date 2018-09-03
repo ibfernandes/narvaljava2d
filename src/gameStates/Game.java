@@ -262,8 +262,8 @@ public class Game extends GameState{
 		//==================================
 		//Create GameObjects
 		//==================================
-		//createClerics(4);
-		createBirds(30);
+		createClerics(1);
+		//createBirds(30);
 		
 		//Create fire
 		GameObject bonfire = new GameObject();
@@ -676,7 +676,7 @@ public class Game extends GameState{
 		screenView.x = camera.getX();
 		screenView.y = camera.getY();
 		initQuadTree(screenView);
-		//generateCollisionGraph();
+		generateCollisionGraph();
 	}
 
 	public Camera getCamera() {
