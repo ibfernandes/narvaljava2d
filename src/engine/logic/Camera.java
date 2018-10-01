@@ -1,6 +1,9 @@
 package engine.logic;
 
 import engine.engine.Engine;
+import engine.entity.Entity;
+import engine.entity.EntityManager;
+import engine.entity.component.RenderComponent;
 import engine.utilities.ResourceManager;
 import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
@@ -8,17 +11,18 @@ import glm.vec._3.Vec3;
 
 public class Camera {
 	private float x=0,y=0,z=0;
-	private float prevX=0, prevY=0;
-	private GameObject focus;
+	private Entity focus;
 	private Mat4 camera;
+	private EntityManager em;
 	
-	public Camera() {
+	public Camera(EntityManager em) {
+		this.em = em;
 		camera = new Mat4();
 		camera = camera.identity();
 	}
 	
-	public void setFocusOn(GameObject obj) {
-		focus = obj;
+	public void setFocusOn(Entity entity) {
+		focus = entity;
 	}
 	
 	public void moveDirectTo(float x, float y) {
@@ -39,20 +43,20 @@ public class Camera {
 	}
 	
 	public void update(float deltaTime) {
-		prevX = this.x;
-		prevY = this.y;
-		
-		if(focus !=null)
-			moveDirectTo(-focus.getX() +1280/2 - focus.getSize().x/2, -focus.getY() +720/2 - focus.getSize().y/2); //TODO: should use window.width and height
 	}
 	
 	Mat4 transform  = new Mat4();
+	
 	public void variableUpdate(float alpha) {
-		float x = this.x*alpha + prevX * (1f - alpha);
-		float y = this.y*alpha + prevY * (1f - alpha);
+		RenderComponent rc = ((RenderComponent)(em.getFirstComponent(focus, RenderComponent.class)));
+		Vec2 position = rc.getRenderPosition();
+		Vec2 size = rc.getSize();
 		
+		if(focus != null)
+			moveDirectTo(-position.x + 1280/2 - size.x/2, -position.y +720/2 - size.y/2); //TODO: should use window.width and height, also should use renderX and renderY?
+
 		transform = transform.identity();
-		transform.translate(x,y,0);
+		transform.translate(this.x,this.y,0);
 		
 		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setMat4("camera", transform);

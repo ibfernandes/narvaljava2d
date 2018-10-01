@@ -67,13 +67,8 @@ public class TextureRenderer {
 			vertices[i*p +20] = 1; vertices[i*p +21] = i*offset; 			vertices[i*p +22] = 1; vertices[i*p +23] = i*offset;
 		}
 		
-
-
-		
 		return vertices;
 	}
-	
-	
 	
 	public void render(Texture texture, Vec2 position, Vec2 size, float rotate, Vec4 color) {//TODO: is this working?
 		shader.use();

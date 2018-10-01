@@ -23,24 +23,37 @@ public class SavingChunk {
 		Path filePath = Paths.get(path);
 		this.id = chunk.getID(chunk.getX(), chunk.getY());
 
-		try {
-			AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(
-					filePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
-			
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ObjectOutputStream out = new ObjectOutputStream(bos);
-			out.writeObject(chunk);
-			out.flush();
-			
-			buffer.put(bos.toByteArray());
-			buffer.flip();
-		 
-		    promise = fileChannel.write(buffer, 0);
-		    //promise.get();
-		    buffer.clear();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+
+		//Thread t = new Thread() {
+		//	public void run() {
+				try {
+				AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(
+						filePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+				
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				ObjectOutputStream out = new ObjectOutputStream(bos);
+				
+				long start = System.nanoTime();
+				out.writeObject(chunk);
+				out.flush();
+				//System.out.println("writeObject: \t"+chunk.getFileName()+" \t"+(System.nanoTime()-start)/Engine.MILISECOND+"ms");
+				
+				start = System.nanoTime();
+				buffer.put(bos.toByteArray());
+				buffer.flip();
+				//System.out.println("bufferPut: \t"+chunk.getFileName()+" \t"+(System.nanoTime()-start)/Engine.MILISECOND+"ms");
+				
+			    promise = fileChannel.write(buffer, 0);
+			    
+			    
+			    //promise.get();
+			    buffer.clear();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+		//	}
+		//};
+		//t.start();
 	}
 	
 	public boolean isDone() {

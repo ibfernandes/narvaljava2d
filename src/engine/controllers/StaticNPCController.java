@@ -18,6 +18,8 @@ import engine.ai.ConsiderationWander;
 import engine.ai.State;
 import engine.engine.Engine;
 import engine.engine.PhysicsEngine;
+import engine.entity.Entity;
+import engine.entity.EntityManager;
 import engine.graphic.Animation;
 import engine.logic.GameObject;
 import engine.ui.UIObject;
@@ -46,7 +48,10 @@ public class StaticNPCController extends Controller{
 		Action a = ct.calculateAction(object, context);
 		
 		if(a.getActionName().equals("talk")) {
-			System.out.println("Work!");
+			talkingBox = new UIObject();
+			talkingBox.setPosition(new Vec2(object.getPosition().x + object.getSize().x/2 - button.getSize().x/2 + 90, object.getPosition().y - button.getSize().y -15));
+			talkingBox.setFont("monospace");
+			talkingBox.setText("Oi =]");
 		}
 		
 		boolean flagAdd = false;
@@ -71,10 +76,7 @@ public class StaticNPCController extends Controller{
 			
 			button.setAnimations(asm);
 			
-			talkingBox = new UIObject();
-			talkingBox.setPosition(new Vec2(object.getPosition().x + object.getSize().x/2 - button.getSize().x/2 + 90, object.getPosition().y - button.getSize().y -15));
-			talkingBox.setFont("monospace");
-			talkingBox.setText("Oi =]");
+			
 		}
 		
 		for(GameObject o: context.getFinalLayer()) {
@@ -104,6 +106,10 @@ public class StaticNPCController extends Controller{
 	@Override
 	public void renderDebug() {
 
+	}
+
+	@Override
+	public void update(float deltaTime, Entity object, EntityManager context) {
 	}
 
 

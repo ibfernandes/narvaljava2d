@@ -119,11 +119,6 @@ public class ShadowRenderer {
 		model = model.mul(skew);
 		model = model.scale(shadow.getSize().x, shadow.getSize().y, 1);
 
-		
-		
-
-		
-		
 		shader.setMat4("model", model);
 		shader.setVec4("spriteColor", color);
 		shader.setVec2("flip", shadow.getOrientation());

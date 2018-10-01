@@ -52,6 +52,17 @@ public class Rectangle implements Serializable {
                 (th < ty || th > ry));
     }
     
+
+	public boolean fitsEntirely(Rectangle r){
+	    if ( (r.x+r.width) < (x+width)
+	        && (r.x) > (x)
+	        && (r.y) > (y)
+	        && (r.y+r.height) < (y+height))
+	        return true;
+	    else
+	        return false;
+	}
+    
     /**
      * Implements SAT. source: http://noonat.github.io/intersect/#aabb-vs-aabb
      * @param box

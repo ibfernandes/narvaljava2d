@@ -26,7 +26,7 @@ public class Main {
 		
 		//Editor ed = new Editor();
 
-
+		
 		 String filePath = "/SourceSansPro.ttf";
 
 		 //new TruetypeFont(24,filePath).run("STB Truetype Demo");
@@ -35,7 +35,6 @@ public class Main {
 		
 		Thread tr = new Thread(Engine.getSelf());
 		tr.start();
-		 
 
 		
 		//new MainFrame("http://www.google.com", OS.isLinux(), false);

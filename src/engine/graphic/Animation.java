@@ -14,14 +14,14 @@ public class Animation implements Serializable{
 	private String texture;
 	private long frameDuration = -1;
 	private long startTime = System.nanoTime();
+	private boolean playedOnce = false;
 
-	
 	/**
 	 * Frame duration in milliseconds
 	 * @param texture
 	 * @param frameDurantion
 	 */
-	public Animation(String texture, long frameDuration) {
+	public Animation(String texture, long frameDuration) { //TODO: pass a vector of frame times instead of a linear one
 		this.texture = texture;
 		this.frameDuration = frameDuration;
 	}
@@ -46,6 +46,7 @@ public class Animation implements Serializable{
 						(size.y)/height
 					);
 		}
+		
 	}
 	
 	public Vec4 getFrame(int index) {
@@ -64,14 +65,23 @@ public class Animation implements Serializable{
 		
 		if(frameDuration>0) {
 			long elapsed = (System.nanoTime() - startTime) / Engine.MILISECOND;
+			
 			if(elapsed > frameDuration) {
 				currentFrame++;
 				startTime = System.nanoTime();
 			}
 			if(currentFrame == frames.length) {
 				currentFrame = 0;
-				//playedOnce = true;
+				playedOnce = true;
 			}
 		}
+	}
+
+	public boolean hasPlayedOnce() {
+		return playedOnce;
+	}
+
+	public void setPlayedOnce(boolean playedOnce) {
+		this.playedOnce = playedOnce;
 	}
 }

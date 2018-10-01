@@ -35,6 +35,7 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 	private static final long serialVersionUID = 1L;
 	private String group;
 	private Vec2 position = new Vec2(0,0);
+	private Vec2 renderPosition = new Vec2(0,0);
 	private Vec2 previousPosition = new Vec2(0,0);
 	private Vec2 orientation = new Vec2(0,0); //Default: facing the same as image
 	private Vec2 size		 = new Vec2(0,0);
@@ -80,7 +81,8 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 		 
     private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
         ois.defaultReadObject();
-        createBody(PhysicsEngine.getSelf().getWorld(), type);
+        
+       // createBody(PhysicsEngine.getSelf().getWorld(), type);
     }
 
 	/**
@@ -146,18 +148,17 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 	}
 	
 	public void render() {
-		
-		
+
 		 if (texture!=null) {
 			 ResourceManager.getSelf().getTextureRenderer().render(
 						ResourceManager.getSelf().getTexture(texture),
 						ResourceManager.getSelf().getTexture(texture+"_normal"),
-						position, size, rotation, color, new Vec4(0,0,1,1), orientation, skew);
+						renderPosition, size, rotation, color, new Vec4(0,0,1,1), orientation, skew);
 		}else if(animations!=null) {
 			ResourceManager.getSelf().getTextureRenderer().render(
 					ResourceManager.getSelf().getTexture(animations.getCurrentAnimation().getTexture()),
 					ResourceManager.getSelf().getTexture(animations.getCurrentAnimation().getTexture()+"_normal"),
-					position, size, rotation, color, animations.getCurrentAnimation().getCurrentFrame(), orientation, skew);
+					renderPosition, size, rotation, color, animations.getCurrentAnimation().getCurrentFrame(), orientation, skew);
 		}else if(texture==null) {
 			//cubeRenderer.render(position, size, rotation, color);
 		}
@@ -187,6 +188,11 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 			controller.update(deltaTime, this, game);
 		if(animations!=null)
 			animations.getCurrentAnimation().update();
+	}
+	
+	public void variableUpdate(float alpha) {
+		renderPosition.x = position.x*alpha + previousPosition.x * (1f - alpha);
+		renderPosition.y = position.y*alpha + previousPosition.y * (1f - alpha);
 	}
 
 	public void moveDirectlyTo(float x, float y) {

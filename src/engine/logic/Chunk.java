@@ -48,7 +48,7 @@ public class Chunk implements Serializable{
 		mapRGB = new int[textureWidth][textureHeight];
 		
 		//long start = System.nanoTime();
-		generateTerrain();
+		//generateTerrain();
 		//System.out.println("\n generateTerrain: "+(System.nanoTime()-start)/Engine.MILISECOND);
 		//generateGameObjectLayers();
 	}
@@ -71,7 +71,7 @@ public class Chunk implements Serializable{
 		return noise;
 	}
 	
-	private void generateTerrain() {
+	public void generateTerrain() {
 		float d;
 		float a = 0.15f;
 		float b = 0.9f;
@@ -104,12 +104,13 @@ public class Chunk implements Serializable{
 				
 				
 				if(perlinNoise[x][y]>-.1 ) { 		//land
-					mapRGB[x][y] = Color.ESMERALDA; //esmeralda
+					mapRGB[x][y] = Color.GRASS_GROUND; //esmeralda
 					if(fractalNoise[x][y]>0.2)
-						mapRGB[x][y] = Color.DARKED_ESMERALDA;
+						mapRGB[x][y] = Color.GRASS_GROUND_LIGHTER;
 				}
+				
 				if(perlinNoise[x][y]<=-.1)  //preenche tudo com água
-					mapRGB[x][y] = 	Color.TURKISH; //turquesa
+					mapRGB[x][y] = 	Color.OCEAN_GROUND; //turquesa
 				
 				if(perlinNoise[x][y]<=-.1) {	//sand
 					mapRGB[x][y] =  (255<<24) | (244<<16) | (234<<8) | (187); //ARGB
@@ -148,7 +149,7 @@ public class Chunk implements Serializable{
 						continue;
 					
 					GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
-					o.setSize(new Vec2(512,512));
+					o.setSize(new Vec2(740,612));
 					o.setVelocity(0);
 					o.setColor(new Vec4(1,1,1,1));
 					if(random.nextBoolean())
@@ -161,9 +162,9 @@ public class Chunk implements Serializable{
 					ASM asm = new ASM(); //TODO: setTexutre not working?!
 					
 					Animation an;
-					an = new Animation("tree", -1);
+					an = new Animation("tree2", -1);
 					
-					an.setFrames(1, new Vec2(0,0), new Vec2(64,64)); // TODO: cuting lastline´, something to with squared size?
+					an.setFrames(1, new Vec2(0,0), new Vec2(67,51)); // TODO: cuting lastline´, something to with squared size?
 					asm.addAnimation("idle_1", an);
 					asm.changeStateTo("idle_1");
 					o.setAnimations(asm);

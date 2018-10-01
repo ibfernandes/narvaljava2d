@@ -28,9 +28,12 @@ public class ChunkMap {
 	private int mapSize = 0; //How many chunks are stored now.
 	private ArrayList<ReadingChunk> loadingChunks = new ArrayList<>();
 	private ArrayList<ReadingChunk> loadingChunksToRemove = new ArrayList<>();
+	private ArrayList<SavingChunk> savingChunks = new ArrayList<>();
+	private ArrayList<SavingChunk> savingChunksToRemove = new ArrayList<>();
+	private ArrayList<Chunk> chunksToSave = new ArrayList<>();
 	
-	public static final int CHUNK_WIDTH = 4096;
-	public static final int CHUNK_HEIGHT = 4096;
+	public static final int CHUNK_WIDTH = 2048;
+	public static final int CHUNK_HEIGHT = 2048;
 	public static final int CHUNK_BUFFER_SIZE = ((CHUNK_WIDTH*CHUNK_HEIGHT)/CHUNK_WIDTH)*1000;
 	public static final int MAP_WIDTH = 60000;
 	public static final int MAP_HEIGHT = 60000;
@@ -60,7 +63,7 @@ public class ChunkMap {
 			if(chunkExistsOnDisk(x,y))
 				loadFromFile(x,y);
 			else
-				saveFile(new Chunk(x,y,CHUNK_WIDTH, CHUNK_HEIGHT, MAP_WIDTH, MAP_HEIGHT));
+				chunksToSave.add(new Chunk(x,y,CHUNK_WIDTH, CHUNK_HEIGHT, MAP_WIDTH, MAP_HEIGHT));
 		
 		return (chunks.get(x)==null)? null : chunks.get(x).get(y);
 	}
@@ -78,6 +81,24 @@ public class ChunkMap {
 		
 		for(ReadingChunk r: loadingChunksToRemove)
 			loadingChunks.remove(r);
+		
+		
+		if(!chunksToSave.isEmpty() && savingChunks.isEmpty()) {
+			
+			chunksToSave.get(0).generateTerrain();
+			put(chunksToSave.get(0));
+			saveFile(chunksToSave.get(0));
+			
+			chunksToSave.remove(0);
+		}
+		
+		for( SavingChunk s: savingChunks)
+			if(s.isDone()) {
+				savingChunksToRemove.add(s);
+			}
+		
+		for(SavingChunk toRemove: savingChunksToRemove)
+			savingChunks.remove(toRemove);
 	}
 	
 	public void loadFromFile(int x, int y) {
@@ -92,13 +113,20 @@ public class ChunkMap {
 	
 	public void saveFile(Chunk chunk) {
 		long start = System.nanoTime();
-
-		SavingChunk r = new SavingChunk(mapPath+Chunk.getFileName(chunk.getX(), chunk.getY()), chunk);
 		
-    	System.out.println("\nsaveFile: \t"+chunk.getFileName()+" \t"+(System.nanoTime()-start)/Engine.MILISECOND+"ms");
+		System.out.println("---------");
+		System.out.println("savefile START");
+		
+		
+		//SavingChunk r = new SavingChunk(mapPath+Chunk.getFileName(chunk.getX(), chunk.getY()), chunk);
+		//savingChunks.add(r);
+		
+    	System.out.println("savefile END: \t\t"+chunk.getFileName()+" \t"+(System.nanoTime()-start)/Engine.MILISECOND+"ms");
+    	System.out.println("---------");
 	}
 	
 	public boolean chunkExistsOnDisk(int x, int y) {
+		//return false;
 		return (new File(mapPath+Chunk.getFileName(x, y)).exists());
 	}
 	
