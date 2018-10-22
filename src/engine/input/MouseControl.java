@@ -7,10 +7,12 @@ import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 
 import engine.engine.Engine;
+import glm.vec._2.Vec2;
 
 
 public class MouseControl extends GLFWCursorPosCallback implements Control{
-	int previousState = -1;
+	private int previousState = -1;
+	private Vec2 cursorPos = new Vec2(0,0);
 	
 	@Override
 	public boolean isKeyReleased(int key) {
@@ -38,5 +40,11 @@ public class MouseControl extends GLFWCursorPosCallback implements Control{
 
 	@Override
 	public void invoke(long window, double xpos, double ypos) {
+		cursorPos.x = (float) xpos;
+		cursorPos.y = (float) ypos;
+	}
+
+	public Vec2 getCursorPos() {
+		return cursorPos;
 	}
 }

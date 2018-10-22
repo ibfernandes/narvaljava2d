@@ -46,12 +46,12 @@ public class EntityManager {
 		return comps;
 	}
 	
-	public Component getFirstComponent(Entity e, Class c) {
+	public <T extends Component> T getFirstComponent(Entity e, Class c) {
 		ArrayList<Component> comps= new ArrayList<>();
 		
 		for(Component cp: componentsOf.get(e.getID()))
 			if(c.isInstance(cp))
-				return cp;
+				return (T) cp;
 		
 		return null;
 	}

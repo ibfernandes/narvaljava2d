@@ -60,8 +60,8 @@ void main(){
 		result += calculatePointLight(pointLights[i], imgTex);
 
 	if(imgTex.w>0){
-		color = vec4(result, spriteColor.w);
+		color = vec4(result, imgTex.w);
 	}else{
-		color = vec4(result, 0);
+		color = vec4(result, imgTex.w);
 	}
 }

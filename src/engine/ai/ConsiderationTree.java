@@ -2,6 +2,8 @@ package engine.ai;
 
 import java.util.ArrayList;
 
+import engine.entity.Entity;
+import engine.entity.EntityManager;
 import engine.logic.GameObject;
 import gameStates.Game;
 
@@ -12,7 +14,7 @@ public class ConsiderationTree {
 		considerations.add(c);
 	}
 	
-	public Action calculateAction(GameObject obj, Game context){
+	public Action calculateAction(Entity obj, EntityManager context){
 		Consideration considerationBuffer = considerations.get(0);
 		float buffer = considerationBuffer.evaluate(obj, context);
 		

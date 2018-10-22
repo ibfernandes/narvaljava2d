@@ -184,8 +184,8 @@ public class GameObject implements Comparable<GameObject>, Serializable{
 	public void update(float deltaTime, Game game) {//TODO: remove Game as paramater
 		updateCoordinateSystems();
 		
-		if(controller!=null)
-			controller.update(deltaTime, this, game);
+		//if(controller!=null)
+		//	controller.update(deltaTime, this, game);
 		if(animations!=null)
 			animations.getCurrentAnimation().update();
 	}

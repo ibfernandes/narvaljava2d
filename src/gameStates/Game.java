@@ -62,12 +62,14 @@ import engine.entity.EntityManager;
 import engine.entity.MoveSystem;
 import engine.entity.RenderSystem;
 import engine.entity.SystemManager;
+import engine.entity.TextSystem;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.ControllerComponent;
 import engine.entity.component.HealthComponent;
 import engine.entity.component.MoveComponent;
 import engine.entity.component.PositionComponent;
 import engine.entity.component.RenderComponent;
+import engine.entity.component.TextComponent;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
 import engine.graphic.Texture;
@@ -290,6 +292,7 @@ public class Game extends GameState{
 		//Creates player
 		//==================================
 		Entity player = em.newEntity();
+		player.setName("player");
 
 		ASM asm = new ASM();
 		
@@ -414,11 +417,13 @@ public class Game extends GameState{
 		BodySystem bs = new BodySystem(em);
 		ControllerSystem cs = new ControllerSystem(em);
 		RenderSystem rs = new RenderSystem(em);
+		TextSystem ts = new TextSystem(em);
 		
 		sm.addSystem(ms);
 		sm.addSystem(bs);
 		sm.addSystem(cs);
 		sm.addSystem(rs);
+		sm.addSystem(ts);
 		
 		previousCameraGridX =  -1; 
 		previousCameraGridY =  -1; 
@@ -783,6 +788,14 @@ public class Game extends GameState{
 		if(g.getBody()!=null)
 			PhysicsEngine.getSelf().getWorld().destroyBody(g.getBody());
 		movableLayer.remove(g);
+	}
+
+	public EntityManager getEm() {
+		return em;
+	}
+
+	public Rectangle getScreenView() {
+		return screenView;
 	}
 
 }

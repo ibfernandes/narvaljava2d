@@ -24,10 +24,11 @@ public class RenderSystem extends ComponentSystem{
 			for(Component c: em.getComponent(e,RenderComponent.class)) {
 				
 				RenderComponent rc = (RenderComponent) c;
-				ResourceManager.getSelf().getTextureRenderer().render(
-						ResourceManager.getSelf().getTexture(rc.getAnimations().getCurrentAnimation().getTexture()),
-						ResourceManager.getSelf().getTexture(rc.getAnimations().getCurrentAnimation().getTexture()+"_normal"),
-						rc.getRenderPosition(), rc.getSize(), rc.getRotation(), rc.getColor(), rc.getAnimations().getCurrentAnimation().getCurrentFrame(), rc.getOrientation(), rc.getSkew());
+				if(!rc.isDisabled())
+					ResourceManager.getSelf().getTextureRenderer().render(
+							ResourceManager.getSelf().getTexture(rc.getAnimations().getCurrentAnimation().getTexture()),
+							ResourceManager.getSelf().getTexture(rc.getAnimations().getCurrentAnimation().getTexture()+"_normal"),
+							rc.getRenderPosition(), rc.getSize(), rc.getRotation(), rc.getColor(), rc.getAnimations().getCurrentAnimation().getCurrentFrame(), rc.getOrientation(), rc.getSkew());
 			}
 		}
 		

@@ -1,10 +1,11 @@
 package engine.ai;
 
+import engine.entity.Entity;
 import engine.logic.GameObject;
 
 public class Action {
 	private String actionName;
-	private GameObject target;
+	private Entity target;
 	
 	public Action(String actionName) {
 		this.actionName = actionName;
@@ -18,11 +19,11 @@ public class Action {
 		this.actionName = actionName;
 	}
 
-	public GameObject getTarget() {
+	public Entity getTarget() {
 		return target;
 	}
 
-	public void setTarget(GameObject target) {
+	public void setTarget(Entity target) {
 		this.target = target;
 	}
 

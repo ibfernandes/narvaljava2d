@@ -76,16 +76,16 @@ public class Texture {
 
         buffer.flip();
         
-        generateTexture(buffer, pixels.length, pixels[0].length);
+        generateTexture(buffer, pixels.length, pixels[0].length, false);
    }
 	
-	public Texture(ByteBuffer buffer, int width, int height) {
+	public Texture(ByteBuffer buffer, int width, int height, boolean antiAlias) {
 		this.width  = width;
 		this.height = height;
-		generateTexture(buffer, width, height);
+		generateTexture(buffer, width, height, antiAlias);
 	}
 	
-	public void generateTexture(ByteBuffer buffer, int width, int height) {
+	public void generateTexture(ByteBuffer buffer, int width, int height, boolean antiAlias) {
 		glBindTexture(GL_TEXTURE_2D, id); //Bind texture ID
         
         //Setup wrap mode
@@ -93,8 +93,15 @@ public class Texture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
 
         //Setup texture scaling filtering
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); //GL_LINEAR for smooth
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        
+        if(antiAlias) {
+        	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
+        	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }else {
+        	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
+        	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        }
+        	
         
         //Send texel data to OpenGL
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);

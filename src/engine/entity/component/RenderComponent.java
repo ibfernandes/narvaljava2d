@@ -16,6 +16,7 @@ public class RenderComponent implements Component{
 	private ASM animations;
 	private float rotation;
 	private Rectangle boundingBox = new Rectangle(0,0,0,0);
+	private boolean disabled = false;
 	
 	public Rectangle getBoundingBox() {
 		boundingBox.x = renderPosition.x;
@@ -82,5 +83,11 @@ public class RenderComponent implements Component{
 	}
 	public void setRotation(float rotation) {
 		this.rotation = rotation;
+	}
+	public boolean isDisabled() {
+		return disabled;
+	}
+	public void setDisabled(boolean disabled) {
+		this.disabled = disabled;
 	}
 }

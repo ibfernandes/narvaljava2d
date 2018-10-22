@@ -21,8 +21,11 @@ import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
 
 import static java.awt.Font.MONOSPACED;
+import static java.awt.Font.SERIF;
 import static java.awt.Font.PLAIN;
 import static java.awt.Font.TRUETYPE_FONT;
+
+import java.awt.Color;
 
 /**
 * This class contains a font texture for drawing text.
@@ -31,18 +34,8 @@ import static java.awt.Font.TRUETYPE_FONT;
 */
 public class Font {
 
-   /**
-    * Contains the glyphs for each char.
-    */
    private final Map<Character, Glyph> glyphs;
-   /**
-    * Contains the font texture.
-    */
    private final Texture texture;
-
-   /**
-    * Height of the font.
-    */
    private int fontHeight;
    private Vec2 boxSize = new Vec2(0,0);
    
@@ -51,7 +44,7 @@ public class Font {
     * size 16.
     */
    public Font() {
-       this(new java.awt.Font(MONOSPACED, PLAIN, 16), true);
+       this(new java.awt.Font(SERIF, PLAIN, 128), false);
    }
 
    /**
@@ -167,7 +160,7 @@ public class Font {
        /* Image for the texture */
        BufferedImage image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
        Graphics2D g = image.createGraphics();
-
+       
        int x = 0;
 
        /* Create image for the standard chars, again we omit ASCII 0 to 31
@@ -197,8 +190,7 @@ public class Font {
        /* Flip image Horizontal to get the origin to bottom left */
        AffineTransform transform = AffineTransform.getScaleInstance(1f, -1f);
        transform.translate(0, -image.getHeight());
-       AffineTransformOp operation = new AffineTransformOp(transform,
-                                                           AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+       AffineTransformOp operation = new AffineTransformOp(transform, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
        image = operation.filter(image, null);
 
        /* Get charWidth and charHeight of image */
@@ -207,7 +199,7 @@ public class Font {
 
        /* Get pixel data of image */
        int[] pixels = new int[width * height];
-       int test[] = image.getRGB(0, 0, width, height, pixels, 0, width);
+       image.getRGB(0, 0, width, height, pixels, 0, width);
 
        /* Put pixel data into a ByteBuffer */
        ByteBuffer buffer = MemoryUtil.memAlloc(width * height * 4);
@@ -229,8 +221,7 @@ public class Font {
        buffer.flip();
 
        /* Create texture */
-       //Texture fontTexture = Texture.createTexture(width, height, buffer);
-       Texture fontTexture = new Texture(buffer, width, height);
+       Texture fontTexture = new Texture(buffer, width, height, antiAlias);
        MemoryUtil.memFree(buffer);
        return fontTexture;
    }
@@ -248,9 +239,10 @@ public class Font {
        /* Creating temporary image to extract character size */
        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
        Graphics2D g = image.createGraphics();
-       if (antiAlias) {
+       
+       if (antiAlias) 
            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-       }
+       
        g.setFont(font);
        FontMetrics metrics = g.getFontMetrics();
        g.dispose();
@@ -267,11 +259,13 @@ public class Font {
        /* Create image for holding the char */
        image = new BufferedImage(charWidth, charHeight, BufferedImage.TYPE_INT_ARGB);
        g = image.createGraphics();
-       if (antiAlias) {
+       
+       if (antiAlias) 
            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-       }
+       
+       
        g.setFont(font);
-       g.setPaint(java.awt.Color.WHITE);
+       g.setPaint(java.awt.Color.RED);
        g.drawString(String.valueOf(c), 0, metrics.getAscent());
        g.dispose();
        return image;
@@ -380,13 +374,13 @@ public class Font {
       // renderer.end();
    }
 
-public Vec2 getBoxSize() {
-	return boxSize;
-}
-
-public void setBoxSize(Vec2 boxSize) {
-	this.boxSize = boxSize;
-}
+	public Vec2 getBoxSize() {
+		return boxSize;
+	}
+	
+	public void setBoxSize(Vec2 boxSize) {
+		this.boxSize = boxSize;
+	}
 
    /**
     * Draw text at the specified position.

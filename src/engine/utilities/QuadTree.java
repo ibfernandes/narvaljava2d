@@ -28,14 +28,14 @@ public class QuadTree {
 	}
 	
 	/**
-	 * Returns true if object is inserted successfully and false if not
+	 * Returns true if object is inserted successfully and false if it's out of bounds
 	 * @param o
 	 * @return
 	 */
 	public boolean insert(Entity e) {
 		RenderComponent rc = (RenderComponent) em.getFirstComponent(e, RenderComponent.class);
 		if(rc==null) {
-			System.err.println("RenderComponent can't be null");
+			//System.err.println("RenderComponent can't be null");
 			return false;
 			}
 		

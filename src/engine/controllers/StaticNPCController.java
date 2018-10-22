@@ -20,6 +20,10 @@ import engine.engine.Engine;
 import engine.engine.PhysicsEngine;
 import engine.entity.Entity;
 import engine.entity.EntityManager;
+import engine.entity.component.BodyComponent;
+import engine.entity.component.PositionComponent;
+import engine.entity.component.RenderComponent;
+import engine.entity.component.TextComponent;
 import engine.graphic.Animation;
 import engine.logic.GameObject;
 import engine.ui.UIObject;
@@ -36,80 +40,105 @@ import graphic.ASM;
 public class StaticNPCController extends Controller{
 
 	private ConsiderationTree ct = new ConsiderationTree();
-	private GameObject button;
-	private UIObject talkingBox;
+	private Entity button;
+	private Entity talkingBox;
 	
 	public StaticNPCController() {
 		ct.addConsideration(new ConsiderationTalk());
-	}
-
-	@Override
-	public void update(float deltaTime, GameObject object, Game context) {
-		Action a = ct.calculateAction(object, context);
-		
-		if(a.getActionName().equals("talk")) {
-			talkingBox = new UIObject();
-			talkingBox.setPosition(new Vec2(object.getPosition().x + object.getSize().x/2 - button.getSize().x/2 + 90, object.getPosition().y - button.getSize().y -15));
-			talkingBox.setFont("monospace");
-			talkingBox.setText("Oi =]");
-		}
-		
-		boolean flagAdd = false;
-		boolean flagRemove = false;
-		
-		if(button==null) {
-			button = new GameObject();
-			button.setSize(new Vec2(32,32));
-			button.setBaseBox(new Vec2(32,32));
-			button.setVelocity(0);
-			button.setColor(new Vec4(1,1,1,1));
-			button.setController(null);
-			button.setOrientation(new Vec2(0,0));
-			button.setPosition(new Vec2(object.getPosition().x + object.getSize().x/2 - button.getSize().x/2, object.getPosition().y - button.getSize().y -15));
-			
-			ASM asm = new ASM();
-			Animation an = new Animation("e_button", -1);
-			an.setFrames(1, new Vec2(0,0), new Vec2(32,32));
-			asm.addAnimation("idle_1", an);
-			
-			asm.changeStateTo("idle_1");
-			
-			button.setAnimations(asm);
-			
-			
-		}
-		
-		for(GameObject o: context.getFinalLayer()) {
-			if(o.getGroup()!=null && o.getGroup().equals("player") && object.getInterationBox().intersects(o.getInterationBox())) {
-				if(!context.getStaticLayer().contains(button)) {
-					flagAdd = true;
-					break;
-				}
-			}else if(o.getGroup()!=null && o.getGroup().equals("player") && context.getStaticLayer().contains(button)) {
-				flagRemove = true;
-				break;
-			}
-		}
-		
-		if(flagAdd) {
-			context.getStaticLayer().add(button);
-			context.getUiLayer().add(talkingBox);
-
-		}else if(flagRemove) {
-			context.getStaticLayer().remove(button);
-			context.getUiLayer().remove(talkingBox);
-		}
-			
 		
 	}
+
 
 	@Override
 	public void renderDebug() {
 
 	}
+	
+	private void createDialogButton(Entity parent, EntityManager em) {
+		button = em.newEntity();
+		PositionComponent pc = new PositionComponent();
+		RenderComponent rc = new RenderComponent();
+		
+		Vec2 parentPos = ((PositionComponent) em.getFirstComponent(parent, PositionComponent.class)).getPosition();
+		pc.setPosition(parentPos);
+		em.addComponentTo(button, pc);
+		
+		rc.setSize(new Vec2(32,32));
+		rc.setColor(new Vec4(1,1,1,1));
+		rc.setOrientation(new Vec2(0,0));
+		rc.setRenderPosition(parentPos);
+		//TODO: renderPos
+		
+		ASM asm = new ASM();
+		Animation an = new Animation("e_button", -1);
+		an.setFrames(1, new Vec2(0,0), new Vec2(32,32));
+		asm.addAnimation("idle_1", an);
+		
+		asm.changeStateTo("idle_1");
+		
+		rc.setAnimations(asm);
+		em.addComponentTo(button, rc);
+	}
+	
+	private void createDialogBox(Entity parent, EntityManager em) {
+		talkingBox = em.newEntity();
+		
+		Vec2 parentPos = ((PositionComponent) em.getFirstComponent(parent, PositionComponent.class)).getPosition();
+		
+		TextComponent tc = new TextComponent();
+		tc.setFontColor(new Vec4(1,0,0,1));
+		tc.setFontName("monospace");
+		tc.setText("È     ÈText Component text! È");
+		tc.setFontSize(230);
+		tc.setPosition(parentPos);
+		tc.setDisabled(true);
+		
+		em.addComponentTo(talkingBox, tc);
+	}
 
 	@Override
 	public void update(float deltaTime, Entity object, EntityManager context) {
+	
+		Action a = ct.calculateAction(object, context);
+		RenderComponent rc = (RenderComponent) context.getFirstComponent(object, RenderComponent.class);
+		BodyComponent bc = (BodyComponent) context.getFirstComponent(object, BodyComponent.class);
+		
+		if(button==null) {
+			createDialogButton(object, context);
+			createDialogBox(object, context);
+		}
+		
+		TextComponent tc = (TextComponent) context.getFirstComponent(talkingBox, TextComponent.class);
+		//if(a.getActionName().equals("talk")) {
+			
+			tc.setDisabled(false);
+		//}else {
+		//	tc.setDisabled(true);
+		//}
+		
+		boolean flagShowButton = false;
+		boolean flagRemove = false;
+		
+			
+		for(Entity e: context.getAllEntities()){
+			RenderComponent erc = (RenderComponent) context.getFirstComponent(e, RenderComponent.class);
+			
+			if(e.getName()!=null && e.getName().equals("player") && rc.getBoundingBox().intersects(erc.getBoundingBox())) {
+				if(!flagShowButton) {
+					flagShowButton = true;
+					break;
+				}
+			}else {
+				flagShowButton = false;
+				break;
+			}
+		}
+		
+		if(flagShowButton) {
+			((RenderComponent)context.getFirstComponent(button, RenderComponent.class)).setDisabled(false);
+		}else
+			((RenderComponent)context.getFirstComponent(button, RenderComponent.class)).setDisabled(true);
+		
 	}
 
 

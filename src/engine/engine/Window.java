@@ -35,7 +35,7 @@ public class Window {
 	    id = glfwCreateWindow(width, height, name,  NULL,  NULL);
 	    glfwMakeContextCurrent(id);
 	    
-	    glfwSetWindowPos(id, 2000, 60); //TODO: [NOTE]Set it to my second monitor (for debug purposes)
+	    glfwSetWindowPos(id, 0, 60); //TODO: [NOTE]Set it to my second monitor (for debug purposes)
 	    glfwShowWindow(id);
 		GL.createCapabilities();
 		glfwSwapInterval(0);//VSYNC
