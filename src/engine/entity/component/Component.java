@@ -1,4 +1,13 @@
 package engine.entity.component;
 
-public interface Component {
+public abstract class Component{
+	private long entityID;
+	
+	public Component(long entityID) {
+		this.entityID = entityID;
+	}
+	
+	public long getParentEntityID() {
+		return entityID;
+	}
 }

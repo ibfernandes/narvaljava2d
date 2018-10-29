@@ -1,14 +1,14 @@
 package engine.entity;
 
 public class Entity {
-	private int id;
+	private long id;
 	private String name;
 	
-	public Entity(int id) {
+	public Entity(long id) {
 		this.id = id;
 	}
 	
-	public int getID() {
+	public long getID() {
 		return id;
 	}
 

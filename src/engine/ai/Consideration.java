@@ -6,6 +6,6 @@ import engine.logic.GameObject;
 import gameStates.Game;
 
 public interface Consideration {
-	float evaluate(Entity obj, EntityManager game);
+	float evaluate(long EntityID, EntityManager game);
 	Action getAction();
 }

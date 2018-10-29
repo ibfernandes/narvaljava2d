@@ -7,10 +7,12 @@ import engine.engine.PhysicsEngine;
 import engine.entity.component.Component;
 
 public class EntityManager {
-	private int lastID = 0;
+	private long lastID = 0;
 	private ArrayList<Entity> entities = new ArrayList<>();
-	private HashMap <Integer, ArrayList<Component>> componentsOf = new HashMap<>();
+	private HashMap<String, ArrayList<Component>> componentsByClass = new HashMap<>();
+	private HashMap <Long, ArrayList<Component>> componentsOf = new HashMap<>();
 	private EntityManager self;
+	private int maxEntities = 20000;
 	
 	/*private EntityManager() {}*/
 	
@@ -19,27 +21,38 @@ public class EntityManager {
 	}*/
 
 	
-	public int generateID() {
-		return lastID++;
+	public long generateID() {
+		return lastID++;  //TODO: What if this ID is already taken
 	}
 	
 	public Entity newEntity() {
-		Entity e = new Entity(generateID());
-		entities.add(e);
+		//System.out.println(entities.size());
+		
+		long id = generateID();
+		Entity e = new Entity(id);
+		if(id>maxEntities)
+			entities.set((int) (id%maxEntities),e);
+		else
+			entities.add(e);
 		return e;
 	}
 	
 	public void addComponentTo(Entity e, Component c) {
+
 		if(componentsOf.get(e.getID())==null)
 			componentsOf.put(e.getID(), new ArrayList<>());
 		
+		if(componentsByClass.get(c.getClass().getName())==null)
+			componentsByClass.put(c.getClass().getName(), new ArrayList<>());
+		
 		componentsOf.get(e.getID()).add(c);
+		componentsByClass.get(c.getClass().getName()).add(c);
 	}
 	
-	public ArrayList<Component> getComponent(Entity e, Class c) {
+	public ArrayList<Component> getComponent(long entityID, Class c) {
 		ArrayList<Component> comps= new ArrayList<>();
 		
-		for(Component cp: componentsOf.get(e.getID()))
+		for(Component cp: componentsOf.get(entityID))
 			if(c.isInstance(cp))
 				comps.add(cp);
 		
@@ -47,9 +60,15 @@ public class EntityManager {
 	}
 	
 	public <T extends Component> T getFirstComponent(Entity e, Class c) {
-		ArrayList<Component> comps= new ArrayList<>();
-		
 		for(Component cp: componentsOf.get(e.getID()))
+			if(c.isInstance(cp))
+				return (T) cp;
+		
+		return null;
+	}
+	
+	public <T extends Component> T getFirstComponent(long id, Class c) {
+		for(Component cp: componentsOf.get(id))
 			if(c.isInstance(cp))
 				return (T) cp;
 		
@@ -62,6 +81,10 @@ public class EntityManager {
 	
 	public ArrayList<Entity> getAllEntities() {
 		return entities;
+	}
+	
+	public <T extends Component> ArrayList<T> getAllComponents(Class c){
+		return (ArrayList<T>) componentsByClass.get(c.getName());
 	}
 	
 	public ArrayList<Entity> getAllEntitiesWithComponent(Class c) {

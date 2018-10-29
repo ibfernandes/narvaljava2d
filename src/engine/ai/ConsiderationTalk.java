@@ -13,8 +13,8 @@ public class ConsiderationTalk implements Consideration{
 	private Action a = new Action("talk");
 	
 	@Override
-	public float evaluate(Entity obj, EntityManager context) {
-		RenderComponent rc = (RenderComponent) context.getFirstComponent(obj, RenderComponent.class);
+	public float evaluate(long entityID, EntityManager context) {
+		RenderComponent rc = (RenderComponent) context.getFirstComponent(entityID, RenderComponent.class);
 		
 		for(Entity e: context.getAllEntities()) {
 			

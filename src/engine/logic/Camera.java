@@ -61,6 +61,9 @@ public class Camera {
 		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setMat4("camera", transform);
 		
+		ResourceManager.getSelf().getShader("texturev2").use();
+		ResourceManager.getSelf().getShader("texturev2").setMat4("camera", transform);
+		
 		ResourceManager.getSelf().getShader("shadow").use();
 		ResourceManager.getSelf().getShader("shadow").setMat4("camera", transform);
 		

@@ -1,5 +1,6 @@
 package engine.entity;
 
+import engine.entity.component.BodyComponent;
 import engine.entity.component.Component;
 import engine.entity.component.ControllerComponent;
 
@@ -12,11 +13,9 @@ public class ControllerSystem extends ComponentSystem{
 
 	@Override
 	public void update(float dt) {
-		for(Entity e: em.getAllEntitiesWithComponent(ControllerComponent.class)) {
-			for(Component c: em.getComponent(e,ControllerComponent.class)) {
+		for(Component c: em.getAllComponents(ControllerComponent.class)) {
 				ControllerComponent bc = (ControllerComponent) c;
-				bc.controller.update(dt, e, em);
-			}
+				bc.controller.update(dt, bc.getParentEntityID(), em);
 		}
 	}
 

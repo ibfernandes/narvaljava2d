@@ -22,6 +22,7 @@ import engine.entity.Entity;
 import engine.entity.EntityManager;
 import engine.graphic.Animation;
 import engine.logic.GameObject;
+import engine.renderer.ASM;
 import engine.ui.UIObject;
 import engine.utilities.ArraysExt;
 import engine.utilities.ResourceManager;
@@ -31,7 +32,6 @@ import gameStates.Game;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
-import graphic.ASM;
 
 public class DeerController extends Controller{
 

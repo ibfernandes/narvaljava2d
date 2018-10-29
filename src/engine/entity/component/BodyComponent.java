@@ -11,7 +11,12 @@ import engine.engine.PhysicsEngine;
 import engine.geometry.Rectangle;
 import glm.vec._2.Vec2;
 
-public class BodyComponent implements Component{
+public class BodyComponent extends Component{
+	public BodyComponent(long entityID) {
+		super(entityID);
+		
+	}
+
 	public transient Body body;
 	public BodyType type;
 	private Rectangle baseBox;

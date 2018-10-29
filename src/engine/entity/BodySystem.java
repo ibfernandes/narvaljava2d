@@ -17,21 +17,17 @@ public class BodySystem extends ComponentSystem{
 
 	@Override
 	public void update(float dt) {
-		for(Entity e: em.getAllEntitiesWithComponent(BodyComponent.class)) {
-			for(Component c: em.getComponent(e,BodyComponent.class)) {
-				BodyComponent bc = (BodyComponent) c;
-			}
+		for(Component c: em.getAllComponents(BodyComponent.class)) {
+			BodyComponent bc = (BodyComponent) c;
 		}
 	}
 
 	@Override
 	public void render() {
-		for(Entity e: em.getAllEntitiesWithComponent(BodyComponent.class)) {
-			for(Component c: em.getComponent(e,BodyComponent.class)) {
-				BodyComponent bc = (BodyComponent) c;
-				RenderComponent rc = (RenderComponent) em.getFirstComponent(e, RenderComponent.class);
-				ResourceManager.getSelf().getCubeRenderer().render(bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize()), 0, new Vec3(1,1,0));
-			}
+		for(Component c: em.getAllComponents(BodyComponent.class)) {
+			BodyComponent bc = (BodyComponent) c;
+			RenderComponent rc = (RenderComponent) em.getFirstComponent(bc.getParentEntityID(), RenderComponent.class);
+			ResourceManager.getSelf().getCubeRenderer().render(bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize()), 0, new Vec3(1,1,0));
 		}
 	}
 

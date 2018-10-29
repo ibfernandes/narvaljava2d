@@ -1,10 +1,11 @@
-package graphic;
+package engine.renderer;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import java.nio.FloatBuffer;
 import java.util.Random;
 
 import engine.graphic.Shader;
@@ -15,7 +16,9 @@ import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
 
-public class TextureRenderer {
+public class TextureRenderer implements Renderer{
+	private FloatBuffer vertices;
+	public int numVertices;
 	private Shader shader;
 	private int quadVAO;
 	
@@ -46,6 +49,7 @@ public class TextureRenderer {
 		glBindVertexArray(quadVAO);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0 , 4, GL_FLOAT, false, Float.BYTES * 4, 0);
+	
 		
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
@@ -106,7 +110,6 @@ public class TextureRenderer {
 		model = model.rotate(rotate, 0, 0, 1);
 		model = model.translate(-0.5f * size.x, -0.5f *size.y, 0); //Move the origin of rotation back to it's top left
 		model = model.scale(size.x, size.y, 1);
-	
 
 		shader.setMat4("model", model);
 		shader.setVec4("spriteColor", color);
@@ -161,7 +164,6 @@ public class TextureRenderer {
 		model = model.mul(skew);
 		model = model.scale(size.x, size.y, 1);
 
-		
 		
 
 		

@@ -1,4 +1,4 @@
-package graphic;
+package engine.renderer;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
@@ -12,7 +12,7 @@ import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 
-public class CubeRenderer {
+public class CubeRenderer implements Renderer{
 	private Shader shader;
 	private int quadVAO;
 	
@@ -43,6 +43,7 @@ public class CubeRenderer {
 		glBindVertexArray(quadVAO);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0 , 4, GL_FLOAT, false, Float.BYTES *4, 0);
+		//glDisableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 	}

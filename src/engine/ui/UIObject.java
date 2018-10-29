@@ -21,14 +21,14 @@ import engine.graphic.Animation;
 import engine.graphic.Texture;
 import engine.input.KeyboardControl;
 import engine.input.MouseControl;
+import engine.renderer.ASM;
+import engine.renderer.CubeRenderer;
 import engine.utilities.MathExt;
 import engine.utilities.ResourceManager;
 import gameStates.Game;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
-import graphic.ASM;
-import graphic.CubeRenderer;
 
 public class UIObject implements Comparable<UIObject>, Serializable{
 	

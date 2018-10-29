@@ -20,6 +20,7 @@ import java.util.concurrent.Future;
 
 import engine.engine.Engine;
 import engine.engine.Settings;
+import engine.entity.EntityManager;
 
 public class ChunkMap {
 	private HashMap<Integer, HashMap<Integer, Chunk>> chunks; //TODO: could change to a matrix and keep shifting it
@@ -31,6 +32,7 @@ public class ChunkMap {
 	private ArrayList<SavingChunk> savingChunks = new ArrayList<>();
 	private ArrayList<SavingChunk> savingChunksToRemove = new ArrayList<>();
 	private ArrayList<Chunk> chunksToSave = new ArrayList<>();
+	private EntityManager em;
 	
 	public static final int CHUNK_WIDTH = 2048;
 	public static final int CHUNK_HEIGHT = 2048;
@@ -38,7 +40,8 @@ public class ChunkMap {
 	public static final int MAP_WIDTH = 60000;
 	public static final int MAP_HEIGHT = 60000;
 	
-	public ChunkMap(int seed) {
+	public ChunkMap(int seed, EntityManager em) {
+		this.em = em;
 		chunks = new HashMap<>();
 		this.seed = seed;
 		mapPath = Settings.mapsFolder+seed+File.separator;
@@ -63,7 +66,7 @@ public class ChunkMap {
 			if(chunkExistsOnDisk(x,y))
 				loadFromFile(x,y);
 			else
-				chunksToSave.add(new Chunk(x,y,CHUNK_WIDTH, CHUNK_HEIGHT, MAP_WIDTH, MAP_HEIGHT));
+				chunksToSave.add(new Chunk(x,y,CHUNK_WIDTH, CHUNK_HEIGHT, MAP_WIDTH, MAP_HEIGHT,em));
 		
 		return (chunks.get(x)==null)? null : chunks.get(x).get(y);
 	}

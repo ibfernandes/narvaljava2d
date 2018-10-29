@@ -83,6 +83,12 @@ import engine.logic.HorizontalPool;
 import engine.logic.Timer;
 import engine.noise.FastNoise;
 import engine.physics.Hit;
+import engine.renderer.ASM;
+import engine.renderer.CubeRenderer;
+import engine.renderer.GrassRenderer;
+import engine.renderer.ShadowRenderer;
+import engine.renderer.TextureRenderer;
+import engine.renderer.TextureRendererV2;
 import engine.ui.Font;
 import engine.ui.UIObject;
 import engine.utilities.BufferUtilities;
@@ -94,11 +100,6 @@ import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
-import graphic.ASM;
-import graphic.CubeRenderer;
-import graphic.GrassRenderer;
-import graphic.ShadowRenderer;
-import graphic.TextureRenderer;
 import javafx.scene.image.PixelWriter;
 import net.jafama.FastMath;
 
@@ -112,7 +113,7 @@ public class Game extends GameState{
 	private QuadTree quadTree; // Contains all objects currently on screen
 	private Camera camera;
 	private Rectangle screenView;
-	private GameObject player;
+	private Entity player;
 	
 	//Shadow Map
 	private int shadowFBO;
@@ -143,7 +144,7 @@ public class Game extends GameState{
 	public boolean obstacleMap[][];
 	
 	//Others
-	private Vec2 startPoint = new Vec2(48500, 46000);
+	private Vec2 startPoint = new Vec2(48000, 48000);
 	
 	//Entity System 
 	private EntityManager em = new EntityManager();
@@ -154,7 +155,7 @@ public class Game extends GameState{
 		initShadowLayer();
 		
 		screenView = new Rectangle(0,0,Engine.getSelf().getWindow().getWidth(),Engine.getSelf().getWindow().getHeight());
-		chunkMap = new ChunkMap(seed);
+		chunkMap = new ChunkMap(seed,em);
 		
 		//==================================
 		//Loads all shaders
@@ -175,6 +176,10 @@ public class Game extends GameState{
 							"shaders/grass.vert",
 							"shaders/grass.frag",
 							null);
+		ResourceManager.getSelf().loadShader("texturev2", 
+				"shaders/texturev2.vert",
+				"shaders/texturev2.frag",
+				null);
 		
 		//==================================
 		//Loads all textures
@@ -234,6 +239,7 @@ public class Game extends GameState{
 		//Loads all Audio
 		//==================================
 		ResourceManager.getSelf().loadAudio("ocean_waves","audio/ocean_waves.ogg" );
+		//ResourceManager.getSelf().playAudio("ocean_waves", startPoint, 1000);
 		
 		//==================================
 		//Loads all fonts
@@ -251,9 +257,15 @@ public class Game extends GameState{
 		
 		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setMat4("projection", projection);
-		ResourceManager.getSelf().getShader("texture").setPointLight(0, new Vec3(250,500, 300), new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
+		ResourceManager.getSelf().getShader("texture").setPointLight(0, new Vec3(startPoint.x, startPoint.y, 300), new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
 		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1f);
 		ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0,0,0));
+		//DON'T FORGET TO ALSO CHANGE ON CAMERA
+		ResourceManager.getSelf().getShader("texturev2").use();
+		ResourceManager.getSelf().getShader("texturev2").setMat4("projection", projection);
+		ResourceManager.getSelf().getShader("texturev2").setPointLight(0, new Vec3(startPoint.x, startPoint.y, 300), new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
+		ResourceManager.getSelf().getShader("texturev2").setFloat("dayTime", 1f);
+		ResourceManager.getSelf().getShader("texturev2").setVec3("ambientColor", new Vec3(0,0,0));
 		
 		ResourceManager.getSelf().getShader("shadow").use();
 		ResourceManager.getSelf().getShader("shadow").setMat4("projection", projection);
@@ -265,10 +277,16 @@ public class Game extends GameState{
 		//Start renderers
 		//==================================
 		TextureRenderer t = new TextureRenderer(ResourceManager.getSelf().getShader("texture"));
+		TextureRendererV2 t2 = new TextureRendererV2(ResourceManager.getSelf().getShader("texturev2"));
 		CubeRenderer r = new CubeRenderer(ResourceManager.getSelf().getShader("cube"));
 		ShadowRenderer s = new ShadowRenderer(ResourceManager.getSelf().getShader("shadow"));
 		GrassRenderer g = new GrassRenderer(ResourceManager.getSelf().getShader("grass"));
 		
+		ResourceManager.getSelf().setRenderer("textureRenderer", t);
+		ResourceManager.getSelf().setRenderer("cubeRenderer", r);
+		ResourceManager.getSelf().setRenderer("shadowRenderer", s);
+		ResourceManager.getSelf().setRenderer("grassRenderer", g);
+		ResourceManager.getSelf().setRenderer("textureRendererv2", t2);
 		ResourceManager.getSelf().setTextureRenderer(t);
 		ResourceManager.getSelf().setCubeRenderer(r);
 		ResourceManager.getSelf().setShadowRenderer(s);
@@ -291,7 +309,7 @@ public class Game extends GameState{
 		//==================================
 		//Creates player
 		//==================================
-		Entity player = em.newEntity();
+		player = em.newEntity();
 		player.setName("player");
 
 		ASM asm = new ASM();
@@ -319,7 +337,7 @@ public class Game extends GameState{
 		asm.changeStateTo("idle_1");
 		
 		Vec2 size= new Vec2(128,128);
-		RenderComponent rc = new RenderComponent();
+		RenderComponent rc = new RenderComponent(player.getID());
 		rc.setSize(size);
 		rc.setColor(new Vec4(1,1,1,1));
 		rc.setAnimations(asm);
@@ -327,19 +345,19 @@ public class Game extends GameState{
 		
 		em.addComponentTo(player, rc);
 
-		ControllerComponent cp = new ControllerComponent();
+		ControllerComponent cp = new ControllerComponent(player.getID());
 		cp.controller = new PlayerController();
 		em.addComponentTo(player, cp);
 		
-		MoveComponent mc = new MoveComponent();
+		MoveComponent mc = new MoveComponent(player.getID());
 		mc.speed = 600;
 		em.addComponentTo(player, mc);
 		
-		PositionComponent pc = new PositionComponent();
+		PositionComponent pc = new PositionComponent(player.getID());
 		pc.setPosition(startPoint);
 		em.addComponentTo(player, pc);
 		
-		BodyComponent bc = new BodyComponent();
+		BodyComponent bc = new BodyComponent(player.getID());
 		bc.setBaseBox(new Rectangle(0f,0.8f,1.0f,0.2f));
 		bc.calculateBaseBox(startPoint, size);
 		bc.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
@@ -387,7 +405,7 @@ public class Game extends GameState{
 		asm.changeStateTo("idle_1");
 		
 		Vec2 pos = new Vec2(startPoint.x+300, startPoint.y);
-		rc = new RenderComponent();
+		rc = new RenderComponent(npc.getID());
 		rc.setSize(new Vec2(128,128));
 		rc.setColor(new Vec4(1,1,1,1));
 		rc.setAnimations(asm);
@@ -395,15 +413,15 @@ public class Game extends GameState{
 		
 		em.addComponentTo(npc, rc);
 
-		cp = new ControllerComponent();
+		cp = new ControllerComponent(npc.getID());
 		cp.controller = new StaticNPCController();
 		em.addComponentTo(npc, cp);
 		
-		pc = new PositionComponent();
+		pc = new PositionComponent(npc.getID());
 		pc.setPosition(pos);
 		em.addComponentTo(npc, pc);
 		
-		bc = new BodyComponent();
+		bc = new BodyComponent(npc.getID());
 		bc.setBaseBox(new Rectangle(0f,0.8f,1.0f,0.2f));
 		bc.calculateBaseBox(pos, size);
 		bc.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.KINEMATIC);
@@ -644,20 +662,20 @@ public class Game extends GameState{
 		glClearColor(1,1,1,1);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		for(int y=0; y<chunksOnScreen[0].length; y++) 
+		/*for(int y=0; y<chunksOnScreen[0].length; y++) 
 			for(int x=0; x<chunksOnScreen.length; x++) 
 				if(texturenOnScreen[x][y]!=null && chunksOnScreen[x][y]!=null)
 					ResourceManager.getSelf().getTextureRenderer().render(texturenOnScreen[x][y].getId(),
 							new Vec2(chunksOnScreen[x][y].getX()*ChunkMap.CHUNK_WIDTH, chunksOnScreen[x][y].getY()*ChunkMap.CHUNK_HEIGHT),
-							new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
+							new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));*/
 
 	//	ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
 		//		Engine.getSelf().getWindow().getSize(), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
 		
 		
-		for(Entity e: finalLayer) {
-			BodyComponent bc = (BodyComponent) em.getFirstComponent(e, BodyComponent.class);
-			RenderComponent rc = (RenderComponent) em.getFirstComponent(e, RenderComponent.class);
+	//	for(Entity e: finalLayer) {
+		//	BodyComponent bc = (BodyComponent) em.getFirstComponent(e, BodyComponent.class);
+		//	RenderComponent rc = (RenderComponent) em.getFirstComponent(e, RenderComponent.class);
 			
 			//if(!bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize()).intersects(screenView))
 				//continue;
@@ -671,7 +689,7 @@ public class Game extends GameState{
 				ResourceManager.getSelf().getGrassRenderer().render(o);
 			else
 				o.render();*/
-		}
+		//}
 		
 		/*if(obstacleMap!=null)
 			for(int y=0; y< obstacleMap[0].length; y++)
@@ -687,11 +705,7 @@ public class Game extends GameState{
 				}*/
 	    
 		sm.render();
-		
-		for(UIObject o: UILayer) {
-			if(o!=null)
-				o.render();
-		}
+	
 		
 	}
 	@Override
@@ -707,8 +721,8 @@ public class Game extends GameState{
 	
 	@Override
 	public void update(float deltaTime) {
-		
-		//alListener3f(AL_POSITION, player.getX(), player.getY(),0);
+		PositionComponent ppc= em.getFirstComponent(player, PositionComponent.class);
+		alListener3f(AL_POSITION, ppc.getPosition().x, ppc.getPosition().y,0);
 		
 		timer.update();
 		timerWetSand.update();
@@ -729,14 +743,12 @@ public class Game extends GameState{
 		
 		finalLayer.clear();
 		
-	//	for(int y=0; y<chunksOnScreen[0].length; y++) 
-			//for(int x=0; x<chunksOnScreen.length; x++)
-			//	if(chunksOnScreen[x][y]!=null) 
-			//			finalLayer.addAll(chunksOnScreen[x][y].getStaticLayer());
-				
 		
-		finalLayer.addAll(em.getAllEntities());
-		finalLayer.addAll(staticLayer);
+		
+		
+		
+		//finalLayer.addAll(em.getAllEntities());
+		//finalLayer.addAll(staticLayer);
 		//finalLayer.add(player);
 		//Collections.sort(finalLayer); //TODO: get a better sort method
 										// excluir os objetos fora da tela. não precisa dar sort neles. só return.

@@ -26,6 +26,7 @@ import engine.entity.component.RenderComponent;
 import engine.entity.component.TextComponent;
 import engine.graphic.Animation;
 import engine.logic.GameObject;
+import engine.renderer.ASM;
 import engine.ui.UIObject;
 import engine.utilities.ArraysExt;
 import engine.utilities.ResourceManager;
@@ -35,7 +36,6 @@ import gameStates.Game;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
-import graphic.ASM;
 
 public class StaticNPCController extends Controller{
 
@@ -54,10 +54,10 @@ public class StaticNPCController extends Controller{
 
 	}
 	
-	private void createDialogButton(Entity parent, EntityManager em) {
+	private void createDialogButton(long parent, EntityManager em) {
 		button = em.newEntity();
-		PositionComponent pc = new PositionComponent();
-		RenderComponent rc = new RenderComponent();
+		PositionComponent pc = new PositionComponent(button.getID());
+		RenderComponent rc = new RenderComponent(button.getID());
 		
 		Vec2 parentPos = ((PositionComponent) em.getFirstComponent(parent, PositionComponent.class)).getPosition();
 		pc.setPosition(parentPos);
@@ -80,15 +80,15 @@ public class StaticNPCController extends Controller{
 		em.addComponentTo(button, rc);
 	}
 	
-	private void createDialogBox(Entity parent, EntityManager em) {
+	private void createDialogBox(long parent, EntityManager em) {
 		talkingBox = em.newEntity();
 		
 		Vec2 parentPos = ((PositionComponent) em.getFirstComponent(parent, PositionComponent.class)).getPosition();
 		
-		TextComponent tc = new TextComponent();
+		TextComponent tc = new TextComponent(talkingBox.getID());
 		tc.setFontColor(new Vec4(1,0,0,1));
 		tc.setFontName("monospace");
-		tc.setText("È     ÈText Component text! È");
+		tc.setText("Teste dialogo");
 		tc.setFontSize(230);
 		tc.setPosition(parentPos);
 		tc.setDisabled(true);
@@ -97,24 +97,24 @@ public class StaticNPCController extends Controller{
 	}
 
 	@Override
-	public void update(float deltaTime, Entity object, EntityManager context) {
+	public void update(float deltaTime, long EntityID, EntityManager context) {
 	
-		Action a = ct.calculateAction(object, context);
-		RenderComponent rc = (RenderComponent) context.getFirstComponent(object, RenderComponent.class);
-		BodyComponent bc = (BodyComponent) context.getFirstComponent(object, BodyComponent.class);
+		Action a = ct.calculateAction(EntityID, context);
+		RenderComponent rc = (RenderComponent) context.getFirstComponent(EntityID, RenderComponent.class);
+		BodyComponent bc = (BodyComponent) context.getFirstComponent(EntityID, BodyComponent.class);
 		
 		if(button==null) {
-			createDialogButton(object, context);
-			createDialogBox(object, context);
+			createDialogButton(EntityID, context);
+			createDialogBox(EntityID, context);
 		}
 		
 		TextComponent tc = (TextComponent) context.getFirstComponent(talkingBox, TextComponent.class);
-		//if(a.getActionName().equals("talk")) {
+		if(a.getActionName().equals("talk")) {
 			
 			tc.setDisabled(false);
-		//}else {
-		//	tc.setDisabled(true);
-		//}
+		}else {
+			tc.setDisabled(true);
+		}
 		
 		boolean flagShowButton = false;
 		boolean flagRemove = false;

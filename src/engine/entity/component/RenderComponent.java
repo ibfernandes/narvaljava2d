@@ -1,11 +1,17 @@
 package engine.entity.component;
 
 import engine.geometry.Rectangle;
+import engine.logic.GameObject;
+import engine.renderer.ASM;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
-import graphic.ASM;
 
-public class RenderComponent implements Component{
+public class RenderComponent extends Component implements Comparable<RenderComponent>{
+	public RenderComponent(long entityID) {
+		super(entityID);
+		
+	}
+
 	private Vec2 renderPosition = new Vec2(0,0);
 	private String texture;	
 	private Vec2 orientation = new Vec2(0,0); //Default: facing the same as image
@@ -89,5 +95,21 @@ public class RenderComponent implements Component{
 	}
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
+	}
+	
+	@Override
+	//TODO: what if the object doesnt have a baseBox?
+	// -1 this < obj
+	// 0 this = obj
+	// 1 this > obj
+	public int compareTo(RenderComponent rc) {
+		if(getRenderPosition().y > rc.getRenderPosition().y) 
+			return 1;
+		if(getRenderPosition().y == rc.getRenderPosition().y) 
+			return 0;
+		if(getRenderPosition().y < rc.getRenderPosition().y) 
+			return -1;
+		
+		return 0;
 	}
 }

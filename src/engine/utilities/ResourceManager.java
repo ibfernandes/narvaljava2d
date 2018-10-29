@@ -17,12 +17,13 @@ import engine.audio.Audio;
 import engine.audio.AudioSource;
 import engine.graphic.Shader;
 import engine.graphic.Texture;
+import engine.renderer.CubeRenderer;
+import engine.renderer.GrassRenderer;
+import engine.renderer.Renderer;
+import engine.renderer.ShadowRenderer;
+import engine.renderer.TextureRenderer;
 import engine.ui.Font;
 import glm.vec._2.Vec2;
-import graphic.CubeRenderer;
-import graphic.GrassRenderer;
-import graphic.ShadowRenderer;
-import graphic.TextureRenderer;
 
 public final class ResourceManager {
 	private static ResourceManager self;
@@ -30,6 +31,7 @@ public final class ResourceManager {
 	private static HashMap<String,  Texture> textures = new HashMap<String, Texture>();
 	private static HashMap<String,  Audio> audio = new HashMap<String, Audio>();
 	private static HashMap<String,  Font> fonts = new HashMap<String, Font>();
+	private static HashMap<String,  Renderer> renderers = new HashMap<String, Renderer>();
 	private static CubeRenderer cubeRenderer;
 	private static TextureRenderer textureRenderer;
 	private static ShadowRenderer shadowRenderer;
@@ -179,6 +181,14 @@ public final class ResourceManager {
 	private Texture loadTextureFromFile(String imgPath) {
 		Texture t = new Texture("/"+imgPath); 
 		return t;
+	}
+	
+	public void setRenderer(String name, Renderer r) {
+		renderers.put(name, r);
+	}
+	
+	public <T extends Renderer> T getRenderer(String name) {
+		return (T) renderers.get(name);
 	}
 
 	public CubeRenderer getCubeRenderer() {

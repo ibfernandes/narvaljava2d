@@ -1,4 +1,4 @@
-package graphic;
+package engine.renderer;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
@@ -19,7 +19,7 @@ import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
 
-public class GrassRenderer {
+public class GrassRenderer implements Renderer{
 	private Shader shader;
 	private int quadVAO;
 	private int numOfLayers = 8;
@@ -42,11 +42,11 @@ public class GrassRenderer {
 		
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0 , 4, GL_FLOAT, false, Float.BYTES *5, 0);
-		
+		//glDisableVertexAttribArray(0);
 		
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1 , 1, GL_FLOAT, false, Float.BYTES *5,  Float.BYTES *4);
-		
+		//glDisableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 	}

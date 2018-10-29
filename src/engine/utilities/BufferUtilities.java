@@ -12,11 +12,14 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 import org.lwjgl.BufferUtils;
 
 import game.Main;
 import glm.mat._4.Mat4;
+import glm.vec._2.Vec2;
+import glm.vec._4.Vec4;
 import sun.nio.ch.IOUtil;
 
 public class BufferUtilities {
@@ -50,6 +53,28 @@ public class BufferUtilities {
 		 buffer.put(values);
 		 buffer.flip();
 		 return buffer;
+	}
+	
+	public static FloatBuffer createFloatBuffer(Vec2 vec) {
+		 return createFloatBuffer(vec.toFA_());
+	}
+	
+	public static FloatBuffer createFloatBuffer(Vec4 vec) {
+		 return createFloatBuffer(vec.toFA_());
+	}
+	
+	public static FloatBuffer createFloatBuffer(ArrayList<Mat4> mats){
+		FloatBuffer buffer = createFloatBuffer(4*4*mats.size());
+		
+		for(Mat4 mat: mats) {
+			buffer.put(mat.m00);	buffer.put(mat.m01);	buffer.put(mat.m02);	buffer.put(mat.m03);
+			buffer.put(mat.m10);	buffer.put(mat.m11);	buffer.put(mat.m12);	buffer.put(mat.m13);
+			buffer.put(mat.m20);	buffer.put(mat.m21);	buffer.put(mat.m22);	buffer.put(mat.m23);
+			buffer.put(mat.m30);	buffer.put(mat.m31);	buffer.put(mat.m32);	buffer.put(mat.m33);
+		}
+		
+		buffer.flip();
+		return buffer;
 	}
 	
 	public static FloatBuffer createFloatBuffer(Mat4 mat){

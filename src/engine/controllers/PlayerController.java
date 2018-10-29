@@ -37,15 +37,15 @@ public class PlayerController  extends Controller{
 	}
 
 	@Override
-	public void update(float deltaTime, Entity e, EntityManager context) {
+	public void update(float deltaTime, long entityID, EntityManager context) {
 		
 		Arrays.fill(directions, false); // TODO: for now i could use only one boolean (isMoving)
 		float xMove =0;
 		float yMove =0;
 		
 		
-		RenderComponent rc = (RenderComponent) context.getComponent(e, RenderComponent.class).get(0);
-		MoveComponent mc = (MoveComponent) context.getComponent(e, MoveComponent.class).get(0);
+		RenderComponent rc = (RenderComponent) context.getFirstComponent(entityID, RenderComponent.class);
+		MoveComponent mc = (MoveComponent) context.getFirstComponent(entityID, MoveComponent.class);
 		
 		Vec2 dir = new Vec2(0,0);
 		

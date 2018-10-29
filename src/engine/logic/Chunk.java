@@ -2,20 +2,24 @@ package engine.logic;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 import org.jbox2d.dynamics.BodyType;
 
 import engine.engine.Engine;
 import engine.engine.PhysicsEngine;
+import engine.entity.Entity;
+import engine.entity.EntityManager;
+import engine.entity.componentModels.BasicEntity;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
 import engine.noise.FastNoise;
+import engine.renderer.ASM;
 import engine.utilities.Color;
 import engine.utilities.Vec2i;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
-import graphic.ASM;
 import net.jafama.FastMath;
 
 public class Chunk implements Serializable{
@@ -27,30 +31,26 @@ public class Chunk implements Serializable{
 	private int mapWidth, mapHeight; //TODO: redundant INFO to save on each chunk
 	private ArrayList<GameObject> objectLayer;
 	private int noiseDivisor = 5;
-	HorizontalPool grassPool = new HorizontalPool(500);
-	//private Rectangle boundingBox;
+	private HashMap<Float, Entity> objects;
+	private transient Random random = new Random();
+	private transient EntityManager em;
 	
-	//Should pass rules to map generation
-	//Should get its size from something static final since it'll be the same for all of them.
-	public Chunk (int x, int y, int chunkWidth, int chunkHeight, int mapWidth, int mapHeight) { 
+	//TODO: Should pass/refine rules to map generation
+	//TODO: Should get its size from something static final since it'll be the same for all of them. (Instead of saving it to a file for every single Chunk
+	public Chunk (int x, int y, int chunkWidth, int chunkHeight, int mapWidth, int mapHeight, EntityManager em) {
+		this.em = em;
 		this.x = x;
 		this.y = y;
 		this.chunkWidth = chunkWidth;
 		this.chunkHeight = chunkHeight;
 		this.mapWidth = mapWidth;
 		this.mapHeight = mapHeight;
-		
-		//boundingBox = new Rectangle(x,y,chunkWidth, chunkHeight);
-		
+			
 		textureWidth = (int) (chunkWidth/noiseDivisor);
 		textureHeight = (int) (chunkHeight/noiseDivisor);
 		
 		mapRGB = new int[textureWidth][textureHeight];
-		
-		//long start = System.nanoTime();
-		//generateTerrain();
-		//System.out.println("\n generateTerrain: "+(System.nanoTime()-start)/Engine.MILISECOND);
-		//generateGameObjectLayers();
+		objects = new HashMap<>();
 	}
 	
 	public int[][] getTerrain(){
@@ -79,7 +79,6 @@ public class Chunk implements Serializable{
 		float perlinNoise[][] = new float[textureWidth][textureHeight];
 		float whiteNoise[][] = new float[textureWidth][textureHeight];
 		float fractalNoise[][] = new float[textureWidth][textureHeight];
-		Random random = new Random();
 		FastNoise fastNoise = new FastNoise();
 		
 		for(int y=0; y<textureHeight; y++) {
@@ -144,89 +143,77 @@ public class Chunk implements Serializable{
 				//create scnearion elements
 
 				//TODO: the pool is jsut growing without limit. Need to fix that.
-				if(whiteNoise[x][y]>0.9999 && (mapRGB[x][y] == Color.ESMERALDA || mapRGB[x][y] == Color.DARKED_ESMERALDA)) {
-					if(grassPool.contains(whiteNoise[x][y]))
+				if(whiteNoise[x][y]>0.9999 && (mapRGB[x][y] == Color.GRASS_GROUND || mapRGB[x][y] == Color.DARKED_ESMERALDA)) {
+					if(objects.containsKey(whiteNoise[x][y]))
 						continue;
 					
-					GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
-					o.setSize(new Vec2(740,612));
-					o.setVelocity(0);
-					o.setColor(new Vec4(1,1,1,1));
-					if(random.nextBoolean())
-						o.setOrientation(new Vec2(0,0));
-					else
-						o.setOrientation(new Vec2(1,0));
-					o.setBaseBox(new Vec2(512, 16));
-					o.setSkew(new Vec2(0,0));
-					o.setPosition(new Vec2(x*noiseDivisor + this.x*chunkWidth,y*noiseDivisor + this.y*chunkHeight)); //TODO: fix that to a proper interval
-					ASM asm = new ASM(); //TODO: setTexutre not working?!
-					
-					Animation an;
-					an = new Animation("tree2", -1);
-					
-					an.setFrames(1, new Vec2(0,0), new Vec2(67,51)); // TODO: cuting lastline´, something to with squared size?
-					asm.addAnimation("idle_1", an);
-					asm.changeStateTo("idle_1");
-					o.setAnimations(asm);
-					//o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
-					o.setGroup("vegetation");
-					
-					grassPool.add(o, whiteNoise[x][y]);
-				}else if(whiteNoise[x][y]>0.99 && (mapRGB[x][y] == Color.ESMERALDA || mapRGB[x][y] == Color.DARKED_ESMERALDA)) {
-					if(grassPool.contains(whiteNoise[x][y]))
+					//objects.put(whiteNoise[x][y], generateRandomTree(x,y));
+				}else if(whiteNoise[x][y]>0.99 && (mapRGB[x][y] == Color.GRASS_GROUND || mapRGB[x][y] == Color.DARKED_ESMERALDA)) {
+					if(objects.containsKey(whiteNoise[x][y]))
 						continue;
-					GameObject o = new GameObject(); //TODO: Should optimize this so i don't need to create an object every time.
-					o.setSize(new Vec2(30,24));
-					o.setVelocity(0);
-					o.setColor(new Vec4(1,1,1,1));
-					if(random.nextBoolean())
-						o.setOrientation(new Vec2(0,0));
-					else
-						o.setOrientation(new Vec2(1,0));
-					o.setSkew(new Vec2(0,0));
-					o.setPosition(new Vec2(x*noiseDivisor + this.x*chunkWidth,y*noiseDivisor + this.y*chunkHeight));
-					ASM asm = new ASM(); //TODO: setTexutre not working?!
 					
-					Animation an;
-					/*if(whiteNoise[x][y]>0.9995)
-						an = new Animation("flower_red", -1);
-					else if(whiteNoise[x][y]>0.9991)
-						an = new Animation("flower_blue", -1);
-					else
-						an = new Animation("flower", -1);*/
-				
-					an = new Animation("grass", -1);
-					
-					//an.setFrames(1, new Vec2(0,0), new Vec2(12,12)); // TODO: cuting lastline´, something to with squared size?
-					an.setFrames(1, new Vec2(0,0), new Vec2(10,8)); // TODO: cuting lastline´, something to with squared size?
-					asm.addAnimation("idle_1", an);
-					asm.changeStateTo("idle_1");
-					o.setAnimations(asm);
-					//o.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.STATIC);
-					o.setGroup("vegetation");
-					
-					grassPool.add(o, whiteNoise[x][y]);
-					
+					objects.put(whiteNoise[x][y], generateRandomGroundVegetation(x,y));
 				}
-			
 			}
 		}
 	}
 	
-	private void generateStaticLayer() {
+	public Entity generateRandomTree(int x, int y) {
+		Vec2 orientation;
+		Vec2 position = new Vec2(x*noiseDivisor + this.x*chunkWidth, y*noiseDivisor + this.y*chunkHeight);
+		if(random.nextBoolean())
+			orientation = new Vec2(0,0);
+		else
+			orientation = new Vec2(1,0);
 		
-	}
-	private void generateMovableLayer() {
+		ASM asm = new ASM(); //TODO: setTexutre not working?!
 		
+		Animation an;
+		an = new Animation("tree", -1);
+		
+		an.setFrames(1, new Vec2(0,0), new Vec2(67,51)); // TODO: cuting lastline´, something to with squared size?
+		asm.addAnimation("idle_1", an);
+		asm.changeStateTo("idle_1");
+		
+		
+		Entity e = BasicEntity.generate(em, "grassRenderer", position, null, orientation, new Vec2(740, 612), asm); //TODO: i'll need to make sure that every time i load a chunk all id's are RE-generated so they're UNIQUE
+		
+		return e;
 	}
 	
-	private void generateGameObjectLayers() {
-		generateStaticLayer();
-		generateMovableLayer();
+	public Entity generateRandomGroundVegetation(int x, int y) {
+		Vec2 orientation;
+		Vec2 position = new Vec2(x*noiseDivisor + this.x*chunkWidth, y*noiseDivisor + this.y*chunkHeight);
+		if(random.nextBoolean())
+			orientation = new Vec2(0,0);
+		else
+			orientation = new Vec2(1,0);
+		
+		ASM asm = new ASM(); //TODO: setTexutre not working?!
+		
+		Animation an;
+		/*if(whiteNoise[x][y]>0.9995)
+			an = new Animation("flower_red", -1);
+		else if(whiteNoise[x][y]>0.9991)
+			an = new Animation("flower_blue", -1);
+		else
+			an = new Animation("flower", -1);*/
+	
+		an = new Animation("grass", -1);
+		
+		//an.setFrames(1, new Vec2(0,0), new Vec2(12,12)); // TODO: cuting lastline´, something to with squared size?
+		an.setFrames(1, new Vec2(0,0), new Vec2(10,8)); // TODO: cuting lastline´, something to with squared size?
+		asm.addAnimation("idle_1", an);
+		asm.changeStateTo("idle_1");
+		
+		
+		Entity e = BasicEntity.generate(em, "grassRenderer", position, null, orientation, new Vec2(30,24), asm); //TODO: i'll need to make sure that every time i load a chunk all id's are RE-generated so they're UNIQUE
+		
+		return e;
 	}
 	
-	public ArrayList<GameObject> getStaticLayer(){
-		return grassPool.getPool();
+	public ArrayList<Entity> getObjects(){
+		return new ArrayList<>(objects.values());
 	}
 	
 	public Vec2i getPosition() {
@@ -251,10 +238,5 @@ public class Chunk implements Serializable{
 	
 	public static String getID(int x, int y) {
 		return x+"_"+y;
-	}
-
-	/*public Rectangle getBoundingBox() {
-		return boundingBox;
-	}*/
-	
+	}	
 }

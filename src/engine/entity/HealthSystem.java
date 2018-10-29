@@ -1,6 +1,7 @@
 package engine.entity;
 
 import engine.entity.component.Component;
+import engine.entity.component.ControllerComponent;
 import engine.entity.component.HealthComponent;
 
 public class HealthSystem extends ComponentSystem{
@@ -10,18 +11,16 @@ public class HealthSystem extends ComponentSystem{
 	}
 
 	public void update(float dt) {
-		for(Entity e: em.getAllEntitiesWithComponent(HealthComponent.class)) {
+		for(Component c: em.getAllComponents(HealthComponent.class)) {
 	        
-			for(Component c: em.getComponent(e,HealthComponent.class)) {
-		        HealthComponent health = (HealthComponent) c;
-		        
-		        if (!health.isAlive) return;
-		        if (health.maxHP == 0) return;
-		        if (health.currentHP <= 0) {
-		            health.isAlive = false;
-		        }
+	        HealthComponent health = (HealthComponent) c;
+	        
+	        if (!health.isAlive) return;
+	        if (health.maxHP == 0) return;
+	        if (health.currentHP <= 0) {
+	            health.isAlive = false;
 	        }
-		}
+        }
 	}
 
 	@Override

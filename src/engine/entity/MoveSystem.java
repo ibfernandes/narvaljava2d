@@ -6,6 +6,7 @@ import engine.engine.Engine;
 import engine.engine.PhysicsEngine;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.Component;
+import engine.entity.component.HealthComponent;
 import engine.entity.component.MoveComponent;
 import engine.entity.component.PositionComponent;
 import engine.entity.component.RenderComponent;
@@ -21,40 +22,39 @@ public class MoveSystem extends ComponentSystem{
 
 	@Override
 	public void update(float dt) {
-		for(Entity e: em.getAllEntitiesWithComponent(MoveComponent.class)) {
+		
+		for(Component c: em.getAllComponents(MoveComponent.class)) {
 			
-			for(Component c: em.getComponent(e,MoveComponent.class)) {
-				MoveComponent mc = (MoveComponent) c;
-				PositionComponent pc= (PositionComponent) em.getFirstComponent(e, PositionComponent.class);
-				RenderComponent rc = (RenderComponent) em.getFirstComponent(e, RenderComponent.class);
-				
-				if(pc==null) {
-					System.err.println("Missing PositionComponent");
-					return;
-				}
-				
-				pc.setPreviousPosition(pc.getPosition());
-				
-				speed.x = (mc.speed/Engine.getSelf().TARGET_UPDATES)*mc.direction.x;
-				speed.y = (mc.speed/Engine.getSelf().TARGET_UPDATES)*mc.direction.y;
-				
-				//if it doesn't have a physics body
-				if(em.getComponent(e,BodyComponent.class).isEmpty()) {
-					pc.getPosition().x += speed.x;
-					pc.getPosition().y += speed.y;
-				}else {
-					for(Component c2: em.getComponent(e,BodyComponent.class)) {
-						BodyComponent bc = (BodyComponent) c2;
-						if(bc.body==null)
-							continue;
-						
-						
+			MoveComponent mc = (MoveComponent) c;
+			PositionComponent pc= (PositionComponent) em.getFirstComponent(c.getParentEntityID(), PositionComponent.class);
+			RenderComponent rc = (RenderComponent) em.getFirstComponent(c.getParentEntityID(), RenderComponent.class);
+			
+			if(pc==null) {
+				System.err.println("Missing PositionComponent");
+				return;
+			}
+			
+			pc.setPreviousPosition(pc.getPosition());
+			
+			speed.x = (mc.speed/Engine.getSelf().TARGET_UPDATES)*mc.direction.x;
+			speed.y = (mc.speed/Engine.getSelf().TARGET_UPDATES)*mc.direction.y;
+			
+			//if it doesn't have a physics body
+			if(em.getComponent(c.getParentEntityID(),BodyComponent.class).isEmpty()) {
+				pc.getPosition().x += speed.x;
+				pc.getPosition().y += speed.y;
+			}else {
+				for(Component c2: em.getComponent(c.getParentEntityID(),BodyComponent.class)) {
+					BodyComponent bc = (BodyComponent) c2;
+					if(bc.body==null)
+						continue;
 					
-						bc.body.setLinearVelocity(speed);
-						Vec2 pixelsPos = PhysicsEngine.convertMetersToPixels(bc.body.getPosition().x, bc.body.getPosition().y);
-						Vec2 pos = bc.calculatePosition(pixelsPos, rc.getSize());
-						pc.setPosition(pos); //offset up
-					}
+					
+				
+					bc.body.setLinearVelocity(speed);
+					Vec2 pixelsPos = PhysicsEngine.convertMetersToPixels(bc.body.getPosition().x, bc.body.getPosition().y);
+					Vec2 pos = bc.calculatePosition(pixelsPos, rc.getSize());
+					pc.setPosition(pos); //offset up
 				}
 			}
 		}
