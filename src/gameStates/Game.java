@@ -61,6 +61,7 @@ import engine.entity.Entity;
 import engine.entity.EntityManager;
 import engine.entity.MoveSystem;
 import engine.entity.RenderSystem;
+import engine.entity.SightSystem;
 import engine.entity.SystemManager;
 import engine.entity.TextSystem;
 import engine.entity.component.BodyComponent;
@@ -69,6 +70,7 @@ import engine.entity.component.HealthComponent;
 import engine.entity.component.MoveComponent;
 import engine.entity.component.PositionComponent;
 import engine.entity.component.RenderComponent;
+import engine.entity.component.SightComponent;
 import engine.entity.component.TextComponent;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
@@ -138,13 +140,14 @@ public class Game extends GameState{
 	private int currentCameraGridY;
 	
 	//Graph used for pathfinding
-	public int graphDivisor = 8;
-	public int graphSizeX = Engine.getSelf().getWindow().getWidth()/graphDivisor;
-	public int graphSizeY = Engine.getSelf().getWindow().getWidth()/graphDivisor;
+	public static final int GRAPH_DIVISOR = 8;
+	public int graphSizeX = Engine.getSelf().getWindow().getWidth()/GRAPH_DIVISOR;
+	public int graphSizeY = Engine.getSelf().getWindow().getWidth()/GRAPH_DIVISOR;
 	public boolean obstacleMap[][];
 	
 	//Others
 	private Vec2 startPoint = new Vec2(48000, 48000);
+	//private Vec2 startPoint = new Vec2(6000, 6000);
 	
 	//Entity System 
 	private EntityManager em = new EntityManager();
@@ -310,6 +313,7 @@ public class Game extends GameState{
 		//Creates player
 		//==================================
 		player = em.newEntity();
+		em.setPlayerID(player.getID());
 		player.setName("player");
 
 		ASM asm = new ASM();
@@ -337,10 +341,14 @@ public class Game extends GameState{
 		asm.changeStateTo("idle_1");
 		
 		Vec2 size= new Vec2(128,128);
+		Rectangle baseBoxProportions = new Rectangle(0f,0.8f,1.0f,0.2f);
+		
 		RenderComponent rc = new RenderComponent(player.getID());
 		rc.setSize(size);
 		rc.setColor(new Vec4(1,1,1,1));
 		rc.setAnimations(asm);
+		rc.setBaseBox(baseBoxProportions);
+		rc.setRenderer("textureRenderer");
 		rc.setRenderPosition(startPoint);
 		
 		em.addComponentTo(player, rc);
@@ -350,7 +358,7 @@ public class Game extends GameState{
 		em.addComponentTo(player, cp);
 		
 		MoveComponent mc = new MoveComponent(player.getID());
-		mc.speed = 600;
+		mc.velocity = 600;
 		em.addComponentTo(player, mc);
 		
 		PositionComponent pc = new PositionComponent(player.getID());
@@ -358,7 +366,7 @@ public class Game extends GameState{
 		em.addComponentTo(player, pc);
 		
 		BodyComponent bc = new BodyComponent(player.getID());
-		bc.setBaseBox(new Rectangle(0f,0.8f,1.0f,0.2f));
+		bc.setBaseBox(baseBoxProportions);
 		bc.calculateBaseBox(startPoint, size);
 		bc.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
 		em.addComponentTo(player, bc);
@@ -409,6 +417,7 @@ public class Game extends GameState{
 		rc.setSize(new Vec2(128,128));
 		rc.setColor(new Vec4(1,1,1,1));
 		rc.setAnimations(asm);
+		rc.setRenderer("textureRenderer");
 		rc.setRenderPosition(pos);
 		
 		em.addComponentTo(npc, rc);
@@ -426,22 +435,88 @@ public class Game extends GameState{
 		bc.calculateBaseBox(pos, size);
 		bc.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.KINEMATIC);
 		em.addComponentTo(npc, bc);
+		
+		
+		//Following npc
+		Entity followingNpc = em.newEntity();
 
+		asm = new ASM();
+		
+		a = new Animation("rogue", 150);
+		a.setFrames(10, new Vec2(0,0), new Vec2(32,32));
+		asm.addAnimation("idle_1", a);
+		
+		a = new Animation("rogue", 150);
+		a.setFrames(10, new Vec2(0,32), new Vec2(32,32));
+		asm.addAnimation("idle_2", a);
+		
+		a = new Animation("rogue", 100);
+		a.setFrames(10, new Vec2(0,64), new Vec2(32,32));
+		asm.addAnimation("walking", a);
+		
+		a = new Animation("rogue", 16);
+		a.setFrames(10, new Vec2(0,96), new Vec2(32,32));
+		asm.addAnimation("attacking", a);
+		
+		a = new Animation("rogue", 150);
+		a.setFrames(10, new Vec2(0,128), new Vec2(32,32));
+		asm.addAnimation("dying", a);
+		
+		asm.changeStateTo("idle_1");
+		
+		pos = new Vec2(startPoint.x+2000, startPoint.y);
+		rc = new RenderComponent(followingNpc.getID());
+		rc.setSize(new Vec2(128,128));
+		rc.setColor(new Vec4(1,1,1,1));
+		rc.setAnimations(asm);
+		rc.setRenderer("textureRenderer");
+		rc.setRenderPosition(pos);
+		
+		em.addComponentTo(followingNpc, rc);
+
+		cp = new ControllerComponent(followingNpc.getID());
+		cp.controller = new AIController();
+		em.addComponentTo(followingNpc, cp);
+		
+		pc = new PositionComponent(followingNpc.getID());
+		pc.setPosition(pos);
+		em.addComponentTo(followingNpc, pc);
+		
+		mc = new MoveComponent(followingNpc.getID());
+		mc.velocity = 200;
+		em.addComponentTo(followingNpc, mc);
+		
+		SightComponent sc = new SightComponent(followingNpc.getID());
+		sc.setViewSize(800, 600);
+		em.addComponentTo(followingNpc, sc);
+		
+		bc = new BodyComponent(followingNpc.getID());
+		bc.setBaseBox(new Rectangle(0f,0.8f,1.0f,0.2f));
+		bc.calculateBaseBox(pos, size);
+		bc.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.KINEMATIC);
+		em.addComponentTo(followingNpc, bc);
+		
+		
+		createBoxes(); 
+		
 		//==================================
 		// Entity Systems
 		//==================================
 		
-		MoveSystem ms = new MoveSystem(em);
-		BodySystem bs = new BodySystem(em);
-		ControllerSystem cs = new ControllerSystem(em);
-		RenderSystem rs = new RenderSystem(em);
-		TextSystem ts = new TextSystem(em);
+		MoveSystem ms = new MoveSystem(this);
+		BodySystem bs = new BodySystem(this);
+		ControllerSystem cs = new ControllerSystem(this);
+		RenderSystem rs = new RenderSystem(this);
+		TextSystem ts = new TextSystem(this);
+		SightSystem ss = new SightSystem(this);
 		
 		sm.addSystem(ms);
-		sm.addSystem(bs);
+		
 		sm.addSystem(cs);
 		sm.addSystem(rs);
+		sm.addSystem(bs);
 		sm.addSystem(ts);
+		sm.addSystem(ss);
 		
 		previousCameraGridX =  -1; 
 		previousCameraGridY =  -1; 
@@ -480,6 +555,50 @@ public class Game extends GameState{
 			System.err.println("ERROR: Shadow layer FBO.");
 		
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+	
+	public void createBoxes() {
+		float basicOffset = 0;
+		Vec2 size = new Vec2(12*5,15*5);
+		Vec2 positions[] = {
+				new Vec2(startPoint.x + basicOffset,startPoint.y),
+				new Vec2(startPoint.x + basicOffset + size.x,startPoint.y),
+				new Vec2(startPoint.x + basicOffset + size.x*2,startPoint.y),
+				new Vec2(startPoint.x + basicOffset + size.x*2,startPoint.y + size.y),
+				new Vec2(startPoint.x + basicOffset + size.x*2,startPoint.y+ size.y*2),
+				new Vec2(startPoint.x + basicOffset + size.x*2,startPoint.y+ size.y*3),
+				new Vec2(startPoint.x + basicOffset + size.x*2,startPoint.y+ size.y*4)
+				};
+
+		for(int i=0; i< positions.length; i++) {
+			Entity box = em.newEntity();
+	
+			ASM asm = new ASM();
+			Animation a = new Animation("wooden_box", -1);
+			a.setFrames(1, new Vec2(0,0), new Vec2(12,15));
+			asm.addAnimation("idle_1", a);
+			asm.changeStateTo("idle_1");
+
+			RenderComponent rc = new RenderComponent(box.getID());
+			rc.setSize(size);
+			rc.setColor(new Vec4(1,1,1,1));
+			rc.setAnimations(asm);
+			rc.setRenderer("textureRenderer");
+			rc.setRenderPosition(positions[i]);
+			rc.setBaseBox(new Rectangle(0f,0.6f,1.0f,0.4f));
+			em.addComponentTo(box, rc);
+	
+			PositionComponent pc = new PositionComponent(box.getID());
+			pc.setPosition(positions[i]);
+			em.addComponentTo(box, pc);
+
+			
+			BodyComponent bc = new BodyComponent(box.getID());
+			bc.setBaseBox(new Rectangle(0f,0.6f,1.0f,0.4f));
+			bc.calculateBaseBox(positions[i], size);
+			bc.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.KINEMATIC);
+			em.addComponentTo(box, bc);
+		}
 	}
 	
 	public void createBirds(int qtd) {
@@ -575,10 +694,10 @@ public class Game extends GameState{
 			
 			Rectangle baseBox = bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize());
 			
-			int coordXMapS = (int) (-camera.getX() + baseBox.getX())/graphDivisor;
-			int coordYMapS = (int) (-camera.getY() + baseBox.getY())/graphDivisor;
-			int sizeX = (int) (baseBox.width/graphDivisor) + 1;
-			int sizeY = (int) (baseBox.height/graphDivisor) +1;
+			int coordXMapS = (int) (-camera.getX() + baseBox.getX())/GRAPH_DIVISOR;
+			int coordYMapS = (int) (-camera.getY() + baseBox.getY())/GRAPH_DIVISOR;
+			int sizeX = (int) (baseBox.width/GRAPH_DIVISOR) + 1;
+			int sizeY = (int) (baseBox.height/GRAPH_DIVISOR) +1;
 			
 			if(coordXMapS<0 || coordYMapS<0) //TODO: Should consider the INTERVAL, not just the start and fisnish poitn
 				continue;
@@ -590,13 +709,13 @@ public class Game extends GameState{
 		}
 	}
 	
-	public boolean[][] getPointOfViewCollisionGraph(GameObject obj) {
+	public boolean[][] getPointOfViewCollisionGraph(Rectangle baseBox) {
 		boolean temp[][] = obstacleMap.clone();
 
-		int coordXMapS = (int) (- camera.getX() + obj.getBaseBox().getX())/graphDivisor;
-		int coordYMapS = (int) (- camera.getY() + obj.getBaseBox().getY())/graphDivisor;
-		int sizeX = (int) (obj.getBaseBox().width/graphDivisor) + 1;
-		int sizeY = (int) (obj.getBaseBox().height/graphDivisor) +1;
+		int coordXMapS = (int) (- camera.getX() + baseBox.getX())/GRAPH_DIVISOR;
+		int coordYMapS = (int) (- camera.getY() + baseBox.getY())/GRAPH_DIVISOR;
+		int sizeX = (int) (baseBox.width/GRAPH_DIVISOR) + 1;
+		int sizeY = (int) (baseBox.height/GRAPH_DIVISOR) +1;
 		
 		if(coordXMapS<0 || coordYMapS<0) //TODO: Should consider the INTERVAL, not just the start and fisnish poitn
 			return temp;
@@ -614,9 +733,6 @@ public class Game extends GameState{
 	}
 
 	public void generateChunks() { 
-		
-
-		
 		currentCameraGridX = (int) (camera.getX()/ChunkMap.CHUNK_WIDTH) ; 
 		currentCameraGridY = (int) (camera.getY()/ChunkMap.CHUNK_HEIGHT) ;
 		
@@ -654,6 +770,9 @@ public class Game extends GameState{
 			//ResourceManager.getSelf().getShadowRenderer().render(o);
 	}
 	
+	Chunk showCase = new Chunk(0,0,ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT, ChunkMap.MAP_WIDTH, ChunkMap.MAP_HEIGHT,em);
+	Texture terrainTexture = new Texture(ChunkMap.CHUNK_WIDTH/Chunk.NOISE_DIVISOR,ChunkMap.CHUNK_HEIGHT/Chunk.NOISE_DIVISOR);
+	
 	@Override
 	public void render() {
 		
@@ -662,13 +781,38 @@ public class Game extends GameState{
 		glClearColor(1,1,1,1);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
+		//TODO: Versão dinâmica só pra poder gerar o show case
+		/*showCase.setX((int) (camera.getX() / ChunkMap.CHUNK_WIDTH) );
+		showCase.setY((int) (camera.getY() / ChunkMap.CHUNK_HEIGHT) );
+		showCase.setWaterDx(FastMath.sin(Math.toRadians(timer.getDegree())));
+		showCase.setWetSandDx(FastMath.sin(Math.toRadians(timerWetSand.getDegree())));
+	
+		showCase.generateTerrain();
+				ResourceManager.getSelf().getTextureRenderer().render( new Texture(showCase.getTerrain()).getId(),
+						new Vec2(showCase.getX()*ChunkMap.CHUNK_WIDTH, showCase.getY()*ChunkMap.CHUNK_HEIGHT),
+						new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));*/
+		
+		showCase.setX((int) camera.getX());
+		showCase.setY((int) camera.getY());
+		showCase.setWaterDx(FastMath.sin(Math.toRadians(timer.getDegree())));
+		showCase.setWetSandDx(FastMath.sin(Math.toRadians(timerWetSand.getDegree())));
+		
+		showCase.generateNoise();
+		showCase.generateTerrain();
+		
+		terrainTexture.createAndSendBuffer(showCase.getTerrain());
+	
+		ResourceManager.getSelf().getTextureRenderer().render( terrainTexture.getId(),
+				new Vec2(camera.getX(), camera.getY()),
+				new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
+		
 		/*for(int y=0; y<chunksOnScreen[0].length; y++) 
 			for(int x=0; x<chunksOnScreen.length; x++) 
 				if(texturenOnScreen[x][y]!=null && chunksOnScreen[x][y]!=null)
 					ResourceManager.getSelf().getTextureRenderer().render(texturenOnScreen[x][y].getId(),
 							new Vec2(chunksOnScreen[x][y].getX()*ChunkMap.CHUNK_WIDTH, chunksOnScreen[x][y].getY()*ChunkMap.CHUNK_HEIGHT),
 							new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));*/
-
+		
 	//	ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
 		//		Engine.getSelf().getWindow().getSize(), 0, new Vec4(1,1,1,0.2), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
 		
@@ -739,7 +883,7 @@ public class Game extends GameState{
 		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1);
 		//ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0.42f*1/sin,0.06f*1/sin,0.5176f*1/sin));
 		
-		generateChunks();
+		//generateChunks();
 		
 		finalLayer.clear();
 		
@@ -764,7 +908,7 @@ public class Game extends GameState{
 		screenView.x = camera.getX();
 		screenView.y = camera.getY();
 		initQuadTree(screenView);
-		//generateCollisionGraph();
+		generateCollisionGraph();
 	}
 
 	public Camera getCamera() {

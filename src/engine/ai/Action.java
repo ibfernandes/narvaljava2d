@@ -5,7 +5,7 @@ import engine.logic.GameObject;
 
 public class Action {
 	private String actionName;
-	private Entity target;
+	private long targetEntityID;
 	
 	public Action(String actionName) {
 		this.actionName = actionName;
@@ -19,12 +19,12 @@ public class Action {
 		this.actionName = actionName;
 	}
 
-	public Entity getTarget() {
-		return target;
+	public long getTarget() {
+		return targetEntityID;
 	}
 
-	public void setTarget(Entity target) {
-		this.target = target;
+	public void setTarget(long targetEntityID) {
+		this.targetEntityID = targetEntityID;
 	}
 
 }

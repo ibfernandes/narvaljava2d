@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL30.*;
 import java.util.Arrays;
 import java.util.Random;
 
+import engine.entity.component.RenderComponent;
 import engine.graphic.Shader;
 import engine.graphic.Texture;
 import engine.logic.GameObject;
@@ -170,6 +171,59 @@ public class GrassRenderer implements Renderer{
 		
 		glActiveTexture(GL_TEXTURE1);
 		ResourceManager.getSelf().getTexture(o.getAnimations().getCurrentAnimation().getTexture()).bind(); // TODO: should be normal.bind()
+		
+		
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glBindVertexArray(quadVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6*numOfLayers);
+
+		glBindVertexArray(0);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		
+	}
+	
+	public void render(RenderComponent rc) {
+		shader.use();
+		Mat4 model = new Mat4();
+		
+		//TODO: Encapsulate this in a proper method
+		float skewX = (float) Math.tan(Math.toRadians(rc.getSkew().x)); //sys
+		float skewY = (float) Math.tan(Math.toRadians(rc.getSkew().y));
+		if(skewX>10)
+			skewX= 10;
+		if(skewX<-10)
+			skewX = -10;
+		
+		Mat4 skew = new Mat4();
+		skew.m00 =1 ; skew.m10 = skewX; skew.m20 = 0; skew.m30 = 0;
+		skew.m01 = skewY; skew.m11 = 1; skew.m21 = 0; skew.m31 = 0;
+		skew.m02 = 0; skew.m12 = 0; skew.m22 = 1; skew.m32 = 0;
+		skew.m03 = 0; skew.m13 = 0; skew.m23 = 0; skew.m33 = 1; 
+		
+		
+		model = model.translate(rc.getRenderPosition().x, rc.getRenderPosition().y, 0);
+		model = model.translate(0.5f * rc.getSize().x, 0.5f *rc.getSize().y, 0); //Move the origin of rotation to object's center
+		model = model.rotate(rc.getRotation(), 0, 0, 1); // Must be in radians
+		model = model.translate(-0.5f * rc.getSize().x, -0.5f *rc.getSize().y, 0); //Move the origin of rotation back to it's top left
+		model = model.mul(skew);
+		model = model.scale(rc.getSize().x, rc.getSize().y, 1);
+
+		
+		
+
+		shader.setMat4("model", model);
+		shader.setVec4("spriteColor", rc.getColor());
+		shader.setVec2("flip", rc.getOrientation());
+		shader.setVec4("spriteFrame", rc.getAnimations().getCurrentAnimation().getCurrentFrame());
+		
+		shader.setInteger("image", 0);
+		shader.setInteger("normalTex", 1);
+		
+		glActiveTexture(GL_TEXTURE0);
+		ResourceManager.getSelf().getTexture(rc.getAnimations().getCurrentAnimation().getTexture()).bind();
+		
+		glActiveTexture(GL_TEXTURE1);
+		ResourceManager.getSelf().getTexture(rc.getAnimations().getCurrentAnimation().getTexture()).bind(); // TODO: should be normal.bind()
 		
 		
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

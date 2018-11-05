@@ -1,10 +1,4 @@
-/SourceSansPro.ttf
-/audio/
-/editor/
-/engine/
-/game/
 /gameStates/
-/root.fxml
-/shaders/
 /sprites/
-/style.css
+/engine/
+/shaders/

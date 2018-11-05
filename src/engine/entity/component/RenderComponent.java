@@ -7,11 +7,6 @@ import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
 
 public class RenderComponent extends Component implements Comparable<RenderComponent>{
-	public RenderComponent(long entityID) {
-		super(entityID);
-		
-	}
-
 	private Vec2 renderPosition = new Vec2(0,0);
 	private String texture;	
 	private Vec2 orientation = new Vec2(0,0); //Default: facing the same as image
@@ -22,7 +17,33 @@ public class RenderComponent extends Component implements Comparable<RenderCompo
 	private ASM animations;
 	private float rotation;
 	private Rectangle boundingBox = new Rectangle(0,0,0,0);
+	private Rectangle calculatedBaseBox = new Rectangle(0,0,0,0);
+	private Rectangle baseBox = new Rectangle(0,0,0,0);
 	private boolean disabled = false;
+	private String Renderer = "";
+	
+	public RenderComponent(long entityID) {
+		super(entityID);
+	}
+	
+	/**
+	 * Rectangle coordinates must be set in normalized local object space. It uses RenderComponent.getBoundingBox as reference (anchorPoint).
+	 * @param baseBox
+	 */
+	public void setBaseBox(Rectangle baseBox) {
+		this.baseBox = baseBox;
+	}
+	
+	public Rectangle getCalculatedBaseBox() {
+
+		calculatedBaseBox.x = renderPosition.x + size.x * baseBox.x;
+		calculatedBaseBox.y = renderPosition.y + size.y * baseBox.y;
+
+		calculatedBaseBox.width = size.x * baseBox.width;
+		calculatedBaseBox.height = size.y * baseBox.height;
+		
+		return calculatedBaseBox;
+	}
 	
 	public Rectangle getBoundingBox() {
 		boundingBox.x = renderPosition.x;
@@ -103,13 +124,23 @@ public class RenderComponent extends Component implements Comparable<RenderCompo
 	// 0 this = obj
 	// 1 this > obj
 	public int compareTo(RenderComponent rc) {
-		if(getRenderPosition().y > rc.getRenderPosition().y) 
+		Rectangle r = getCalculatedBaseBox();
+		
+		if(r.y > rc.getCalculatedBaseBox().y) 
 			return 1;
-		if(getRenderPosition().y == rc.getRenderPosition().y) 
+		if(r.y == rc.getCalculatedBaseBox().y) 
 			return 0;
-		if(getRenderPosition().y < rc.getRenderPosition().y) 
+		if(r.y < rc.getCalculatedBaseBox().y) 
 			return -1;
 		
 		return 0;
+	}
+
+	public String getRenderer() {
+		return Renderer;
+	}
+
+	public void setRenderer(String renderer) {
+		Renderer = renderer;
 	}
 }

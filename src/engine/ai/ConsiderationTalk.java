@@ -21,7 +21,7 @@ public class ConsiderationTalk implements Consideration{
 			RenderComponent rce = (RenderComponent) context.getFirstComponent(e, RenderComponent.class);
 			
 			if(GSM.getSelf().getKeyboard().isKeyPressed(KeyBoardBindings.INTERACTION_KEY) && e.getName()!=null && e.getName().equals("player") && rce.getBoundingBox().intersects(rc.getBoundingBox())) {
-				a.setTarget(e);
+				a.setTarget(e.getID());
 				return 1f;
 			}
 		}

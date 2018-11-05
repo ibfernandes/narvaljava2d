@@ -11,6 +11,7 @@ public class EntityManager {
 	private ArrayList<Entity> entities = new ArrayList<>();
 	private HashMap<String, ArrayList<Component>> componentsByClass = new HashMap<>();
 	private HashMap <Long, ArrayList<Component>> componentsOf = new HashMap<>();
+	private long playerID;
 	private EntityManager self;
 	private int maxEntities = 20000;
 	
@@ -98,6 +99,14 @@ public class EntityManager {
 				}
 					
 		return ents;
+	}
+
+	public long getPlayerID() {
+		return playerID;
+	}
+
+	public void setPlayerID(long playerID) {
+		this.playerID = playerID;
 	}
 
 }

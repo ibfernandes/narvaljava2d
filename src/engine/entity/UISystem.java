@@ -5,11 +5,13 @@ import engine.entity.component.MoveComponent;
 import engine.entity.component.TextComponent;
 import engine.entity.component.UIComponent;
 import gameStates.GSM;
+import gameStates.Game;
 
 public class UISystem extends ComponentSystem{
 
-	public UISystem(EntityManager em) {
-		super(em);
+
+	public UISystem(Game context) {
+		super(context);
 		
 	}
 
@@ -19,8 +21,8 @@ public class UISystem extends ComponentSystem{
 
 	@Override
 	public void variableUpdate(float alpha) {
-		for(Component c: em.getAllComponents(UIComponent.class)) {
-			UIComponent uic = (UIComponent) em.getFirstComponent(c.getParentEntityID(), UIComponent.class);
+		for(Component c: context.getEm().getAllComponents(UIComponent.class)) {
+			UIComponent uic = (UIComponent) context.getEm().getFirstComponent(c.getEntityID(), UIComponent.class);
 			
 			if(uic.getRenderComponent().getBoundingBox().intersectsPoint(GSM.getSelf().getMouse().getCursorPos())) {
 				System.out.println("Hover");

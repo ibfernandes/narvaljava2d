@@ -16,8 +16,14 @@ import engine.utilities.BufferUtilities;
 public class Texture {
 	private int id;
 	private BufferedImage textureImage;
-	private static final int BYTES_PER_PIXEL = 4;
+	public static final int BYTES_PER_PIXEL = 4; //ARGB Model
 	private int width, height;
+	
+	public Texture(int width, int height) {
+		this.width = width;
+		this.height = height;
+		this.id = glGenTextures();
+	}
 	
 	public Texture(int id) {
 		this.id = id;
@@ -78,6 +84,59 @@ public class Texture {
         
         generateTexture(buffer, pixels.length, pixels[0].length, false);
    }
+	
+	public void createAndSendBuffer(int[][] pixels) {
+		int[] pixelsAux = new int[pixels.length * pixels[0].length];
+		for(int y=0;y<pixels[0].length;y++) {
+			for(int x=0;x<pixels.length;x++) {
+				pixelsAux[x + y*pixels.length] = pixels[x][y];
+			}
+		}
+
+        ByteBuffer buffer = BufferUtilities.createByteBuffer(
+        							new byte[pixels.length * pixels[0].length * BYTES_PER_PIXEL]
+        						); //4 for RGBA, 3 for RGB
+        
+        for(int y = 0; y < pixels[0].length; y++){
+            for(int x = 0; x < pixels.length; x++){
+                int pixel = pixelsAux[y * pixels.length + x];
+                buffer.put((byte) ((pixel >> 16) & 0xFF));     		// Red component
+                buffer.put((byte) ((pixel >> 8) & 0xFF));      		// Green component
+                buffer.put((byte) (pixel & 0xFF));              	// Blue component
+                buffer.put((byte) ((pixel >> 24) & 0xFF));    		// Alpha component. Only for RGBA
+            }
+        }
+
+        buffer.flip();
+        
+        generateTexture(buffer, pixels.length, pixels[0].length, false);
+	}
+	
+	public void createAndSendBuffer(ByteBuffer buffer) { //TODO: NOT WORKING, BUFF ORDER WRONG
+		//int[] pixelsAux = new int[pixels.length * pixels[0].length];
+		//buffer.clear();
+		
+		/*for(int y=0;y<pixels[0].length;y++) {
+			for(int x=0;x<pixels.length;x++) {
+				pixelsAux[x + y*pixels.length] = pixels[x][y];
+			}
+		}*/
+
+        /*for(int y = 0; y < pixels[0].length; y++){
+            for(int x = 0; x < pixels.length; x++){
+            	// int pixel = pixelsAux[y * pixels.length + x];
+            	int pixel = pixels[x][y];
+                buffer.put((byte) ((pixel >> 16) & 0xFF));     		// Red component
+                buffer.put((byte) ((pixel >> 8) & 0xFF));      		// Green component
+                buffer.put((byte) (pixel & 0xFF));              	// Blue component
+                buffer.put((byte) ((pixel >> 24) & 0xFF));    		// Alpha component. Only for RGBA
+            }
+        }*/
+
+        //buffer.flip();
+        
+        generateTexture(buffer, this.width, this.height, false);
+	}
 	
 	public Texture(ByteBuffer buffer, int width, int height, boolean antiAlias) {
 		this.width  = width;

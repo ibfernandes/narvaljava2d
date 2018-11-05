@@ -7,6 +7,13 @@ public class MoveComponent extends Component{
 		super(entityID);
 		
 	}
-	public float speed = 0;
+	public float velocity = 0;
 	public Vec2 direction = new Vec2(0,0);
+	
+	public float getVelocity() {
+		return velocity;
+	}
+	public void setVelocity(float velocity) {
+		this.velocity = velocity;
+	}
 }

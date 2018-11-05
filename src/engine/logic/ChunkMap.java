@@ -34,8 +34,8 @@ public class ChunkMap {
 	private ArrayList<Chunk> chunksToSave = new ArrayList<>();
 	private EntityManager em;
 	
-	public static final int CHUNK_WIDTH = 2048;
-	public static final int CHUNK_HEIGHT = 2048;
+	public static final int CHUNK_WIDTH = 1920;
+	public static final int CHUNK_HEIGHT = 1080;
 	public static final int CHUNK_BUFFER_SIZE = ((CHUNK_WIDTH*CHUNK_HEIGHT)/CHUNK_WIDTH)*1000;
 	public static final int MAP_WIDTH = 60000;
 	public static final int MAP_HEIGHT = 60000;

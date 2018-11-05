@@ -1,10 +1,12 @@
 package engine.entity;
 
+import gameStates.Game;
+
 public abstract class ComponentSystem {
-	protected EntityManager em;
+	protected Game context;
 	
-	public ComponentSystem(EntityManager em) {
-		this.em = em;
+	public ComponentSystem(Game context) {
+		this.context = context;
 	}
 	
 	public abstract void update(float dt);

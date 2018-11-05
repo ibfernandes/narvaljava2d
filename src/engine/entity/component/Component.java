@@ -7,7 +7,7 @@ public abstract class Component{
 		this.entityID = entityID;
 	}
 	
-	public long getParentEntityID() {
+	public long getEntityID() {
 		return entityID;
 	}
 }

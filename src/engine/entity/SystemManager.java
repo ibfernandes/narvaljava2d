@@ -2,13 +2,12 @@ package engine.entity;
 
 import java.util.ArrayList;
 
+import gameStates.Game;
+
 public class SystemManager {
 	
 	private ArrayList<ComponentSystem> systems = new ArrayList<>();
-	
-	public void addSystem(ComponentSystem cs) {
-		systems.add(cs);
-	}
+
 	
 	public void update(float dt) {
 		for(ComponentSystem cs: systems)
@@ -23,5 +22,9 @@ public class SystemManager {
 	public void render() {
 		for(ComponentSystem cs: systems)
 			cs.render();
+	}
+
+	public void addSystem(ComponentSystem cs) {
+		systems.add(cs);
 	}
 }

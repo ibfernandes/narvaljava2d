@@ -38,7 +38,8 @@ vec3 calculatePointLight(PointLight lightPoint, vec4 imgTex){
 	light.constant = 0.000002;
 	light.position = vec3(600,300,500);*/
 
-	float distance = length(lightPoint.position - vec3(FragPos.x/2, FragPos.y, FragPos.z));
+	//FragPos.x/2
+	float distance = length(lightPoint.position - vec3(FragPos.xyz));
 	float attenuation = 1 / (lightPoint.constant + lightPoint.linear * distance + lightPoint.quadratic * (distance* distance));
 
 	float finalAttenuation = max(attenuation,dayTime);

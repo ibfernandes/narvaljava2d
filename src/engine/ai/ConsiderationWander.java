@@ -9,7 +9,7 @@ public class ConsiderationWander implements Consideration{
 	private Action a = new Action("wander");
 	
 	@Override
-	public float evaluate(Entity obj, EntityManager game) {
+	public float evaluate(long entityID, EntityManager game) {
 		 
 		return 0.1f;
 		

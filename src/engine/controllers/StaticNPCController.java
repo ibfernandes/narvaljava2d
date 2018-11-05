@@ -97,18 +97,18 @@ public class StaticNPCController extends Controller{
 	}
 
 	@Override
-	public void update(float deltaTime, long EntityID, EntityManager context) {
+	public void update(float deltaTime, long EntityID, Game context) {
 	
-		Action a = ct.calculateAction(EntityID, context);
-		RenderComponent rc = (RenderComponent) context.getFirstComponent(EntityID, RenderComponent.class);
-		BodyComponent bc = (BodyComponent) context.getFirstComponent(EntityID, BodyComponent.class);
+		Action a = ct.calculateAction(EntityID, context.getEm());
+		RenderComponent rc = (RenderComponent) context.getEm().getFirstComponent(EntityID, RenderComponent.class);
+		BodyComponent bc = (BodyComponent) context.getEm().getFirstComponent(EntityID, BodyComponent.class);
 		
 		if(button==null) {
-			createDialogButton(EntityID, context);
-			createDialogBox(EntityID, context);
+			createDialogButton(EntityID, context.getEm());
+			createDialogBox(EntityID, context.getEm());
 		}
 		
-		TextComponent tc = (TextComponent) context.getFirstComponent(talkingBox, TextComponent.class);
+		TextComponent tc = (TextComponent) context.getEm().getFirstComponent(talkingBox, TextComponent.class);
 		if(a.getActionName().equals("talk")) {
 			
 			tc.setDisabled(false);
@@ -120,8 +120,8 @@ public class StaticNPCController extends Controller{
 		boolean flagRemove = false;
 		
 			
-		for(Entity e: context.getAllEntities()){
-			RenderComponent erc = (RenderComponent) context.getFirstComponent(e, RenderComponent.class);
+		for(Entity e: context.getEm().getAllEntities()){
+			RenderComponent erc = (RenderComponent) context.getEm().getFirstComponent(e, RenderComponent.class);
 			
 			if(e.getName()!=null && e.getName().equals("player") && rc.getBoundingBox().intersects(erc.getBoundingBox())) {
 				if(!flagShowButton) {
@@ -135,9 +135,9 @@ public class StaticNPCController extends Controller{
 		}
 		
 		if(flagShowButton) {
-			((RenderComponent)context.getFirstComponent(button, RenderComponent.class)).setDisabled(false);
+			((RenderComponent)context.getEm().getFirstComponent(button, RenderComponent.class)).setDisabled(false);
 		}else
-			((RenderComponent)context.getFirstComponent(button, RenderComponent.class)).setDisabled(true);
+			((RenderComponent)context.getEm().getFirstComponent(button, RenderComponent.class)).setDisabled(true);
 		
 	}
 
