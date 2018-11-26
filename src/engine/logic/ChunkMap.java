@@ -88,6 +88,7 @@ public class ChunkMap {
 		
 		if(!chunksToSave.isEmpty() && savingChunks.isEmpty()) {
 			
+			chunksToSave.get(0).generateNoise();
 			chunksToSave.get(0).generateTerrain();
 			put(chunksToSave.get(0));
 			saveFile(chunksToSave.get(0));

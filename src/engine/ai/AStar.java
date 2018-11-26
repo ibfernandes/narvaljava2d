@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import engine.utilities.Vec2i;
+import gameStates.Game;
 
 public class AStar {
 	private ArrayList<Anode> openSet = new ArrayList<>();
@@ -12,8 +13,8 @@ public class AStar {
 	private HashMap <Integer, Anode> cameFrom = new HashMap<>();
 	private HashMap <Float, Anode> gScore = new HashMap<>(); //gScore -> distance between start Node and this ANode
 	private float M_SQRT2 = (float) Math.sqrt(2.0);
-	public static final int MAXSTEPS = 900;
-	private int widthSize = (128/8) +1, heightSize = (20/8)+1;
+	public static final int MAXSTEPS = 2000;
+	private int widthSize = (128/Game.GRAPH_DIVISOR) +1, heightSize = (20/Game.GRAPH_DIVISOR)+1;
 	private boolean obstacleMap[][];
 	
 	public ArrayList<Anode> calculatePath(Vec2i start, Vec2i end, boolean obstacleMap[][]){
@@ -59,8 +60,9 @@ public class AStar {
 			closedSet.add(current);
 			
 			for(Anode neighbor: getNeighbors(current)) {
-				if(isSizeOccupied(neighbor))
+				if(isSizeOccupied(neighbor)) {
 					closedSet.add(neighbor);
+				}
 				
 				if(closedSet.contains(neighbor))
 					continue; //ignore the neighbor which is already evaluated
@@ -94,14 +96,14 @@ public class AStar {
 	
 	private boolean isSizeOccupied(Anode u) {
 		Anode tempState = new Anode(u.pos.x , u.pos.y);
-		
 		for(int y=0; y<heightSize; y++) {
 			for(int x=0; x<widthSize; x++) {
 				tempState.pos.x = u.pos.x + x;
 				tempState.pos.y = u.pos.y + y;
 				
-				if(isOccupied(tempState))
+				if(isOccupied(tempState)) {
 					return true;
+				}
 			}
 		}
 		

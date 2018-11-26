@@ -1,4 +1,4 @@
-package engine.renderer;
+package engine.logic;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -9,7 +9,7 @@ import engine.graphic.Animation;
 
 
 
-public class ASM implements Serializable{
+public class AnimationStateManager implements Serializable{
 
 	private String currentAnimation;
 	private int currentAnimationType;
@@ -22,7 +22,7 @@ public class ASM implements Serializable{
 	/**
 	 * [A]nimation [S]tate [M]anager
 	 */
-	public ASM() {
+	public AnimationStateManager() {
 		animations = new HashMap<String, Animation>();
 		animationsQueue = new LinkedList<>();
 		animationsQueueType = new LinkedList<>();

@@ -6,7 +6,7 @@ import java.util.HashMap;
 
 import engine.entity.component.Component;
 import engine.entity.component.RenderComponent;
-import engine.renderer.TextureRendererV2;
+import engine.renderer.TextureBatchRenderer;
 import engine.renderer.GrassRenderer;
 import engine.utilities.ResourceManager;
 import gameStates.Game;
@@ -56,7 +56,7 @@ public class RenderSystem extends ComponentSystem{
 	}
 	
 	public void renderv2() {
-		TextureRendererV2  t2 = ResourceManager.getSelf().getRenderer("textureRendererv2");
+		TextureBatchRenderer  t2 = ResourceManager.getSelf().getRenderer("textureRendererv2");
 		
 		/*for(RenderComponent rc: components)
 			t2.render(

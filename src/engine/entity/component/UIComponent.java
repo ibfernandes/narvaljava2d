@@ -1,7 +1,7 @@
 package engine.entity.component;
 
 import engine.geometry.Rectangle;
-import engine.renderer.ASM;
+import engine.logic.AnimationStateManager;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
 

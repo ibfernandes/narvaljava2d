@@ -21,7 +21,7 @@ import engine.graphic.Animation;
 import engine.graphic.Texture;
 import engine.input.KeyboardControl;
 import engine.input.MouseControl;
-import engine.renderer.ASM;
+import engine.logic.AnimationStateManager;
 import engine.renderer.CubeRenderer;
 import engine.utilities.MathExt;
 import engine.utilities.ResourceManager;
@@ -47,7 +47,7 @@ public class UIObject implements Comparable<UIObject>, Serializable{
 	private Vec4 color 		= new Vec4(1,1,1,1);
 	private float rotation, velocity;
 	private boolean isSolid, isAlive;
-	private ASM animations;
+	private AnimationStateManager animations;
 	private Controller controller;
 	private String texture;	// Already loaded from the ResourceManager
 	public static final int ANCHOR_TOP_LEFT 	=	0,
@@ -423,11 +423,11 @@ public class UIObject implements Comparable<UIObject>, Serializable{
 		this.rotation = rotation;
 	}
 
-	public ASM getAnimations() {
+	public AnimationStateManager getAnimations() {
 		return animations;
 	}
 
-	public void setAnimations(ASM animations) {
+	public void setAnimations(AnimationStateManager animations) {
 		this.animations = animations;
 	}
 	public String getTexture() {

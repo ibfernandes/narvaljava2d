@@ -23,7 +23,7 @@ import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
 
-public class TextureRendererV2 implements Renderer{
+public class TextureBatchRenderer implements Renderer{
 
 	private int layers;
 	public int numVertices;
@@ -47,7 +47,7 @@ public class TextureRendererV2 implements Renderer{
 	int objectsCount = 0;
 	
 	
-	public TextureRendererV2(Shader shader) {
+	public TextureBatchRenderer(Shader shader) {
 		this.shader = shader;
 		init();
 	}

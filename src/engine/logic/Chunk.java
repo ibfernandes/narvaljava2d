@@ -19,7 +19,6 @@ import engine.graphic.Texture;
 import engine.noise.FastNoise;
 import engine.noise.FastNoise.Interp;
 import engine.noise.FastNoise.NoiseType;
-import engine.renderer.ASM;
 import engine.utilities.BufferUtilities;
 import engine.utilities.Color;
 import engine.utilities.Vec2i;
@@ -48,6 +47,7 @@ public class Chunk implements Serializable{
 	private FastNoise fastNoise = new FastNoise();
 	private ByteBuffer terrainBuffer;
 	private double waveVariation = 0.016;
+	private Rectangle boundingBox =new Rectangle(0,0,0,0);
 	
 	//TODO: Should pass/refine rules to map generation
 	//TODO: Should get its size from something static final since it'll be the same for all of them. (Instead of saving it to a file for every single Chunk
@@ -61,6 +61,11 @@ public class Chunk implements Serializable{
 		this.chunkHeight = chunkHeight;
 		this.mapWidth = mapWidth;
 		this.mapHeight = mapHeight;
+		
+		boundingBox.x = x*chunkWidth;
+		boundingBox.y = y*chunkHeight;
+		boundingBox.width = chunkWidth;
+		boundingBox.height = chunkHeight;
 			
 		textureWidth = (int) (chunkWidth/NOISE_DIVISOR);
 		textureHeight = (int) (chunkHeight/NOISE_DIVISOR);
@@ -97,10 +102,10 @@ public class Chunk implements Serializable{
 		float b = 0.9f;
 		float c = 2f;
 		
-		//int coordX = ((this.x*chunkWidth)/noiseDivisor)  ; // getx + x*divisor //TODO MAKE X*TEXTWIDTH
-		//int coordY = ((this.y*chunkHeight)/noiseDivisor)  ; //
-		int coordX = ((this.x)/NOISE_DIVISOR);
-		int coordY = ((this.y)/NOISE_DIVISOR);
+		int coordX = ((this.x*chunkWidth)/NOISE_DIVISOR)  ; // getx + x*divisor //TODO MAKE X*TEXTWIDTH
+		int coordY = ((this.y*chunkHeight)/NOISE_DIVISOR)  ; //
+		//int coordX = ((this.x)/NOISE_DIVISOR);
+		//int coordY = ((this.y)/NOISE_DIVISOR);
 		
 		int constX = coordX;
 		int constY = coordY;
@@ -191,14 +196,14 @@ public class Chunk implements Serializable{
 	
 	public Entity generateRandomTree(int x, int y) {
 		Vec2 orientation;
-		//Vec2 position = new Vec2(x*noiseDivisor + this.x*chunkWidth, y*noiseDivisor + this.y*chunkHeight);
-		Vec2 position = new Vec2(x*NOISE_DIVISOR + this.x, y*NOISE_DIVISOR + this.y);
+		Vec2 position = new Vec2(x*NOISE_DIVISOR + this.x*chunkWidth, y*NOISE_DIVISOR + this.y*chunkHeight);
+		//Vec2 position = new Vec2(x*NOISE_DIVISOR + this.x, y*NOISE_DIVISOR + this.y);
 		if(random.nextBoolean())
 			orientation = new Vec2(0,0);
 		else
 			orientation = new Vec2(1,0);
 		
-		ASM asm = new ASM(); //TODO: setTexutre not working?!
+		AnimationStateManager asm = new AnimationStateManager(); //TODO: setTexutre not working?!
 		
 		Animation an;
 		an = new Animation("tree", -1);
@@ -215,14 +220,14 @@ public class Chunk implements Serializable{
 	
 	public Entity generateRandomGroundVegetation(int x, int y) {
 		Vec2 orientation;
-		//Vec2 position = new Vec2(x*noiseDivisor + this.x*chunkWidth, y*noiseDivisor + this.y*chunkHeight);
-		Vec2 position = new Vec2(x*NOISE_DIVISOR + this.x, y*NOISE_DIVISOR + this.y);
+		Vec2 position = new Vec2(x*NOISE_DIVISOR + this.x*chunkWidth, y*NOISE_DIVISOR + this.y*chunkHeight);
+		//Vec2 position = new Vec2(x*NOISE_DIVISOR + this.x, y*NOISE_DIVISOR + this.y);
 		if(random.nextBoolean())
 			orientation = new Vec2(0,0);
 		else
 			orientation = new Vec2(1,0);
 		
-		ASM asm = new ASM(); //TODO: setTexutre not working?!
+		AnimationStateManager asm = new AnimationStateManager(); //TODO: setTexutre not working?!
 		
 		Animation an;
 		/*if(whiteNoise[x][y]>0.9995)
@@ -306,5 +311,9 @@ public class Chunk implements Serializable{
 
 	public void setTerrainBuffer(ByteBuffer terrainBuffer) {
 		this.terrainBuffer = terrainBuffer;
+	}
+
+	public Rectangle getBoundingBox() {
+		return boundingBox;
 	}	
 }

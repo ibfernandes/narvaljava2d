@@ -1,8 +1,8 @@
 package engine.entity.component;
 
 import engine.geometry.Rectangle;
+import engine.logic.AnimationStateManager;
 import engine.logic.GameObject;
-import engine.renderer.ASM;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
 
@@ -14,7 +14,7 @@ public class RenderComponent extends Component implements Comparable<RenderCompo
 	private Vec2 anchorPoint = new Vec2(0,0); //Default: ANCHOR_TOP_LEFT
 	private Vec2 skew 		= new Vec2(0,0);
 	private Vec4 color 		= new Vec4(1,1,1,1);
-	private ASM animations;
+	private AnimationStateManager animations;
 	private float rotation;
 	private Rectangle boundingBox = new Rectangle(0,0,0,0);
 	private Rectangle calculatedBaseBox = new Rectangle(0,0,0,0);
@@ -99,10 +99,10 @@ public class RenderComponent extends Component implements Comparable<RenderCompo
 	public void setColor(Vec4 color) {
 		this.color = color;
 	}
-	public ASM getAnimations() {
+	public AnimationStateManager getAnimations() {
 		return animations;
 	}
-	public void setAnimations(ASM animations) {
+	public void setAnimations(AnimationStateManager animations) {
 		this.animations = animations;
 	}
 	public float getRotation() {

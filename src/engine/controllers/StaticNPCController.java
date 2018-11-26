@@ -25,8 +25,8 @@ import engine.entity.component.PositionComponent;
 import engine.entity.component.RenderComponent;
 import engine.entity.component.TextComponent;
 import engine.graphic.Animation;
+import engine.logic.AnimationStateManager;
 import engine.logic.GameObject;
-import engine.renderer.ASM;
 import engine.ui.UIObject;
 import engine.utilities.ArraysExt;
 import engine.utilities.ResourceManager;
@@ -69,7 +69,7 @@ public class StaticNPCController extends Controller{
 		rc.setRenderPosition(parentPos);
 		//TODO: renderPos
 		
-		ASM asm = new ASM();
+		AnimationStateManager asm = new AnimationStateManager();
 		Animation an = new Animation("e_button", -1);
 		an.setFrames(1, new Vec2(0,0), new Vec2(32,32));
 		asm.addAnimation("idle_1", an);

@@ -95,14 +95,15 @@ public class AIController extends Controller{
 			int endX =  (int) (context.getCamera().getX() - targetRC.getCalculatedBaseBox().getX())*-1/context.GRAPH_DIVISOR;
 			int endY = (int) (context.getCamera().getY() - targetRC.getCalculatedBaseBox().getY())*-1/context.GRAPH_DIVISOR;
 			
-			if(timeNow - before >= Engine.SECOND/10) {
+			
+			if(timeNow - before >= Engine.SECOND*1/5) {
 				Arrays.fill(directions, false);
 				before = System.nanoTime();
 				currentStep = 0;
 				
-				AStar as = new AStar();
-				pathAstar = as.calculatePath(new Vec2i(startX, startY), new Vec2i(endX, endY-4), context.getPointOfViewCollisionGraph(baseBox));
 				
+				AStar as = new AStar();
+				pathAstar = as.calculatePath(new Vec2i(startX, startY), new Vec2i(endX, endY-3), context.getPointOfViewCollisionGraph(baseBox));
 			}
 			
 			
@@ -168,12 +169,12 @@ public class AIController extends Controller{
 		SightComponent sm = gameContext.getEm().getFirstComponent(lastEntityID, SightComponent.class);
 		RenderComponent rc = gameContext.getEm().getFirstComponent(lastEntityID, RenderComponent.class);
 		Rectangle r = sm.calculateSightView(rc.getRenderPosition());
-		ResourceManager.getSelf().getCubeRenderer().render(new Vec2(r.x, r.y), new Vec2(r.width,r.height), 0, new Vec3(1,1,1));
+		//ResourceManager.getSelf().getCubeRenderer().render(new Vec2(r.x, r.y), new Vec2(r.width,r.height), 0, new Vec3(1,1,1));
 		
 		if(pathAstar!=null) {
 			
 			for(Anode state: pathAstar) {
-				ResourceManager.getSelf().getCubeRenderer().render(new Vec2(gameContext.getCamera().getX() + state.pos.x*gameContext.GRAPH_DIVISOR, gameContext.getCamera().getY() + state.pos.y*gameContext.GRAPH_DIVISOR), new Vec2(8,8), 0, new Vec3(0,1,0));
+				ResourceManager.getSelf().getCubeRenderer().render(new Vec2(gameContext.getCamera().getX() + state.pos.x*gameContext.GRAPH_DIVISOR, gameContext.getCamera().getY() + state.pos.y*gameContext.GRAPH_DIVISOR), new Vec2(8,8), 0, new Vec3(0,0,0));
 				
 			}
 		}

@@ -9,13 +9,13 @@ import engine.entity.component.PositionComponent;
 import engine.entity.component.RenderComponent;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
-import engine.renderer.ASM;
+import engine.logic.AnimationStateManager;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
 
 public class BasicEntity {
 	
-	public static Entity generate(EntityManager em, String renderer, Vec2 position, String texture, Vec2 orientation, Vec2 size, ASM animations, Rectangle baseBox) {
+	public static Entity generate(EntityManager em, String renderer, Vec2 position, String texture, Vec2 orientation, Vec2 size, AnimationStateManager animations, Rectangle baseBox) {
 		Entity e = em.newEntity();
 
 		RenderComponent rc = new RenderComponent(e.getID());
