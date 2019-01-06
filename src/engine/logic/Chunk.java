@@ -176,12 +176,12 @@ public class Chunk implements Serializable{
 					if(objects.containsKey(whiteNoise[x][y]))
 						continue;
 
-					objects.put(whiteNoise[x][y], generateRandomTree(x,y));
+					//objects.put(whiteNoise[x][y], generateRandomTree(x,y));
 				}else if(whiteNoise[x][y]>0.99 && (mapRGB[x][y] == Color.GRASS_GROUND || mapRGB[x][y] == Color.DARKED_ESMERALDA)) {
 					if(objects.containsKey(whiteNoise[x][y]))
 						continue;
 					
-					objects.put(whiteNoise[x][y], generateRandomGroundVegetation(x,y));
+					//objects.put(whiteNoise[x][y], generateRandomGroundVegetation(x,y));
 				}
 				
 				terrainBuffer.put((byte) ((mapRGB[x][y] >> 16) & 0xFF));     		// Red component

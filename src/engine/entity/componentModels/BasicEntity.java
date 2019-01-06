@@ -3,9 +3,9 @@ package engine.entity.componentModels;
 import engine.controllers.PlayerController;
 import engine.entity.Entity;
 import engine.entity.EntityManager;
+import engine.entity.component.BasicComponent;
 import engine.entity.component.ControllerComponent;
 import engine.entity.component.MoveComponent;
-import engine.entity.component.PositionComponent;
 import engine.entity.component.RenderComponent;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
@@ -27,8 +27,9 @@ public class BasicEntity {
 		rc.setBaseBox(baseBox);
 		em.addComponentTo(e, rc);
 
-		PositionComponent pc = new PositionComponent(e.getID());
+		BasicComponent pc = new BasicComponent(e.getID());
 		pc.setPosition(position);
+		pc.setSize(size);
 		em.addComponentTo(e, pc);
 		
 		return e;

@@ -5,6 +5,7 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import engine.entity.component.RenderComponent;
 import engine.geometry.Rectangle;
 import engine.graphic.Shader;
 import engine.utilities.BufferUtilities;
@@ -15,6 +16,7 @@ import glm.vec._3.Vec3;
 public class CubeRenderer implements Renderer{
 	private Shader shader;
 	private int quadVAO;
+	private Rectangle rec = new Rectangle(0,0,0,0);
 	
 	public CubeRenderer(Shader shader) {
 		this.shader = shader;
@@ -85,5 +87,13 @@ public class CubeRenderer implements Renderer{
 		glBindVertexArray(quadVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
+	}
+	
+	public void render(RenderComponent r) {
+		rec.x = r.getRenderPosition().x;
+		rec.y = r.getRenderPosition().y;
+		rec.width = r.getSize().x;
+		rec.height = r.getSize().y;
+		render(rec,r.getRotation(),new Vec3(r.getColor()));
 	}
 }

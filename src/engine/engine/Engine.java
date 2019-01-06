@@ -25,6 +25,7 @@ public class Engine implements Runnable{
 	private MouseControl mouse;
 	public static final long SECOND = 1000000000L; //10^9
 	public static final long MILISECOND = 1000000L;//10^6
+	public static final long MEGABYTE = MILISECOND;
 	public static final int TARGET_UPDATES = 60;
 	public static final float TARGET_DT = 1f/(float)TARGET_UPDATES; //TODO: use double instead of float
 	private float accumulator = 0;
@@ -155,6 +156,8 @@ public class Engine implements Runnable{
 			
 			if((currentFrame-lastSecond)>SECOND) {
 				
+				long usedMemory = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
+				usedMemory = usedMemory/MEGABYTE;
 				System.out.printf(
 								"\n==============================="+
 								"\nUPS:\t"+updates+
@@ -163,7 +166,8 @@ public class Engine implements Runnable{
 								"\nUPS pike:\t"+(float)higher/MILISECOND+"ms"+
 								"\nUPS pike calls:\t"+longestDelay+'\n'+
 								"\nFPS AVG:\t"+(float)(avgRender/fps)/MILISECOND+"ms"+
-								"\nFPS pike:\t"+(float)higherRender/MILISECOND
+								"\nFPS pike:\t"+(float)higherRender/MILISECOND+"\n"+
+								"\nMem. usage:\t"+usedMemory+" MB"
 								
 						);
 				

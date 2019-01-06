@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import engine.entity.Entity;
 import engine.entity.EntityManager;
+import engine.entity.component.BasicComponent;
 import engine.entity.component.RenderComponent;
 import engine.geometry.Rectangle;
 import engine.logic.GameObject;
@@ -27,13 +28,21 @@ public class QuadTree {
 		this.boundary = boundary;
 	}
 	
+	public void clear() {
+		gameObjects.clear();
+		northWest = null;
+		northEast = null;
+		southEast = null;
+		southWest = null;
+	}
+		
 	/**
 	 * Returns true if object is inserted successfully and false if it's out of bounds
 	 * @param o
 	 * @return
 	 */
 	public boolean insert(Entity e) {
-		RenderComponent rc = (RenderComponent) em.getFirstComponent(e, RenderComponent.class);
+		BasicComponent rc = (BasicComponent) em.getFirstComponent(e, BasicComponent.class);
 		if(rc==null) {
 			//System.err.println("RenderComponent can't be null");
 			return false;
@@ -77,7 +86,9 @@ public class QuadTree {
 			return pointsInRange;
 		
 		for(int p=0; p<gameObjects.size(); p++) {
-			RenderComponent rc = (RenderComponent) em.getFirstComponent(gameObjects.get(p), RenderComponent.class);
+			BasicComponent rc = (BasicComponent) em.getFirstComponent(gameObjects.get(p), BasicComponent.class);
+			if(rc==null)
+				continue;
 			
 			if(range.intersects(rc.getBoundingBox()))
 					pointsInRange.add(gameObjects.get(p));
@@ -92,5 +103,25 @@ public class QuadTree {
 		pointsInRange.addAll( southWest.queryRange(range) );
 		
 		return pointsInRange;
+	}
+	
+	public QuadTree getNe() {
+		return northEast;
+	}
+	
+	public QuadTree getNw() {
+		return northWest;
+	}
+	
+	public QuadTree getSw() {
+		return southWest;
+	}
+	
+	public QuadTree getSe() {
+		return southEast;
+	}
+	
+	public Rectangle getBoundary() {
+		return boundary;
 	}
 }

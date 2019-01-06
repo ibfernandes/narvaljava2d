@@ -18,9 +18,9 @@ import engine.engine.Engine;
 import engine.engine.PhysicsEngine;
 import engine.entity.Entity;
 import engine.entity.EntityManager;
+import engine.entity.component.BasicComponent;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.MoveComponent;
-import engine.entity.component.PositionComponent;
 import engine.entity.component.RenderComponent;
 import engine.entity.component.SightComponent;
 import engine.geometry.Rectangle;
@@ -47,7 +47,7 @@ public class AIController extends Controller{
 	private int currentStep;
 	private BodyComponent bc;
 	private RenderComponent rc;
-	private PositionComponent pc;
+	private BasicComponent pc;
 	private MoveComponent mc;
 	
 	private Game gameContext;
@@ -66,7 +66,7 @@ public class AIController extends Controller{
 		
 		bc = context.getEm().getFirstComponent(entityID, BodyComponent.class);
 		rc = context.getEm().getFirstComponent(entityID, RenderComponent.class);
-		pc = context.getEm().getFirstComponent(entityID, PositionComponent.class);
+		pc = context.getEm().getFirstComponent(entityID, BasicComponent.class);
 		mc = context.getEm().getFirstComponent(entityID, MoveComponent.class);
 		Rectangle baseBox = bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize());
 		
@@ -96,7 +96,7 @@ public class AIController extends Controller{
 			int endY = (int) (context.getCamera().getY() - targetRC.getCalculatedBaseBox().getY())*-1/context.GRAPH_DIVISOR;
 			
 			
-			if(timeNow - before >= Engine.SECOND*1/5) {
+			if(timeNow - before >= Engine.SECOND*1/20) {
 				Arrays.fill(directions, false);
 				before = System.nanoTime();
 				currentStep = 0;

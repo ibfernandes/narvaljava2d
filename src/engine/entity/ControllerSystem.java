@@ -15,18 +15,20 @@ public class ControllerSystem extends ComponentSystem{
 
 	@Override
 	public void update(float dt) {
-		for(Component c: context.getEm().getAllComponents(ControllerComponent.class)) {
-				ControllerComponent bc = (ControllerComponent) c;
+		for(Entity e: Game.getSelf().getEntitiesOnScreen()) {
+				ControllerComponent bc = (ControllerComponent) Game.getSelf().getEm().getFirstComponent(e, ControllerComponent.class);
+				if(bc==null)
+					continue;
 				bc.controller.update(dt, bc.getEntityID(), context);
 		}
 	}
 
 	@Override
 	public void render() {
-		for(Component c: context.getEm().getAllComponents(ControllerComponent.class)) {
+		/*for(Component c: context.getEm().getAllComponents(ControllerComponent.class)) {
 			ControllerComponent bc = (ControllerComponent) c;
 			bc.controller.renderDebug();
-	}
+		}*/
 	}
 
 	@Override

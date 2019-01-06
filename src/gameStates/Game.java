@@ -64,11 +64,11 @@ import engine.entity.RenderSystem;
 import engine.entity.SightSystem;
 import engine.entity.SystemManager;
 import engine.entity.TextSystem;
+import engine.entity.component.BasicComponent;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.ControllerComponent;
 import engine.entity.component.HealthComponent;
 import engine.entity.component.MoveComponent;
-import engine.entity.component.PositionComponent;
 import engine.entity.component.RenderComponent;
 import engine.entity.component.SightComponent;
 import engine.entity.component.TextComponent;
@@ -85,6 +85,8 @@ import engine.logic.GameObject;
 import engine.logic.HorizontalPool;
 import engine.logic.Timer;
 import engine.noise.FastNoise;
+import engine.particle.ParticleEngine;
+import engine.particle.WalkingParticleEmitter;
 import engine.physics.Hit;
 import engine.renderer.CubeRenderer;
 import engine.renderer.GrassRenderer;
@@ -152,6 +154,14 @@ public class Game extends GameState{
 	//Entity System 
 	private EntityManager em = new EntityManager();
 	private SystemManager sm = new SystemManager();
+	
+	
+	private static Game self;
+	private Game() {};
+	
+	public static Game getSelf() {
+		return (self==null) ? self = new Game(): self;
+	}
 	
 	@Override
 	public void init() {
@@ -260,7 +270,7 @@ public class Game extends GameState{
 		
 		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setMat4("projection", projection);
-		ResourceManager.getSelf().getShader("texture").setPointLight(0, new Vec3(startPoint.x, startPoint.y, 300), new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
+		ResourceManager.getSelf().getShader("texture").setPointLight(0, new Vec3(startPoint.x-2000, startPoint.y-400, 300), new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
 		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1f);
 		ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0,0,0));
 		//DON'T FORGET TO ALSO CHANGE ON CAMERA
@@ -361,7 +371,8 @@ public class Game extends GameState{
 		mc.velocity = 600;
 		em.addComponentTo(player, mc);
 		
-		PositionComponent pc = new PositionComponent(player.getID());
+		BasicComponent pc = new BasicComponent(player.getID());
+		pc.setSize(size);
 		pc.setPosition(startPoint);
 		em.addComponentTo(player, pc);
 		
@@ -427,8 +438,9 @@ public class Game extends GameState{
 		cp.controller = new StaticNPCController();
 		em.addComponentTo(npc, cp);
 		
-		pc = new PositionComponent(npc.getID());
+		pc = new BasicComponent(npc.getID());
 		pc.setPosition(pos);
+		pc.setSize(size);
 		em.addComponentTo(npc, pc);
 		
 		bc = new BodyComponent(npc.getID());
@@ -479,8 +491,9 @@ public class Game extends GameState{
 		cp.controller = new AIController();
 		em.addComponentTo(followingNpc, cp);
 		
-		pc = new PositionComponent(followingNpc.getID());
+		pc = new BasicComponent(followingNpc.getID());
 		pc.setPosition(pos);
+		pc.setSize(size);
 		em.addComponentTo(followingNpc, pc);
 		
 		mc = new MoveComponent(followingNpc.getID());
@@ -500,6 +513,33 @@ public class Game extends GameState{
 		
 		createBoxes(); 
 		
+		
+		//Create fire
+		Entity bonfire = em.newEntity();
+		
+		asm = new AnimationStateManager();
+		a = new Animation("bonfire", 90);
+		a.setFrames(10, new Vec2(0,0), new Vec2(32,32));
+		asm.addAnimation("idle_1", a);
+		asm.changeStateTo("idle_1");
+
+		rc = new RenderComponent(bonfire.getID());
+		rc.setSize(size);
+		rc.setColor(new Vec4(1,1,1,1));
+		rc.setAnimations(asm);
+		rc.setRenderer("textureRenderer");
+		rc.setRenderPosition(new Vec2(startPoint.x-2000, startPoint.y-400));
+		rc.setBaseBox(new Rectangle(0f,0.6f,1.0f,0.4f));
+		em.addComponentTo(bonfire, rc);
+
+		pc = new BasicComponent(bonfire.getID());
+		pc.setSize(size);
+		pc.setPosition(new Vec2(startPoint.x-2000, startPoint.y-400));
+		em.addComponentTo(bonfire, pc);
+
+		em.addComponentTo(bonfire, bc);
+		
+		
 		//==================================
 		// Entity Systems
 		//==================================
@@ -508,31 +548,41 @@ public class Game extends GameState{
 		BodySystem bs = new BodySystem(this);
 		ControllerSystem cs = new ControllerSystem(this);
 		RenderSystem rs = new RenderSystem(this);
-		TextSystem ts = new TextSystem(this);
-		SightSystem ss = new SightSystem(this);
+		//TextSystem ts = new TextSystem(this);
+		//SightSystem ss = new SightSystem(this);
 		
 		sm.addSystem(ms);
 		
 		sm.addSystem(cs);
 		sm.addSystem(rs);
 		sm.addSystem(bs);
-		sm.addSystem(ts);
-		sm.addSystem(ss);
+		//sm.addSystem(ts);
+		//sm.addSystem(ss);
 		
 		previousCameraGridX =  -1; 
 		previousCameraGridY =  -1; 
 		currentCameraGridX = (int) (camera.getX()/ChunkMap.CHUNK_WIDTH); 
 		currentCameraGridY = (int) (camera.getY()/ChunkMap.CHUNK_HEIGHT);
-		initQuadTree(screenView);
+		generateQuadTree();
+		
+		WalkingParticleEmitter emitter = new WalkingParticleEmitter();
+		emitter.setAnchor(startPoint, (int) size.y);
+		ParticleEngine.getSelf().addParticleEmitter(emitter);
 	}
 	
-	private void initQuadTree(Rectangle screenView) {
+	private void generateQuadTree() {
 		quadTree = new QuadTree(screenView, em);
-		
-		for(Entity e: em.getAllEntitiesWithComponent(BodyComponent.class)) {
-			quadTree.insert(e);
+
+		BasicComponent bc;
+		for(Entity e: em.getAllEntitiesWithComponent(BasicComponent.class)) {
+			bc = em.getFirstComponent(e, BasicComponent.class);
 			
+			if(bc.getBoundingBox().intersects(screenView))
+				quadTree.insert(e);
 		}
+		
+//		System.out.println(em.getAllEntitiesWithComponent(BasicComponent.class).size());
+//		System.out.println(quadTree.queryRange(screenView).size());
 	}
 	
 	private void initShadowLayer() {
@@ -598,7 +648,8 @@ public class Game extends GameState{
 			rc.setBaseBox(new Rectangle(0f,0.6f,1.0f,0.4f));
 			em.addComponentTo(box, rc);
 	
-			PositionComponent pc = new PositionComponent(box.getID());
+			BasicComponent pc = new BasicComponent(box.getID());
+			pc.setSize(size);
 			pc.setPosition(positions[i]);
 			em.addComponentTo(box, pc);
 
@@ -697,6 +748,8 @@ public class Game extends GameState{
 
 		for(Entity e: quadTree.queryRange(screenView)) {
 			BodyComponent bc = ((BodyComponent)(em.getFirstComponent(e, BodyComponent.class)));
+			if(bc==null)
+				continue;
 			RenderComponent rc = ((RenderComponent)(em.getFirstComponent(e, RenderComponent.class)));
 			
 			if(rc==null)
@@ -834,7 +887,10 @@ public class Game extends GameState{
 					texturenOnScreen[x][y].createAndSendBuffer(chunksOnScreen[x][y].getTerrain());
 					
 					ResourceManager.getSelf().getTextureRenderer().render(texturenOnScreen[x][y].getId(),
-							new Vec2(chunksOnScreen[x][y].getX()*ChunkMap.CHUNK_WIDTH, chunksOnScreen[x][y].getY()*ChunkMap.CHUNK_HEIGHT),
+							new Vec2(
+									chunksOnScreen[x][y].getX()*ChunkMap.CHUNK_WIDTH*1.00,
+									chunksOnScreen[x][y].getY()*ChunkMap.CHUNK_HEIGHT*1.00
+									),
 							new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));
 				}
 	//	ResourceManager.getSelf().getTextureRenderer().render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
@@ -873,8 +929,7 @@ public class Game extends GameState{
 				}
 	    
 		sm.render();
-	
-		
+		ParticleEngine.getSelf().render();
 	}
 	@Override
 	public void variableUpdate(float alpha) {
@@ -886,12 +941,12 @@ public class Game extends GameState{
 		sm.variableUpdate(alpha);
 		camera.variableUpdate(alpha);
 	}
+
 	
 	@Override
 	public void update(float deltaTime) {
-		PositionComponent ppc= em.getFirstComponent(player, PositionComponent.class);
+		BasicComponent ppc= em.getFirstComponent(player, BasicComponent.class);
 		alListener3f(AL_POSITION, ppc.getPosition().x, ppc.getPosition().y,0);
-		
 		timer.update();
 		timerWetSand.update();
 		
@@ -903,8 +958,8 @@ public class Game extends GameState{
 		
 		
 		ResourceManager.getSelf().getShader("texture").use();
-		sin = (float) Math.sin(Math.toRadians(timerWetSand.getDegree()))*1f;
-		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1*1);
+		sin = (float) Math.sin(Math.toRadians(timer.getDegree()))*1f;
+		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1f*1);
 		//ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0.42f*1/sin,0.06f*1/sin,0.5176f*1/sin));
 		
 		//generateChunks();
@@ -931,8 +986,15 @@ public class Game extends GameState{
 		
 		screenView.x = camera.getX();
 		screenView.y = camera.getY();
-		initQuadTree(screenView);
+		
+		quadTree.clear();
+		generateQuadTree();
 		generateCollisionGraph();
+		ParticleEngine.getSelf().update(deltaTime);
+	}
+	
+	private void renderQuadTree() {
+		
 	}
 
 	public Camera getCamera() {
@@ -963,7 +1025,11 @@ public class Game extends GameState{
 	public QuadTree getQuadTree() {
 		return quadTree;
 	}
-
+	
+	public ArrayList<Entity> getEntitiesOnScreen(){
+		return quadTree.queryRange(screenView);
+	}
+ 
 	public void removeObject(GameObject g) {
 		if(g.getBody()!=null)
 			PhysicsEngine.getSelf().getWorld().destroyBody(g.getBody());

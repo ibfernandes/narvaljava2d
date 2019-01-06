@@ -20,8 +20,8 @@ import engine.engine.Engine;
 import engine.engine.PhysicsEngine;
 import engine.entity.Entity;
 import engine.entity.EntityManager;
+import engine.entity.component.BasicComponent;
 import engine.entity.component.BodyComponent;
-import engine.entity.component.PositionComponent;
 import engine.entity.component.RenderComponent;
 import engine.entity.component.TextComponent;
 import engine.graphic.Animation;
@@ -56,10 +56,10 @@ public class StaticNPCController extends Controller{
 	
 	private void createDialogButton(long parent, EntityManager em) {
 		button = em.newEntity();
-		PositionComponent pc = new PositionComponent(button.getID());
+		BasicComponent pc = new BasicComponent(button.getID());
 		RenderComponent rc = new RenderComponent(button.getID());
 		
-		Vec2 parentPos = ((PositionComponent) em.getFirstComponent(parent, PositionComponent.class)).getPosition();
+		Vec2 parentPos = ((BasicComponent) em.getFirstComponent(parent, BasicComponent.class)).getPosition();
 		pc.setPosition(parentPos);
 		em.addComponentTo(button, pc);
 		
@@ -83,7 +83,7 @@ public class StaticNPCController extends Controller{
 	private void createDialogBox(long parent, EntityManager em) {
 		talkingBox = em.newEntity();
 		
-		Vec2 parentPos = ((PositionComponent) em.getFirstComponent(parent, PositionComponent.class)).getPosition();
+		Vec2 parentPos = ((BasicComponent) em.getFirstComponent(parent, BasicComponent.class)).getPosition();
 		
 		TextComponent tc = new TextComponent(talkingBox.getID());
 		tc.setFontColor(new Vec4(1,0,0,1));
@@ -102,6 +102,7 @@ public class StaticNPCController extends Controller{
 		Action a = ct.calculateAction(EntityID, context.getEm());
 		RenderComponent rc = (RenderComponent) context.getEm().getFirstComponent(EntityID, RenderComponent.class);
 		BodyComponent bc = (BodyComponent) context.getEm().getFirstComponent(EntityID, BodyComponent.class);
+		BasicComponent bbc = (BasicComponent) context.getEm().getFirstComponent(EntityID, BasicComponent.class);
 		
 		if(button==null) {
 			createDialogButton(EntityID, context.getEm());
@@ -121,9 +122,10 @@ public class StaticNPCController extends Controller{
 		
 			
 		for(Entity e: context.getEm().getAllEntities()){
-			RenderComponent erc = (RenderComponent) context.getEm().getFirstComponent(e, RenderComponent.class);
+
+			BasicComponent erc = (BasicComponent) context.getEm().getFirstComponent(e, BasicComponent.class);
 			
-			if(e.getName()!=null && e.getName().equals("player") && rc.getBoundingBox().intersects(erc.getBoundingBox())) {
+			if(e.getName()!=null && e.getName().equals("player") && bbc.getBoundingBox().intersects(erc.getBoundingBox())) {
 				if(!flagShowButton) {
 					flagShowButton = true;
 					break;

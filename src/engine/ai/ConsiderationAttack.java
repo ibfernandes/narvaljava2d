@@ -2,6 +2,7 @@ package engine.ai;
 
 import engine.entity.Entity;
 import engine.entity.EntityManager;
+import engine.entity.component.BasicComponent;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.RenderComponent;
 import engine.entity.component.SightComponent;
@@ -26,7 +27,7 @@ public class ConsiderationAttack implements Consideration{
 		RenderComponent rc = em.getFirstComponent(obj, RenderComponent.class);
 		Rectangle r = sm.calculateSightView(rc.getRenderPosition());
 		
-		RenderComponent prc = em.getFirstComponent(em.getPlayerID(), RenderComponent.class);
+		BasicComponent prc = em.getFirstComponent(em.getPlayerID(), BasicComponent.class);
 		
 		if(r.intersects(prc.getBoundingBox())) {
 			a.setTarget(em.getPlayerID());

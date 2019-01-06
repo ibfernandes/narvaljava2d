@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import engine.engine.PhysicsEngine;
 import engine.entity.component.Component;
+import engine.entity.component.RenderComponent;
 
 public class EntityManager {
 	private long lastID = 0;
@@ -31,9 +32,9 @@ public class EntityManager {
 		
 		long id = generateID();
 		Entity e = new Entity(id);
-		if(id>maxEntities)
-			entities.set((int) (id%maxEntities),e);
-		else
+		//if(id>maxEntities)
+		//	entities.set((int) (id%maxEntities),e);
+		//else
 			entities.add(e);
 		return e;
 	}
@@ -59,12 +60,25 @@ public class EntityManager {
 		
 		return comps;
 	}
-	
-	public <T extends Component> T getFirstComponent(Entity e, Class c) {
+	public ArrayList<Component> getComponent(Entity e, Class c) {
+		ArrayList<Component> comps= new ArrayList<>();
+		
 		for(Component cp: componentsOf.get(e.getID()))
 			if(c.isInstance(cp))
-				return (T) cp;
+				comps.add(cp);
 		
+		return comps;
+	}
+	
+	public <T extends Component> T getFirstComponent(Entity e, Class c) {
+		if(e==null || c ==null || componentsOf.get(e.getID())==null)
+			return null;
+		for(Component cp: componentsOf.get(e.getID())) {
+			if(cp==null)
+				return null;
+			if(c.isInstance(cp))
+				return (T) cp;
+		}
 		return null;
 	}
 	
@@ -80,6 +94,29 @@ public class EntityManager {
 		componentsOf.remove(e.getID());
 	}
 	
+	public void removeEntity(Long id) {
+		
+		for(String s: componentsByClass.keySet()) {
+			Component toRemove = null;
+			
+			for(Component c: componentsByClass.get(s))
+				if(c.getEntityID()==id)
+					toRemove = c;
+			
+			componentsByClass.get(s).remove(toRemove);
+		}
+		
+		int removeIndex = -1;
+		for(int i=0; i<entities.size();i++) {
+			if(entities.get(i).getID()==id)
+				removeIndex = i;
+		}
+		
+		if(removeIndex>=0)
+			entities.remove(removeIndex);
+		componentsOf.remove(id);
+	}
+	
 	public ArrayList<Entity> getAllEntities() {
 		return entities;
 	}
@@ -91,13 +128,15 @@ public class EntityManager {
 	public ArrayList<Entity> getAllEntitiesWithComponent(Class c) {
 		ArrayList<Entity> ents = new ArrayList<>();
 		
-		for(Entity e: entities)
+		for(Entity e: entities) {
+			if(componentsOf.get(e.getID())==null)
+				continue;
 			for(Component cp: componentsOf.get(e.getID()))
 				if(c.isInstance(cp)) {
 					ents.add(e);
 					continue;
 				}
-					
+		}	
 		return ents;
 	}
 

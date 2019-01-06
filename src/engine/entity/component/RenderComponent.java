@@ -16,7 +16,6 @@ public class RenderComponent extends Component implements Comparable<RenderCompo
 	private Vec4 color 		= new Vec4(1,1,1,1);
 	private AnimationStateManager animations;
 	private float rotation;
-	private Rectangle boundingBox = new Rectangle(0,0,0,0);
 	private Rectangle calculatedBaseBox = new Rectangle(0,0,0,0);
 	private Rectangle baseBox = new Rectangle(0,0,0,0);
 	private boolean disabled = false;
@@ -45,14 +44,6 @@ public class RenderComponent extends Component implements Comparable<RenderCompo
 		return calculatedBaseBox;
 	}
 	
-	public Rectangle getBoundingBox() {
-		boundingBox.x = renderPosition.x;
-		boundingBox.y = renderPosition.y;
-		boundingBox.width = size.x;
-		boundingBox.height = size.y;
-		
-		return boundingBox;
-	}
 	public Vec2 getRenderPosition() {
 		return renderPosition;
 	}

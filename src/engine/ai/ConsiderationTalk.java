@@ -4,6 +4,7 @@ import engine.controllers.KeyBoardBindings;
 import engine.engine.Engine;
 import engine.entity.Entity;
 import engine.entity.EntityManager;
+import engine.entity.component.BasicComponent;
 import engine.entity.component.RenderComponent;
 import engine.logic.GameObject;
 import gameStates.GSM;
@@ -14,11 +15,11 @@ public class ConsiderationTalk implements Consideration{
 	
 	@Override
 	public float evaluate(long entityID, EntityManager context) {
-		RenderComponent rc = (RenderComponent) context.getFirstComponent(entityID, RenderComponent.class);
+		BasicComponent rc = (BasicComponent) context.getFirstComponent(entityID, BasicComponent.class);
 		
 		for(Entity e: context.getAllEntities()) {
 			
-			RenderComponent rce = (RenderComponent) context.getFirstComponent(e, RenderComponent.class);
+			BasicComponent rce = (BasicComponent) context.getFirstComponent(e, BasicComponent.class);
 			
 			if(GSM.getSelf().getKeyboard().isKeyPressed(KeyBoardBindings.INTERACTION_KEY) && e.getName()!=null && e.getName().equals("player") && rce.getBoundingBox().intersects(rc.getBoundingBox())) {
 				a.setTarget(e.getID());

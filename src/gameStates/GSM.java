@@ -30,7 +30,7 @@ public final class GSM {
 		switch (state) {
 			case GAME_STATE:
 				CURRENT_STATE = state;
-				actualState = new Game();
+				actualState = Game.getSelf();
 				actualState.init();
 				break;
 			default:
