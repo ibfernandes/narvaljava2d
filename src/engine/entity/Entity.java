@@ -1,6 +1,8 @@
 package engine.entity;
 
-public class Entity {
+import java.io.Serializable;
+
+public class Entity implements Serializable{
 	private long id;
 	private String name;
 	

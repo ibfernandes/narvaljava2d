@@ -1,9 +1,10 @@
-package engine.entity;
+package engine.entity.system;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import engine.entity.Entity;
 import engine.entity.component.Component;
 import engine.entity.component.RenderComponent;
 import engine.renderer.TextureBatchRenderer;

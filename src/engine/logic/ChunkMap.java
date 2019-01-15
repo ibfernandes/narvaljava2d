@@ -21,6 +21,7 @@ import java.util.concurrent.Future;
 import engine.engine.Engine;
 import engine.engine.Settings;
 import engine.entity.EntityManager;
+import engine.utilities.Vec2i;
 
 public class ChunkMap {
 	private HashMap<Integer, HashMap<Integer, Chunk>> chunks; //TODO: could change to a matrix and keep shifting it
@@ -32,11 +33,12 @@ public class ChunkMap {
 	private ArrayList<SavingChunk> savingChunks = new ArrayList<>();
 	private ArrayList<SavingChunk> savingChunksToRemove = new ArrayList<>();
 	private ArrayList<Chunk> chunksToSave = new ArrayList<>();
+	private ArrayList<Vec2i> loadingOrder = new ArrayList<>();
 	private EntityManager em;
 	
 	public static final int CHUNK_WIDTH = 1920;
 	public static final int CHUNK_HEIGHT = 1080;
-	public static final int CHUNK_BUFFER_SIZE = ((CHUNK_WIDTH*CHUNK_HEIGHT)/CHUNK_WIDTH)*1000;
+	public static final int CHUNK_BUFFER_SIZE = ((CHUNK_WIDTH*CHUNK_HEIGHT)/CHUNK_WIDTH)*10000;
 	public static final int MAP_WIDTH = 60000;
 	public static final int MAP_HEIGHT = 60000;
 	
@@ -48,11 +50,14 @@ public class ChunkMap {
 	}
 	
 	private void put(Chunk chunk) {
+
 		if(chunks.get(chunk.getX())==null)
 			chunks.put(chunk.getX(), new HashMap<Integer,Chunk>());
 		
 		if(chunks.get(chunk.getX()).put(chunk.getY(), chunk)==null)
 			mapSize++;
+		
+		loadingOrder.add(new Vec2i(chunk.getX(),chunk.getY()));
 	}
 	
 	/**
@@ -72,11 +77,19 @@ public class ChunkMap {
 	}
 	
 	public void update() {
+		if(mapSize>10) {
+			Vec2i pos = loadingOrder.get(0);
+			chunks.get(pos.x).get(pos.y).removeAllEntities();
+			loadingOrder.remove(0);
+			mapSize--;
+		}
+		
 		for( ReadingChunk r: loadingChunks)
 			if(r.isDone()) {
 				loadingChunksToRemove.add(r);
 				try {
 					put(r.getChunk());
+					r.getChunk().addAllEntitiesToEntityManager();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -122,8 +135,8 @@ public class ChunkMap {
 		System.out.println("savefile START");
 		
 		
-		//SavingChunk r = new SavingChunk(mapPath+Chunk.getFileName(chunk.getX(), chunk.getY()), chunk);
-		//savingChunks.add(r);
+		SavingChunk r = new SavingChunk(mapPath+Chunk.getFileName(chunk.getX(), chunk.getY()), chunk);
+		savingChunks.add(r);
 		
     	System.out.println("savefile END: \t\t"+chunk.getFileName()+" \t"+(System.nanoTime()-start)/Engine.MILISECOND+"ms");
     	System.out.println("---------");

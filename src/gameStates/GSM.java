@@ -1,17 +1,16 @@
 package gameStates;
 
-import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import engine.engine.GameState;
+import engine.input.JoystickControl;
 import engine.input.KeyboardControl;
 import engine.input.MouseControl;
-
 
 public final class GSM {
 	private static GSM self;
 	private GameState actualState;
 	private KeyboardControl keyboard;
 	private MouseControl mouse;
+	private JoystickControl joystick;
 	public static final int GAME_STATE = 0;
 	public static final int MENU_STATE = 1;
 	public static int CURRENT_STATE = GAME_STATE;
@@ -61,5 +60,13 @@ public final class GSM {
 	}
 	public KeyboardControl getKeyboard() {
 		return keyboard;
+	}
+
+	public JoystickControl getJoystick() {
+		return joystick;
+	}
+
+	public void setJoystick(JoystickControl joystick) {
+		this.joystick = joystick;
 	}
 }

@@ -13,6 +13,7 @@ import org.lwjgl.openal.ALCCapabilities;
 import org.lwjgl.openal.ALCapabilities;
 import org.lwjgl.opengl.GL;
 
+import engine.input.JoystickControl;
 import engine.input.KeyboardControl;
 import engine.input.MouseControl;
 import gameStates.GSM;
@@ -21,8 +22,6 @@ public class Engine implements Runnable{
 	private Window window;
 	private long deltaTime, currentFrame, lastFrame, lastSecond;
 	private int updates = 0, fps = 0;
-	private KeyboardControl keyboard;
-	private MouseControl mouse;
 	public static final long SECOND = 1000000000L; //10^9
 	public static final long MILISECOND = 1000000L;//10^6
 	public static final long MEGABYTE = MILISECOND;
@@ -63,14 +62,16 @@ public class Engine implements Runnable{
 		
 		GSM.getSelf().changeStateTo(GSM.GAME_STATE);
 		
-		keyboard = new KeyboardControl();
-		mouse = new MouseControl();
+		KeyboardControl keyboard = new KeyboardControl();
+		MouseControl mouse = new MouseControl();
+		JoystickControl joystick = new JoystickControl();
 		
 		glfwSetKeyCallback(window.getId(), keyboard);
 		glfwSetCursorPosCallback(window.getId(), mouse);
 		
 		GSM.getSelf().setKeyboard(keyboard);
 		GSM.getSelf().setMouse(mouse);
+		GSM.getSelf().setJoystick(joystick);
 	}
 	
 	private void initAudioSystem() {

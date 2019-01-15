@@ -47,7 +47,7 @@ import org.lwjgl.opengl.GL32;
 import static org.lwjgl.opengl.GL30.*;
 
 import editor.Editor;
-import engine.audio.Audio;
+import engine.audio.AudioFile;
 import engine.controllers.AIController;
 import engine.controllers.DeerController;
 import engine.controllers.PlayerController;
@@ -55,15 +55,8 @@ import engine.controllers.StaticNPCController;
 import engine.engine.Engine;
 import engine.engine.GameState;
 import engine.engine.PhysicsEngine;
-import engine.entity.BodySystem;
-import engine.entity.ControllerSystem;
 import engine.entity.Entity;
 import engine.entity.EntityManager;
-import engine.entity.MoveSystem;
-import engine.entity.RenderSystem;
-import engine.entity.SightSystem;
-import engine.entity.SystemManager;
-import engine.entity.TextSystem;
 import engine.entity.component.BasicComponent;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.ControllerComponent;
@@ -72,6 +65,13 @@ import engine.entity.component.MoveComponent;
 import engine.entity.component.RenderComponent;
 import engine.entity.component.SightComponent;
 import engine.entity.component.TextComponent;
+import engine.entity.system.BodySystem;
+import engine.entity.system.ControllerSystem;
+import engine.entity.system.MoveSystem;
+import engine.entity.system.RenderSystem;
+import engine.entity.system.SightSystem;
+import engine.entity.system.SystemManager;
+import engine.entity.system.TextSystem;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
 import engine.graphic.Texture;
@@ -497,17 +497,17 @@ public class Game extends GameState{
 		em.addComponentTo(followingNpc, pc);
 		
 		mc = new MoveComponent(followingNpc.getID());
-		mc.velocity = 200;
+		mc.velocity = 80;
 		em.addComponentTo(followingNpc, mc);
 		
 		SightComponent sc = new SightComponent(followingNpc.getID());
-		sc.setViewSize(1400, 1000);
+		sc.setViewSize(2200, 2000);
 		em.addComponentTo(followingNpc, sc);
 		
 		bc = new BodyComponent(followingNpc.getID());
 		bc.setBaseBox(new Rectangle(0f,0.8f,1.0f,0.2f));
 		bc.calculateBaseBox(pos, size);
-		bc.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.KINEMATIC);
+		bc.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
 		em.addComponentTo(followingNpc, bc);
 		
 		
@@ -945,6 +945,8 @@ public class Game extends GameState{
 	
 	@Override
 	public void update(float deltaTime) {
+		//System.out.println(getEm().getAllEntities().size());
+		
 		BasicComponent ppc= em.getFirstComponent(player, BasicComponent.class);
 		alListener3f(AL_POSITION, ppc.getPosition().x, ppc.getPosition().y,0);
 		timer.update();

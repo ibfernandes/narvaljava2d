@@ -4,19 +4,19 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import engine.engine.Engine;
-import engine.entity.BodySystem;
-import engine.entity.ControllerSystem;
 import engine.entity.Entity;
 import engine.entity.EntityManager;
-import engine.entity.MoveSystem;
-import engine.entity.RenderSystem;
-import engine.entity.SystemManager;
 import engine.entity.component.BasicComponent;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.Component;
 import engine.entity.component.MoveComponent;
 import engine.entity.component.ParticleComponent;
 import engine.entity.component.RenderComponent;
+import engine.entity.system.BodySystem;
+import engine.entity.system.ControllerSystem;
+import engine.entity.system.MoveSystem;
+import engine.entity.system.RenderSystem;
+import engine.entity.system.SystemManager;
 import engine.utilities.ResourceManager;
 import gameStates.Game;
 import glm.vec._2.Vec2;
@@ -74,17 +74,20 @@ public class WalkingParticleEmitter extends ParticleEmitter{
 	public void setAnchor(Vec2 anchor, int offset) {
 		this.offset = offset;
 		this.position = anchor;
-		this.previousPosition = anchor;
+		this.previousPosition = new Vec2(anchor.x, anchor.y);
 	}
 	
 	@Override
 	public void update(float deltaTime) {
-		//if(position.x != previousPosition.x || position.y != previousPosition.y) {
-			//previousPosition = position;
-		createParticle();
-		createParticle();
-		createParticle();
-		//}
+		if((int)position.x != (int)previousPosition.x || (int)position.y != (int)previousPosition.y) {
+			createParticle();
+			createParticle();
+			createParticle();
+		}
+		previousPosition.x = position.x;
+		previousPosition.y = position.y;
+		
+		
 		for(int i=0; i< maxParticles; i++) {
 			ParticleComponent pc = (ParticleComponent) Game.getSelf().getEm().getFirstComponent(particles[i], ParticleComponent.class);
 			if ((System.nanoTime() - pc.startTime)/Engine.MILISECOND > pc.lifeTime) {

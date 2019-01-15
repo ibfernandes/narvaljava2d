@@ -14,28 +14,17 @@ public class EntityManager {
 	private HashMap <Long, ArrayList<Component>> componentsOf = new HashMap<>();
 	private long playerID;
 	private EntityManager self;
-	private int maxEntities = 20000;
-	
-	/*private EntityManager() {}*/
-	
-	/*public EntityManager getSelf() {
-		return (self==null) ? self = new EntityManager(): self;
-	}*/
-
+	public static final int MAX_ENTITIES = 6000;
 	
 	public long generateID() {
-		return lastID++;  //TODO: What if this ID is already taken
+		return lastID++;
 	}
 	
 	public Entity newEntity() {
-		//System.out.println(entities.size());
-		
 		long id = generateID();
 		Entity e = new Entity(id);
-		//if(id>maxEntities)
-		//	entities.set((int) (id%maxEntities),e);
-		//else
-			entities.add(e);
+		
+		entities.add(e);
 		return e;
 	}
 	

@@ -1,8 +1,10 @@
-package engine.entity;
+package engine.entity.system;
 
 import engine.engine.PhysicsEngine;
+import engine.entity.Entity;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.Component;
+import engine.entity.component.ControllerComponent;
 import engine.entity.component.RenderComponent;
 import engine.utilities.ResourceManager;
 import gameStates.Game;
@@ -25,11 +27,14 @@ public class BodySystem extends ComponentSystem{
 
 	@Override
 	public void render() {
-		/*for(Component c: context.getEm().getAllComponents(BodyComponent.class)) {
-			BodyComponent bc = (BodyComponent) c;
-			RenderComponent rc = (RenderComponent) context.getEm().getFirstComponent(bc.getEntityID(), RenderComponent.class);
-			//ResourceManager.getSelf().getCubeRenderer().render(bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize()), 0, new Vec3(1,1,0));
-		}*/
+		for(Entity e: Game.getSelf().getEntitiesOnScreen()) {
+			BodyComponent bc = (BodyComponent) Game.getSelf().getEm().getFirstComponent(e, BodyComponent.class);
+			RenderComponent rc = (RenderComponent) Game.getSelf().getEm().getFirstComponent(e, RenderComponent.class);
+			if(bc==null)
+				continue;
+		
+			ResourceManager.getSelf().getCubeRenderer().render(bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize()), 0, new Vec3(1,0,0));
+		}
 	}
 
 	@Override

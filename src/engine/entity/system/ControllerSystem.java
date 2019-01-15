@@ -1,5 +1,6 @@
-package engine.entity;
+package engine.entity.system;
 
+import engine.entity.Entity;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.Component;
 import engine.entity.component.ControllerComponent;
@@ -25,10 +26,14 @@ public class ControllerSystem extends ComponentSystem{
 
 	@Override
 	public void render() {
-		/*for(Component c: context.getEm().getAllComponents(ControllerComponent.class)) {
-			ControllerComponent bc = (ControllerComponent) c;
+		
+		for(Entity e: Game.getSelf().getEntitiesOnScreen()) {
+			ControllerComponent bc = (ControllerComponent) Game.getSelf().getEm().getFirstComponent(e, ControllerComponent.class);
+			if(bc==null)
+				continue;
 			bc.controller.renderDebug();
-		}*/
+		}
+
 	}
 
 	@Override

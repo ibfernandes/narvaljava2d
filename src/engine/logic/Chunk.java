@@ -12,6 +12,9 @@ import engine.engine.Engine;
 import engine.engine.PhysicsEngine;
 import engine.entity.Entity;
 import engine.entity.EntityManager;
+import engine.entity.component.BasicComponent;
+import engine.entity.component.Component;
+import engine.entity.component.RenderComponent;
 import engine.entity.componentModels.BasicEntity;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
@@ -20,8 +23,10 @@ import engine.noise.FastNoise;
 import engine.noise.FastNoise.Interp;
 import engine.noise.FastNoise.NoiseType;
 import engine.utilities.BufferUtilities;
+import engine.utilities.ByteBufferExt;
 import engine.utilities.Color;
 import engine.utilities.Vec2i;
+import gameStates.Game;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
 import net.jafama.FastMath;
@@ -34,9 +39,9 @@ public class Chunk implements Serializable{
 	private int chunkWidth, chunkHeight;  //TODO: redundant INFO to save on each chunk
 	private int textureWidth, textureHeight;
 	private int mapWidth, mapHeight; //TODO: redundant INFO to save on each chunk
-	private ArrayList<GameObject> objectLayer;
 	public static int NOISE_DIVISOR = 5;
 	private HashMap<Float, Entity> objects;
+	private HashMap <Long, ArrayList<Component>> componentsOfEntities = new HashMap<>();
 	private transient Random random = new Random();
 	private transient EntityManager em;
 	private double waterDx = 1;
@@ -44,8 +49,8 @@ public class Chunk implements Serializable{
 	private float perlinNoise[][];
 	private float whiteNoise[][];
 	private float fractalNoise[][];
-	private FastNoise fastNoise = new FastNoise();
-	private ByteBuffer terrainBuffer;
+	private transient FastNoise fastNoise = new FastNoise();
+	private ByteBufferExt terrainBuffer;
 	private double waveVariation = 0.016;
 	private Rectangle boundingBox =new Rectangle(0,0,0,0);
 	
@@ -77,7 +82,7 @@ public class Chunk implements Serializable{
 		objects = new HashMap<>();
 		fastNoise.SetSeed(12345);
 		
-		terrainBuffer = BufferUtilities.createByteBuffer(new byte[textureWidth * textureHeight * Texture.BYTES_PER_PIXEL]);
+		terrainBuffer = new ByteBufferExt(BufferUtilities.createByteBuffer(new byte[textureWidth * textureHeight * Texture.BYTES_PER_PIXEL]));
 	}
 	
 	public int[][] getTerrain(){
@@ -128,7 +133,7 @@ public class Chunk implements Serializable{
 	}
 	
 	public void generateTerrain() {
-		terrainBuffer.clear();
+		terrainBuffer.getBytebuffer().clear();
 
 		for(int y=0; y<textureHeight; y++) {
 			for(int x=0; x<textureWidth;x++) {
@@ -181,17 +186,16 @@ public class Chunk implements Serializable{
 					if(objects.containsKey(whiteNoise[x][y]))
 						continue;
 					
-					//objects.put(whiteNoise[x][y], generateRandomGroundVegetation(x,y));
+					objects.put(whiteNoise[x][y], generateRandomGroundVegetation(x,y));
 				}
 				
-				terrainBuffer.put((byte) ((mapRGB[x][y] >> 16) & 0xFF));     		// Red component
-                terrainBuffer.put((byte) ((mapRGB[x][y] >> 8) & 0xFF));      		// Green component
-                terrainBuffer.put((byte) (mapRGB[x][y] & 0xFF));              	// Blue component
-                terrainBuffer.put((byte) ((mapRGB[x][y] >> 24) & 0xFF));    		// Alpha component. Only for RGBA
+				terrainBuffer.getBytebuffer().put((byte) ((mapRGB[x][y] >> 16) & 0xFF));     		// Red component
+                terrainBuffer.getBytebuffer().put((byte) ((mapRGB[x][y] >> 8) & 0xFF));      		// Green component
+                terrainBuffer.getBytebuffer().put((byte) (mapRGB[x][y] & 0xFF));              	// Blue component
+                terrainBuffer.getBytebuffer().put((byte) ((mapRGB[x][y] >> 24) & 0xFF));    		// Alpha component. Only for RGBA
 			}
 		}
-		
-		terrainBuffer.flip();
+		terrainBuffer.getBytebuffer().flip();
 	}
 	
 	public Entity generateRandomTree(int x, int y) {
@@ -246,9 +250,45 @@ public class Chunk implements Serializable{
 		
 		
 		
-		Entity e = BasicEntity.generate(em, "grassRenderer", position, null, orientation, new Vec2(30,24), asm, new Rectangle(0.0f,0.9f,1.0f,0.1f)); //TODO: i'll need to make sure that every time i load a chunk all id's are RE-generated so they're UNIQUE
+		Entity e = Game.getSelf().getEm().newEntity(); //TODO: i'll need to make sure that every time i load a chunk all id's are RE-generated so they're UNIQUE
+		
+		RenderComponent rc = new RenderComponent(e.getID());
+		rc.setSize(new Vec2(30,24));
+		rc.setColor(new Vec4(1,1,1,1));
+		rc.setAnimations(asm);
+		rc.setRenderPosition(position);
+		rc.setRenderer("grassRenderer");
+		rc.setBaseBox(new Rectangle(0.0f,0.9f,1.0f,0.1f));
+		 Game.getSelf().getEm().addComponentTo(e, rc);
+
+		BasicComponent pc = new BasicComponent(e.getID());
+		pc.setPosition(position);
+		pc.setSize(new Vec2(30,24));
+		Game.getSelf().getEm().addComponentTo(e, pc);
+		
+		
+		ArrayList<Component> components = new ArrayList<>();
+		components.add(rc);
+		components.add(pc);
+		componentsOfEntities.put(e.getID(), components);		
+		
 		
 		return e;
+	}
+	
+	public void addAllEntitiesToEntityManager() {
+		for(Long l: componentsOfEntities.keySet()) {
+			Entity e = Game.getSelf().getEm().newEntity();
+			
+			for(Component c: componentsOfEntities.get(l))
+				Game.getSelf().getEm().addComponentTo(e, c);
+		}
+	}
+	
+	public void removeAllEntities() {
+		for(Float f: objects.keySet()) {
+			Game.getSelf().getEm().removeEntity(objects.get(f).getID());
+		}
 	}
 	
 	public ArrayList<Entity> getObjects(){
@@ -306,11 +346,11 @@ public class Chunk implements Serializable{
 	}
 
 	public ByteBuffer getTerrainBuffer() {
-		return terrainBuffer;
+		return terrainBuffer.getBytebuffer();
 	}
 
 	public void setTerrainBuffer(ByteBuffer terrainBuffer) {
-		this.terrainBuffer = terrainBuffer;
+		this.terrainBuffer.setBytebuffer(terrainBuffer);
 	}
 
 	public Rectangle getBoundingBox() {

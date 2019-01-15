@@ -7,12 +7,13 @@ import engine.utilities.BufferUtilities;
 import glm.vec._2.Vec2;
 
 public class AudioSource {
+	private long id;
 	private int sourcePointer;
 	private float alMaxDistance;
 	private Vec2 pos;
 	
 	/**
-	 * Pass in the buffer pointer which is the audio file already in a buffer.
+	 * Pass in the buffer pointer which the audio file already in a buffer.
 	 * @param bufferPointer
 	 */
 	public AudioSource(int bufferPointer, Vec2 pos, float maxDistance) {
@@ -33,22 +34,28 @@ public class AudioSource {
 		alSourcef(sourcePointer, AL_REFERENCE_DISTANCE, maxDistance/2); 	//Reference distance is when the gain will be ONE, or Volume = 100%. From this point on it'll decrease below 1
 		alSourcef(sourcePointer, AL_MAX_DISTANCE, maxDistance); 			//Quando o volume se torna 0
 	}
+	public AudioSource(AudioFile audio, Vec2 pos, float maxDistance) {
+		this( audio.getBufferPointer(), pos,maxDistance);
+	}
 	
 	public void setMaxDistance(float distance) {
 		alMaxDistance = distance;
 		alSourcef(sourcePointer, AL_MAX_DISTANCE, alMaxDistance);
 	}
 	
-
 	public void play() {
 		alSourcePlay(sourcePointer);
+	}
+	
+	public void pause() {
+		alSourcePause(sourcePointer);
 	}
 	
 	public int getSourcePointer() {
 		return sourcePointer;
 	}
 	
-	public void update() {
-		
+	public void destroy() {
+		alDeleteSources(sourcePointer);
 	}
 }

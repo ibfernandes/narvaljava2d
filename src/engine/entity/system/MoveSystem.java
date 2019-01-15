@@ -1,9 +1,10 @@
-package engine.entity;
+package engine.entity.system;
 
 import java.util.Arrays;
 
 import engine.engine.Engine;
 import engine.engine.PhysicsEngine;
+import engine.entity.Entity;
 import engine.entity.component.BasicComponent;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.Component;

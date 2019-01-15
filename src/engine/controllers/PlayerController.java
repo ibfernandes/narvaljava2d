@@ -10,6 +10,7 @@ import engine.entity.EntityManager;
 import engine.entity.component.MoveComponent;
 import engine.entity.component.RenderComponent;
 import engine.graphic.Texture;
+import engine.input.JoystickControl;
 import engine.input.KeyboardControl;
 import engine.input.MouseControl;
 import engine.logic.GameObject;
@@ -42,8 +43,7 @@ public class PlayerController  extends Controller{
 		Arrays.fill(directions, false); // TODO: for now i could use only one boolean (isMoving)
 		float xMove =0;
 		float yMove =0;
-		
-		
+
 		RenderComponent rc = (RenderComponent) context.getEm().getFirstComponent(entityID, RenderComponent.class);
 		MoveComponent mc = (MoveComponent) context.getEm().getFirstComponent(entityID, MoveComponent.class);
 		
@@ -73,6 +73,7 @@ public class PlayerController  extends Controller{
 		}
 		
 		mc.direction = dir;
+		//mc.direction = GSM.getSelf().getJoystick().getThumbDirection(JoystickControl.LEFT_THUMB_STICK);
 
 		if(ArraysExt.areAllElementsEqual(directions, false)){
 			rc.getAnimations().changeStateTo("idle_1");

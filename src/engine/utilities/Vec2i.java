@@ -26,11 +26,7 @@ public class Vec2i implements Comparable<Vec2i>{
 	}
 
 	@Override
-	// -1 this < obj
-	// 0 this = obj
-	// 1 this > obj
 	public int compareTo(Vec2i o) {
-	
 		if (x == o.x && y == o.y)
 			return 0;
 		

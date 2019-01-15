@@ -1,4 +1,4 @@
-package engine.entity;
+package engine.entity.system;
 
 import engine.entity.component.Component;
 import engine.entity.component.MoveComponent;

@@ -1,6 +1,8 @@
 package engine.entity.component;
 
-public abstract class Component{
+import java.io.Serializable;
+
+public abstract class Component implements Serializable{
 	private long entityID;
 	
 	public Component(long entityID) {
