@@ -6,10 +6,13 @@ import engine.entity.component.BodyComponent;
 import engine.entity.component.Component;
 import engine.entity.component.ControllerComponent;
 import engine.entity.component.RenderComponent;
+import engine.renderer.CubeRenderer;
+import engine.renderer.TextureRenderer;
 import engine.utilities.ResourceManager;
 import gameStates.Game;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
+import glm.vec._4.Vec4;
 
 public class BodySystem extends ComponentSystem{
 
@@ -33,7 +36,7 @@ public class BodySystem extends ComponentSystem{
 			if(bc==null)
 				continue;
 		
-			ResourceManager.getSelf().getCubeRenderer().render(bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize()), 0, new Vec3(1,0,0));
+			((CubeRenderer)ResourceManager.getSelf().getRenderer("cubeRenderer")).render(bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize()), 0, new Vec4(1,0,0,1));
 		}
 	}
 

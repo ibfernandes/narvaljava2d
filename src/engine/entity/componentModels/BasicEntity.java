@@ -10,13 +10,14 @@ import engine.entity.component.RenderComponent;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
 import engine.logic.AnimationStateManager;
+import gameStates.Game;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
 
 public class BasicEntity {
 	
 	public static Entity generate(EntityManager em, String renderer, Vec2 position, String texture, Vec2 orientation, Vec2 size, AnimationStateManager animations, Rectangle baseBox) {
-		Entity e = em.newEntity();
+		Entity e = Game.getSelf().getEm().newEntity();
 
 		RenderComponent rc = new RenderComponent(e.getID());
 		rc.setSize(size);

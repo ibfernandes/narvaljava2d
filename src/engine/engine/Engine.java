@@ -16,6 +16,7 @@ import org.lwjgl.opengl.GL;
 import engine.input.JoystickControl;
 import engine.input.KeyboardControl;
 import engine.input.MouseControl;
+import engine.particle.ParticleEngine;
 import gameStates.GSM;
 
 public class Engine implements Runnable{
@@ -41,10 +42,7 @@ public class Engine implements Runnable{
 	private Engine() {}
 	
 	public static Engine getSelf() {
-		if(self==null) 
-			self = new Engine();
-		
-		return self;
+		return (self==null) ? self = new Engine(): self;
 	}
 	
 	/**

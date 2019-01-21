@@ -8,43 +8,33 @@ import static org.lwjgl.opengl.GL31.*;
 import static org.lwjgl.opengl.GL33.*;
 
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.Random;
-
-import org.lwjgl.system.MemoryUtil;
-
 import engine.entity.component.RenderComponent;
 import engine.graphic.Shader;
 import engine.graphic.Texture;
 import engine.utilities.BufferUtilities;
-import engine.utilities.ResourceManager;
 import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
-import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
 
 public class TextureBatchRenderer implements Renderer{
 
 	private int layers;
-	public int numVertices;
 	private Shader shader;
 
 	//per instance
 	private static final int INSTANCE_VBO_MAX_OBJECTS = 5000; // A maximum of 5.000 objects on the buffer at same time
+
+	private static final int INSTANCE_DATA_STRIDE = 4 + 2 + (4 * 4); //vec4 spriteFrame, vec2 flip, mat4 model
+	private static final int INSTANCE_DATA_STRIDE_IN_BYTES = INSTANCE_DATA_STRIDE*Float.BYTES;
 	
-	//vec4 spriteFrame, vec2 flip, mat4 model
-	//Length (also Stride) in floats. When passing as arg it must be in BYTES.
-	private static final int INSTANCE_DATA_STRIDE = 4 + 2 + (4 * 4);
-	private static final int INSTANCE_DATA_STRIDE_IN_BYTES = (4 + 2 + (4 * 4))*Float.BYTES;
+	private int vertexVBO;
+	private int instanceVBO;
+	private int VAO;
 	
-	int vertexVBO;
-	int instanceVBO;
-	int VAO;
+	private FloatBuffer objectBuffer;
+	private float vertices[];
 	
-	FloatBuffer objectBuffer;
-	float vertices[];
-	
-	int objectsCount = 0;
+	private int objectsCount = 0;
 	
 	
 	public TextureBatchRenderer(Shader shader) {
@@ -54,7 +44,7 @@ public class TextureBatchRenderer implements Renderer{
 	
 	private void init() {
 		layers = 1;
-		vertices = getVertices(layers);
+		vertices = TextureRenderer.generateLayers(layers);
 		objectBuffer = BufferUtilities.createFloatBuffer(INSTANCE_VBO_MAX_OBJECTS*INSTANCE_DATA_STRIDE);
 		
 		VAO = glGenVertexArrays();
@@ -72,26 +62,8 @@ public class TextureBatchRenderer implements Renderer{
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	
-	public float[] getVertices(int layers) {
-		int p = 24; // 4 floats per vetex (obj.x, obj.y, tex.x, tex.y) * 6 vertices = 24 floats
-		float vertices[] = new float[p*layers];
-		float offset = 1/(float)layers;
-		
-		for(int i=layers-1; i>=0; i--) {
-			vertices[i*p + 0] = 0; vertices[i*p + 1] = offset + i*offset; 	vertices[i*p + 2] = 0; vertices[i*p + 3] = offset + i*offset;
-			vertices[i*p + 4] = 1; vertices[i*p + 5] = i*offset; 			vertices[i*p + 6] = 1; vertices[i*p + 7] = i*offset;
-			vertices[i*p + 8] = 0; vertices[i*p + 9] = i*offset; 			vertices[i*p +10] = 0; vertices[i*p +11] = i*offset;
-			
-			vertices[i*p +12] = 0; vertices[i*p +13] = offset + i*offset; 	vertices[i*p +14] = 0; vertices[i*p +15] = offset + i*offset;
-			vertices[i*p +16] = 1; vertices[i*p +17] = offset + i*offset; 	vertices[i*p +18] = 1; vertices[i*p +19] = offset + i*offset;
-			vertices[i*p +20] = 1; vertices[i*p +21] = i*offset; 			vertices[i*p +22] = 1; vertices[i*p +23] = i*offset;
-		}
-		
-		return vertices;
-	}
 	
-	
-	public void start() {
+	public void start(Texture texture) {
 		objectBuffer.clear();
 		objectsCount = 0;
 		
@@ -102,23 +74,27 @@ public class TextureBatchRenderer implements Renderer{
 		shader.setInteger("normalTex", 1);
 		
 		glActiveTexture(GL_TEXTURE0);
-		ResourceManager.getSelf().getTexture("rogue").bind();
+		texture.bind();
 		
 		glActiveTexture(GL_TEXTURE1);
-		ResourceManager.getSelf().getTexture("rogue").bind();
+		texture.bind();
 	}
 	
-	public void render(RenderComponent rc)  {
+	public void render(RenderComponent rc)  {	
+		render(rc.getRenderPosition(), rc.getSize(), rc.getRotation(), rc.getColor(), rc.getAnimations().getCurrentAnimation().getCurrentFrame(), rc.getOrientation());
+	}
+	
+	public void render(Vec2 position, Vec2 size, float rotate, Vec4 color, Vec4 spriteFrame, Vec2 orientation) {
 		Mat4 model = new Mat4();
 		
-		model = model.translate(rc.getRenderPosition().x, rc.getRenderPosition().y, 0);
-		model = model.translate(0.5f * rc.getSize().x, 0.5f * rc.getSize().y, 0);
-		model = model.rotate(rc.getRotation(), 0, 0, 1);
-		model = model.translate(-0.5f * rc.getSize().x, -0.5f *rc.getSize().y, 0);
-		model = model.scale(rc.getSize().x, rc.getSize().y, 1);
+		model = model.translate(position.x, position.y, 0);
+		model = model.translate(0.5f * size.x, 0.5f * size.y, 0);
+		model = model.rotate(rotate, 0, 0, 1);
+		model = model.translate(-0.5f * size.x, -0.5f *size.y, 0);
+		model = model.scale(size.x, size.y, 1);
 
-		objectBuffer.put(rc.getAnimations().getCurrentAnimation().getCurrentFrame().toFA_());
-		objectBuffer.put(rc.getOrientation().toFA_());
+		objectBuffer.put(spriteFrame.toFA_());
+		objectBuffer.put(orientation.toFA_());
 		objectBuffer.put(model.toFa_());
 		objectsCount++;
 	}

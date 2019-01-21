@@ -20,7 +20,6 @@ import game.Main;
 import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
-import sun.nio.ch.IOUtil;
 
 public class BufferUtilities {
 	public static ByteBuffer createByteBuffer(byte[] array) {
@@ -37,17 +36,28 @@ public class BufferUtilities {
 		return BufferUtils.createIntBuffer(size);
 	}
 	
-	public static FloatBuffer createFloatBuffer(float[] vertices){
-		FloatBuffer buffer = createFloatBuffer(vertices.length);
+	/**
+	 * Creates a FloaBuffer from @param values.
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public static FloatBuffer createFloatBuffer(float[] values){
+		FloatBuffer buffer = createFloatBuffer(values.length);
 		
-		for(int i = 0; i < vertices.length; i++){
-			buffer.put(vertices[i]);
-		}
+		for(int i = 0; i < values.length; i++)
+			buffer.put(values[i]);
 
 		buffer.flip();
 		return buffer;
 	}
 	
+	/**
+	 * Creates a IntBuffer from @param values.
+	 * 
+	 * @param values
+	 * @return
+	 */
 	public static IntBuffer createIntBuffer(int values[]){
 		IntBuffer buffer = createIntBuffer(values.length);
 		 buffer.put(values);
@@ -63,10 +73,17 @@ public class BufferUtilities {
 		 return createFloatBuffer(vec.toFA_());
 	}
 	
-	public static FloatBuffer createFloatBuffer(ArrayList<Mat4> mats){
-		FloatBuffer buffer = createFloatBuffer(4*4*mats.size());
+	
+	/**
+	 * Creates a FloatBuffer from @param matrices from top row to bottom row. 
+	 * 
+	 * @param matrices
+	 * @return
+	 */
+	public static FloatBuffer createFloatBuffer(ArrayList<Mat4> matrices){
+		FloatBuffer buffer = createFloatBuffer(4*4*matrices.size());
 		
-		for(Mat4 mat: mats) {
+		for(Mat4 mat: matrices) {
 			buffer.put(mat.m00);	buffer.put(mat.m01);	buffer.put(mat.m02);	buffer.put(mat.m03);
 			buffer.put(mat.m10);	buffer.put(mat.m11);	buffer.put(mat.m12);	buffer.put(mat.m13);
 			buffer.put(mat.m20);	buffer.put(mat.m21);	buffer.put(mat.m22);	buffer.put(mat.m23);
@@ -77,6 +94,12 @@ public class BufferUtilities {
 		return buffer;
 	}
 	
+	/**
+	 * Creates a FloatBuffer from @param mat from top row to bottom row. 
+	 * 
+	 * @param mat
+	 * @return
+	 */
 	public static FloatBuffer createFloatBuffer(Mat4 mat){
 		FloatBuffer buffer = createFloatBuffer(4*4);
 		
@@ -84,8 +107,6 @@ public class BufferUtilities {
 		buffer.put(mat.m10);	buffer.put(mat.m11);	buffer.put(mat.m12);	buffer.put(mat.m13);
 		buffer.put(mat.m20);	buffer.put(mat.m21);	buffer.put(mat.m22);	buffer.put(mat.m23);
 		buffer.put(mat.m30);	buffer.put(mat.m31);	buffer.put(mat.m32);	buffer.put(mat.m33);
-		
-		
 
 		buffer.flip();
 		return buffer;
@@ -99,14 +120,12 @@ public class BufferUtilities {
 	}
 	
 	  /**
-     * Reads the specified resource and returns the raw data as a ByteBuffer.
+     * Loads and read the specified file content in @param resource and returns the raw data as a ByteBuffer.
      *
-     * @param resource   the resource to read
-     * @param bufferSize the initial buffer size
-     *
+     * @param resource  
+     * @param bufferSize 
      * @return the resource data
-     *
-     * @throws IOException if an IO error occurs
+     * @throws IOException
      */
     public static ByteBuffer ioResourceToByteBuffer(String resource, int bufferSize) throws IOException {
         ByteBuffer buffer = null;
@@ -116,15 +135,11 @@ public class BufferUtilities {
             try (SeekableByteChannel fc = Files.newByteChannel(path)) {
                 buffer = BufferUtils.createByteBuffer((int)fc.size() + 1);
                 while (fc.read(buffer) != -1) {
-                    ;
                 }
             }
         } else {
             try {
                 InputStream source = (new Main()).getClass().getResourceAsStream(resource);
-                
-            		if(source==null)
-            			System.out.println("worng");
             		
                 ReadableByteChannel rbc = Channels.newChannel(source);
             
@@ -136,7 +151,7 @@ public class BufferUtilities {
                         break;
                     }
                     if (buffer.remaining() == 0) {
-                        buffer = resizeBuffer(buffer, buffer.capacity() * 3 / 2); // 50%
+                        buffer = resizeBuffer(buffer, buffer.capacity() * 3 / 2);
                     }
                 }
             }catch(Exception e) {

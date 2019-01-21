@@ -27,7 +27,6 @@ import engine.entity.component.TextComponent;
 import engine.graphic.Animation;
 import engine.logic.AnimationStateManager;
 import engine.logic.GameObject;
-import engine.ui.UIObject;
 import engine.utilities.ArraysExt;
 import engine.utilities.ResourceManager;
 import engine.utilities.Vec2i;

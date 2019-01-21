@@ -89,14 +89,14 @@ public class Chunk implements Serializable{
 		return mapRGB;
 	}
 	
-	public float noise(FastNoise fastNoise, float x, float y) { //TODO: I could make it parallel and so increase performance[?]
+	public float noise(FastNoise fastNoise, float x, float y) {
 		float noise = 0;
 		
-		fastNoise.SetFrequency(0.0005f);	 //quanto menor, maior as "ilhas"
-		noise +=  fastNoise.GetPerlin(x, y); //first octave
+		fastNoise.SetFrequency(0.0005f); //The lesser the frequency, bigger the islands
+		noise +=  fastNoise.GetPerlin(x, y); //First octave
 		
 		fastNoise.SetFrequency(0.005f);
-		noise += .1 * fastNoise.GetPerlin(x, y); // second octave
+		noise += .1 * fastNoise.GetPerlin(x, y); //Second octave
 		
 		return noise;
 	}
@@ -277,22 +277,24 @@ public class Chunk implements Serializable{
 	}
 	
 	public void addAllEntitiesToEntityManager() {
+		HashMap <Long, ArrayList<Component>> newHashMap = new HashMap<>();
+		
 		for(Long l: componentsOfEntities.keySet()) {
 			Entity e = Game.getSelf().getEm().newEntity();
 			
 			for(Component c: componentsOfEntities.get(l))
 				Game.getSelf().getEm().addComponentTo(e, c);
+			
+			newHashMap.put(e.getID(), componentsOfEntities.get(l));
 		}
+		
+		componentsOfEntities = newHashMap;
 	}
 	
 	public void removeAllEntities() {
-		for(Float f: objects.keySet()) {
-			Game.getSelf().getEm().removeEntity(objects.get(f).getID());
+		for(Long l: componentsOfEntities.keySet()) {
+			Game.getSelf().getEm().removeEntity(l);
 		}
-	}
-	
-	public ArrayList<Entity> getObjects(){
-		return new ArrayList<>(objects.values());
 	}
 	
 	public Vec2i getPosition() {

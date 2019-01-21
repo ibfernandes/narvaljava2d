@@ -1,23 +1,23 @@
 package game;
 
 
-import org.lwjgl.opengl.GL;
-
-import editor.Editor;
 import engine.engine.Engine;
 import engine.engine.Window;
-import engine.logic.Chunk;
-import engine.logic.ChunkMap;
-import engine.utilities.ResourceManager;
+import engine.logic.EngineSettings;
 public class Main {
 	public static void main(String args[]) {
+		
+		EngineSettings.getSelf().setWindowSize(1280, 720);
+		EngineSettings.getSelf().setMapSize(60000, 60000);
+		EngineSettings.getSelf().setChunkSize(1920, 1080);
+		EngineSettings.getSelf().setMapSeed(12345);
+		
 		Window w;
-		w = new Window(1280,720,"Engine Early Alpha");
+		w = new Window(EngineSettings.getSelf().getWindowSizeX(),EngineSettings.getSelf().getWindowSizeY(),"Engine Early Alpha");
 		
 		Engine.getSelf().attachWindow(w);
 
 		Thread tr = new Thread(Engine.getSelf());
 		tr.start();
-
 	}
 }

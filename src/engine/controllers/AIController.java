@@ -26,7 +26,7 @@ import engine.entity.component.RenderComponent;
 import engine.entity.component.SightComponent;
 import engine.geometry.Rectangle;
 import engine.geometry.Segment;
-import engine.logic.GameObject;
+import engine.renderer.CubeRenderer;
 import engine.utilities.ArraysExt;
 import engine.utilities.ResourceManager;
 import engine.utilities.Vec2i;
@@ -59,6 +59,9 @@ public class AIController extends Controller{
 	
 	private ArrayList<Segment> segments = new ArrayList<>();
 	private ArrayList<Integer> direction = new ArrayList<>();
+	
+	public static final int TOP =0, RIGHT =1, BOTTOM =2, LEFT =3;
+	public static final int TOP_DIAGONAL_LEFT =4, TOP_DIAGONAL_RIGHT =5, BOTTOM_DIAGONAL_RIGHT =6, BOTTOM_DIAGONAL_LEFT =7;
 	
 	public AIController() {
 		ct.addConsideration(new ConsiderationWander());
@@ -277,37 +280,37 @@ public class AIController extends Controller{
 		boolean direction[] = new boolean[4];
 		
 		if(a.pos.x>b.pos.x)
-			direction[GameObject.RIGHT] = true;
+			direction[RIGHT] = true;
 		else if(a.pos.x<b.pos.x)
-			direction[GameObject.LEFT] = true;
+			direction[LEFT] = true;
 		if(a.pos.y> b.pos.y)
-			direction[GameObject.BOTTOM] = true;
+			direction[BOTTOM] = true;
 		else if(a.pos.y<b.pos.y) 
-			direction[GameObject.TOP] = true;
+			direction[TOP] = true;
 		
-		if(direction[GameObject.RIGHT] && direction[GameObject.TOP])
-			return GameObject.TOP_DIAGONAL_RIGHT;
+		if(direction[RIGHT] && direction[TOP])
+			return TOP_DIAGONAL_RIGHT;
 		
-		if(direction[GameObject.LEFT] && direction[GameObject.TOP])
-			return GameObject.TOP_DIAGONAL_LEFT;
+		if(direction[LEFT] && direction[TOP])
+			return TOP_DIAGONAL_LEFT;
 		
-		if(direction[GameObject.RIGHT] && direction[GameObject.BOTTOM])
-			return GameObject.BOTTOM_DIAGONAL_RIGHT;
+		if(direction[RIGHT] && direction[BOTTOM])
+			return BOTTOM_DIAGONAL_RIGHT;
 		
-		if(direction[GameObject.LEFT] && direction[GameObject.BOTTOM])
-			return GameObject.BOTTOM_DIAGONAL_LEFT;
+		if(direction[LEFT] && direction[BOTTOM])
+			return BOTTOM_DIAGONAL_LEFT;
 		
-		if(direction[GameObject.RIGHT])
-			return GameObject.RIGHT;
+		if(direction[RIGHT])
+			return RIGHT;
 		
-		if(direction[GameObject.LEFT])
-			return GameObject.LEFT;
+		if(direction[LEFT])
+			return LEFT;
 		
-		if(direction[GameObject.BOTTOM])
-			return GameObject.BOTTOM;
+		if(direction[BOTTOM])
+			return BOTTOM;
 		
-		if(direction[GameObject.TOP])
-			return GameObject.TOP;
+		if(direction[TOP])
+			return TOP;
 		
 		return -1;
 	}
@@ -318,30 +321,30 @@ public class AIController extends Controller{
 		float yMove = 0;
 		org.jbox2d.common.Vec2  speed = new  org.jbox2d.common.Vec2(0, 0);
 		
-		if(directions[GameObject.TOP]) {
+		if(directions[TOP]) {
 			yMove = -mc.getVelocity()*deltaTime;
 			speed.y = -mc.getVelocity()/PhysicsEngine.BOX2D_SCALE_FACTOR;
 			rc.getAnimations().changeStateTo("walking");
 		}
-		if(directions[GameObject.BOTTOM]) {
+		if(directions[BOTTOM]) {
 			yMove = mc.getVelocity()*deltaTime;
 			speed.y = mc.getVelocity()/PhysicsEngine.BOX2D_SCALE_FACTOR;
 			rc.getAnimations().changeStateTo("walking");
 		}
-		if(directions[GameObject.RIGHT]) {
+		if(directions[RIGHT]) {
 			xMove = mc.getVelocity()*deltaTime;
 			speed.x = mc.getVelocity()/PhysicsEngine.BOX2D_SCALE_FACTOR;
 			rc.setOrientation(faceRight);
 			rc.getAnimations().changeStateTo("walking");
 		}
-		if(directions[GameObject.LEFT]) {
+		if(directions[LEFT]) {
 			xMove = -mc.getVelocity()*deltaTime;
 			speed.x = -mc.getVelocity()/PhysicsEngine.BOX2D_SCALE_FACTOR;
 			rc.setOrientation(faceLeft);
 			rc.getAnimations().changeStateTo("walking");
 		}
 		
-		if(ArraysExt.areAllElementsEqual(directions, false)){
+		if(ArraysExt.areAllElementsEqualTo(directions, false)){
 			rc.getAnimations().changeStateTo("idle_1");
 		}
 		//bc.body.setLinearVelocity(speed);
@@ -351,28 +354,28 @@ public class AIController extends Controller{
 	@Override
 	public void renderDebug() {
 		
-		SightComponent sm = Game.getSelf().getEm().getFirstComponent(lastEntityID, SightComponent.class);
+		/*SightComponent sm = Game.getSelf().getEm().getFirstComponent(lastEntityID, SightComponent.class);
 		RenderComponent rc =  Game.getSelf().getEm().getFirstComponent(lastEntityID, RenderComponent.class);
 		Rectangle r = sm.calculateSightView(rc.getRenderPosition());
-		ResourceManager.getSelf().getCubeRenderer().render(new Vec2(r.x, r.y), new Vec2(r.width,r.height), 0, new Vec3(1,1,1));
+		((CubeRenderer)ResourceManager.getSelf().getRenderer("cubeRenderer")).render(new Vec2(r.x, r.y), new Vec2(r.width,r.height), 0, new Vec3(1,1,1));
 		
 		if(pathAstar!=null) {
-			ResourceManager.getSelf().getCubeRenderer().render(
+			((CubeRenderer)ResourceManager.getSelf().getRenderer("cubeRenderer")).render(
 					new Vec2(endPoint), new Vec2(8,8), 0, new Vec3(1,0,0));	
-			ResourceManager.getSelf().getCubeRenderer().render(
+			((CubeRenderer)ResourceManager.getSelf().getRenderer("cubeRenderer")).render(
 					new Vec2(bc.getCalculatedBaseBox().getPos()), new Vec2(8,8), 0, new Vec3(0,0,1));	
 			
 			
 			for(Anode state: pathAstar) {
-				ResourceManager.getSelf().getCubeRenderer().render(new Vec2(gameContext.getCamera().getX() + state.pos.x*gameContext.GRAPH_DIVISOR, gameContext.getCamera().getY() + state.pos.y*gameContext.GRAPH_DIVISOR), new Vec2(8,8), 0, new Vec3(0,0,0));		
+				((CubeRenderer)ResourceManager.getSelf().getRenderer("cubeRenderer")).render(new Vec2(gameContext.getCamera().getX() + state.pos.x*gameContext.GRAPH_DIVISOR, gameContext.getCamera().getY() + state.pos.y*gameContext.GRAPH_DIVISOR), new Vec2(8,8), 0, new Vec3(0,0,0));		
 			}
 			for(Segment s: segments) {
-				ResourceManager.getSelf().getCubeRenderer().render(
+				((CubeRenderer)ResourceManager.getSelf().getRenderer("cubeRenderer")).render(
 						new Vec2(s.getStart()), new Vec2(8,8), 0, new Vec3(1,0,0));		
-				ResourceManager.getSelf().getCubeRenderer().render(
+				((CubeRenderer)ResourceManager.getSelf().getRenderer("cubeRenderer")).render(
 						new Vec2(s.getEnd()), new Vec2(8,8), 0, new Vec3(0,0,1));		
 			}
-		}
+		}*/
 	}
 
 

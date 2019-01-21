@@ -2,8 +2,6 @@ package engine.utilities;
 
 import static org.lwjgl.openal.AL10.AL_FORMAT_MONO16;
 import static org.lwjgl.openal.AL10.AL_FORMAT_STEREO16;
-import static org.lwjgl.openal.AL10.alBufferData;
-import static org.lwjgl.openal.AL10.alGenBuffers;
 import static org.lwjgl.stb.STBVorbis.stb_vorbis_decode_memory;
 import static org.lwjgl.system.MemoryStack.stackMallocInt;
 import static org.lwjgl.system.MemoryStack.stackPop;
@@ -12,22 +10,17 @@ import static org.lwjgl.system.libc.LibCStdlib.free;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.HashMap;
 
 import engine.audio.AudioFile;
-import engine.audio.AudioSource;
 import engine.graphic.Shader;
 import engine.graphic.Texture;
-import engine.renderer.CubeRenderer;
-import engine.renderer.GrassRenderer;
 import engine.renderer.Renderer;
-import engine.renderer.ShadowRenderer;
-import engine.renderer.TextureRenderer;
 import engine.ui.Font;
-import glm.vec._2.Vec2;
 
 public final class ResourceManager {
 	private static ResourceManager self;
@@ -36,24 +29,22 @@ public final class ResourceManager {
 	private static HashMap<String, AudioFile> audio = new HashMap<String, AudioFile>();
 	private static HashMap<String, Font> fonts = new HashMap<String, Font>();
 	private static HashMap<String, Renderer> renderers = new HashMap<String, Renderer>();
-	private static CubeRenderer cubeRenderer;
-	private static TextureRenderer textureRenderer;
-	private static ShadowRenderer shadowRenderer;
-	private static GrassRenderer grassRender;
 
 	private ResourceManager() {
-
 	}
 
 	public static ResourceManager getSelf() {
-		if (self == null)
-			self = new ResourceManager();
-		return self;
+		return (self == null) ? self = new ResourceManager() : self;
 	}
 
 	/**
-	 * File format must be in .OGG
+	 * Load and store the audio file contained in @param audioPath. File format must
+	 * be in .OGG. Case ResourceManager contains a file with this name, returns it
+	 * instead.
+	 * 
+	 * @param name
 	 * @param audioPath
+	 * @return
 	 */
 	public AudioFile loadAudio(String name, String audioPath) {
 		if (audio.containsKey(name))
@@ -72,7 +63,7 @@ public final class ResourceManager {
 		IntBuffer channelsBuffer = stackMallocInt(1);
 		stackPush();
 		IntBuffer sampleRateBuffer = stackMallocInt(1);
-		
+
 		ShortBuffer rawAudioBuffer = stb_vorbis_decode_memory(BufferUtilities.createByteBuffer(memory), channelsBuffer,
 				sampleRateBuffer);
 
@@ -82,14 +73,14 @@ public final class ResourceManager {
 		stackPop();
 
 		int format = -1;
-		if (channels == 1) 
+		if (channels == 1)
 			format = AL_FORMAT_MONO16;
-		else if (channels == 2) 
+		else if (channels == 2)
 			format = AL_FORMAT_STEREO16;
-		
-		AudioFile audioIns = new AudioFile(rawAudioBuffer,sampleRate, format);
+
+		AudioFile audioIns = new AudioFile(rawAudioBuffer, sampleRate, format);
 		free(rawAudioBuffer);
-		
+
 		return audio.put(name, audioIns);
 	}
 
@@ -97,17 +88,40 @@ public final class ResourceManager {
 		return audio.get(name);
 	}
 
+	/**
+	 * Load and store the font file contained in @param fontPath. File format must
+	 * be in .TTF. Case ResourceManager contains a file with this name, returns it
+	 * instead.
+	 * 
+	 * @param name
+	 * @param fontPath
+	 * @return
+	 */
 	public Font loadFont(String name, String fontPath) {
 		if (fonts.containsKey(name))
 			return fonts.get(name);
-		return fonts.put(name, new Font());
+
+		java.awt.Font f = null;
+		InputStream isr = this.getClass().getResourceAsStream("/" + fontPath);
+
+		try {
+			f = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, isr);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		f = f.deriveFont(java.awt.Font.PLAIN, 128);
+		return fonts.put(name, new Font(f));
 	}
 
 	public Font getFont(String name) {
 		return fonts.get(name);
 	}
+
 	/**
-	 * Loads the file @param name from the resources folder
+	 * Load shader's files from @param vertexShaderPath, @param
+	 * fragmentShaderFilPath and @param geometryShaderPath and compile them into a
+	 * program.
 	 * 
 	 * @param name
 	 * @param vertexShaderPath
@@ -122,34 +136,31 @@ public final class ResourceManager {
 		return shaders.put(name, loadShaderFromFile(vertexShaderPath, fragmentShaderFilPath, geometryShaderPath));
 	}
 
+	public Shader getShader(String name) {
+		return shaders.get(name);
+	}
+
 	/**
-	 * The file must be inside resource folder. (i.e
-	 * resources/shaders/pongshader.vs)
+	 * Load and store the texture file contained in @param imgPath. Case
+	 * ResourceManager contains a file with this name, returns it instead.
 	 * 
-	 * @param imgPath
-	 * @param alpha
 	 * @param name
+	 * @param imgPath
 	 * @return
 	 */
 	public Texture loadTexture(String name, String imgPath) {
 		if (textures.containsKey(name))
 			return textures.get(name);
-		return textures.put(name, loadTextureFromFile(imgPath));
-	}
-
-	public Shader getShader(String name) {
-		return shaders.get(name);
+		Texture t = new Texture("/" + imgPath);
+		return textures.put(name, t);
 	}
 
 	public Texture getTexture(String name) {
 		return textures.get(name);
 	}
 
-	public void clear() {
-	}
-
 	/**
-	 * The file must be inside resource folder. (i.e shaders/pongshader.vs)
+	 * Load shader's from file and compile them into a program.
 	 * 
 	 * @param vertexShaderPath
 	 * @param fragmentShaderPath
@@ -207,48 +218,11 @@ public final class ResourceManager {
 		return shader;
 	}
 
-	private Texture loadTextureFromFile(String imgPath) {
-		Texture t = new Texture("/" + imgPath);
-		return t;
-	}
-
 	public void setRenderer(String name, Renderer r) {
 		renderers.put(name, r);
 	}
 
 	public <T extends Renderer> T getRenderer(String name) {
 		return (T) renderers.get(name);
-	}
-
-	public CubeRenderer getCubeRenderer() {
-		return cubeRenderer;
-	}
-
-	public void setCubeRenderer(CubeRenderer cubeRenderer) {
-		ResourceManager.cubeRenderer = cubeRenderer;
-	}
-
-	public TextureRenderer getTextureRenderer() {
-		return textureRenderer;
-	}
-
-	public void setTextureRenderer(TextureRenderer textureRenderer) {
-		ResourceManager.textureRenderer = textureRenderer;
-	}
-
-	public ShadowRenderer getShadowRenderer() {
-		return shadowRenderer;
-	}
-
-	public void setShadowRenderer(ShadowRenderer shadowRenderer) {
-		ResourceManager.shadowRenderer = shadowRenderer;
-	}
-
-	public void setGrassRenderer(GrassRenderer grassRender) {
-		ResourceManager.grassRender = grassRender;
-	}
-
-	public GrassRenderer getGrassRenderer() {
-		return grassRender;
 	}
 }

@@ -75,7 +75,7 @@ public class PlayerController  extends Controller{
 		mc.direction = dir;
 		//mc.direction = GSM.getSelf().getJoystick().getThumbDirection(JoystickControl.LEFT_THUMB_STICK);
 
-		if(ArraysExt.areAllElementsEqual(directions, false)){
+		if(ArraysExt.areAllElementsEqualTo(directions, false)){
 			rc.getAnimations().changeStateTo("idle_1");
 		}
 

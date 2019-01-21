@@ -19,8 +19,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="3" language="java" name="engine.logic.ChunkMap" project="Engine" 
-    file="/Engine/src/engine/logic/ChunkMap.java" binary="false" corner="BOTTOM_RIGHT">    
+  <class id="3" language="java" name="engine.logic.ChunkManager" project="Engine" 
+    file="/Engine/src/engine/logic/ChunkManager.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="531" y="233"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
@@ -46,8 +46,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="6" language="java" name="engine.logic.Timer" project="Engine" file="/Engine/src/engine/logic/Timer.java" 
-    binary="false" corner="BOTTOM_RIGHT">    
+  <class id="6" language="java" name="engine.utilities.Timer" project="Engine" 
+    file="/Engine/src/engine/utilities/Timer.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="499" y="916"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
@@ -77,28 +77,29 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="11">    
-    <bendpoint x="414" y="475"/>    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="12" name="savingChunksToRemove">        
+      <attribute id="12" name="chunksToSave">        
         <position height="0" width="0" x="0" y="0"/>      
       </attribute>      
       <multiplicity id="13" minimum="0" maximum="2147483647">        
         <position height="0" width="0" x="0" y="0"/>      
       </multiplicity>    
     </end>    
-    <end type="TARGET" refId="5" navigable="true"/>    
+    <end type="TARGET" refId="2" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="14">    
+    <bendpoint x="768" y="380"/>    
+    <bendpoint x="926" y="564"/>    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="15" name="chunksToSave">        
+      <attribute id="15" name="loadingChunks">        
         <position height="0" width="0" x="0" y="0"/>      
       </attribute>      
       <multiplicity id="16" minimum="0" maximum="2147483647">        
         <position height="0" width="0" x="0" y="0"/>      
       </multiplicity>    
     </end>    
-    <end type="TARGET" refId="2" navigable="true"/>    
+    <end type="TARGET" refId="4" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="17">    
@@ -115,17 +116,16 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="20">    
-    <bendpoint x="768" y="380"/>    
-    <bendpoint x="926" y="564"/>    
+    <bendpoint x="414" y="475"/>    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="21" name="loadingChunks">        
+      <attribute id="21" name="savingChunksToRemove">        
         <position height="0" width="0" x="0" y="0"/>      
       </attribute>      
       <multiplicity id="22" minimum="0" maximum="2147483647">        
         <position height="0" width="0" x="0" y="0"/>      
       </multiplicity>    
     </end>    
-    <end type="TARGET" refId="4" navigable="true"/>    
+    <end type="TARGET" refId="5" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
   <classifier-display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 

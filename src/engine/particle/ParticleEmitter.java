@@ -1,7 +1,10 @@
 package engine.particle;
 
 public abstract class ParticleEmitter {
-	public int lifeTime = 0; // in miliseconds
+	/**
+	 * Particle Emitter lifetime in miliseconds
+	 */
+	public int lifeTime = 0; 
 	public boolean hasLifeTime = true;
 	public long startTime = 0;
 	public int particleCount = 0;

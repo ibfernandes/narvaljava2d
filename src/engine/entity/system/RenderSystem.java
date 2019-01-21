@@ -8,6 +8,7 @@ import engine.entity.Entity;
 import engine.entity.component.Component;
 import engine.entity.component.RenderComponent;
 import engine.renderer.TextureBatchRenderer;
+import engine.renderer.TextureRenderer;
 import engine.renderer.CubeRenderer;
 import engine.renderer.GrassRenderer;
 import engine.utilities.ResourceManager;
@@ -62,7 +63,7 @@ public class RenderSystem extends ComponentSystem{
 		for(RenderComponent rc: components) {
 			if(!rc.isDisabled()) {
 				if(rc.getRenderer().equals("textureRenderer"))
-				ResourceManager.getSelf().getTextureRenderer().render(
+					((TextureRenderer)ResourceManager.getSelf().getRenderer("textureRenderer")).render(
 						ResourceManager.getSelf().getTexture(rc.getAnimations().getCurrentAnimation().getTexture()),
 						ResourceManager.getSelf().getTexture(rc.getAnimations().getCurrentAnimation().getTexture()+"_normal"),
 						rc.getRenderPosition(), rc.getSize(), rc.getRotation(), rc.getColor(), rc.getAnimations().getCurrentAnimation().getCurrentFrame(), rc.getOrientation(), rc.getSkew());
@@ -89,7 +90,7 @@ public class RenderSystem extends ComponentSystem{
 		*/
 		
 		
-		t2.start();
+		//t2.start();
 		
 		for(RenderComponent rc: components) {
 			if(!rc.isDisabled()) {

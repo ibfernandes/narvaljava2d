@@ -1,19 +1,11 @@
 package engine.particle;
 
 import java.util.ArrayList;
-import java.util.Queue;
-
 import engine.engine.Engine;
-import engine.engine.PhysicsEngine;
-import engine.entity.EntityManager;
-import glm.vec._2.Vec2;
 
 public class ParticleEngine {
 	private static ParticleEngine self;
-	private EntityManager em;
-	public static int MAX_PARTICLES = 1000;
-	private int particlesCount = 0;
-	private ArrayList<ParticleEmitter> particles = new ArrayList<>();
+	private ArrayList<ParticleEmitter> particleEmitters = new ArrayList<>();
 	private ArrayList<ParticleEmitter> particlesQueue = new ArrayList<>();
 	private ArrayList<ParticleEmitter> particlesToRemove = new ArrayList<>();
 	
@@ -31,24 +23,22 @@ public class ParticleEngine {
 	public void update(float deltaTime) {
 		for(ParticleEmitter pb: particlesQueue) {
 			pb.init();
-			//particlesCount +=pb.particleCount;
 			pb.startTime = System.nanoTime();
-			particles.add(pb);
+			particleEmitters.add(pb);
 		}
 		particlesQueue.clear();
 		
 		long currentTime = System.nanoTime();
-		for(ParticleEmitter pb: particles) {
+		for(ParticleEmitter pb: particleEmitters) {
 			if(pb.hasLifeTime && (currentTime - pb.startTime)/Engine.MILISECOND >= pb.lifeTime) {
 				particlesToRemove.add(pb);
-				//particlesCount -= pb.particleCount;
 				continue;
 			}
 			pb.update(deltaTime);
 		}
 		
 		for(ParticleEmitter pb: particlesToRemove) {
-			particles.remove(pb);
+			particleEmitters.remove(pb);
 		}
 		
 		particlesToRemove.clear();
@@ -56,7 +46,7 @@ public class ParticleEngine {
 	}
 	
 	public void render() {
-		for(ParticleEmitter pb: particles)
+		for(ParticleEmitter pb: particleEmitters)
 			pb.render();
 	}
 }

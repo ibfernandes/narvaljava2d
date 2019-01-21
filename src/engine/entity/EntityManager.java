@@ -79,12 +79,9 @@ public class EntityManager {
 		return null;
 	}
 	
-	public void removeEntity(Entity e) {
-		componentsOf.remove(e.getID());
-	}
+	
 	
 	public void removeEntity(Long id) {
-		
 		for(String s: componentsByClass.keySet()) {
 			Component toRemove = null;
 			

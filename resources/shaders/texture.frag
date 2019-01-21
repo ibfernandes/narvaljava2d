@@ -29,7 +29,8 @@ vec3 calculatePointLight(PointLight lightPoint, vec4 imgTex){
 
 	vec3 normal = normalize(texture(normalTex, TexCoords).xyz);
 
-	vec3 lightDir = normalize(lightPoint.position - FragPos);
+	vec3 lightDir = vec3(0,0,2);
+	//vec3 lightDir = normalize(lightPoint.position - FragPos);
 	float diff = max(dot(normal, lightDir), 0.0);
 	vec3 diffuse = diff * lightPoint.lightColor;
 
@@ -48,7 +49,7 @@ vec3 calculatePointLight(PointLight lightPoint, vec4 imgTex){
 
 	//return vec3((finalDiffuse + finalAmbient) * (imgTex.xyz * spriteColor.xyz));
 	return vec3(
-		(imgTex.xyz + ambientColor + (lightPoint.lightColor * attenuation*0.8) ) * finalAttenuation
+		(imgTex.xyz + ambientColor + (lightPoint.lightColor * diffuse *attenuation*0.8) ) * finalAttenuation
 		); //TODO: apply normals
 }
 

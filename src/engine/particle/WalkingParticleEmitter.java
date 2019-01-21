@@ -5,22 +5,12 @@ import java.util.Random;
 
 import engine.engine.Engine;
 import engine.entity.Entity;
-import engine.entity.EntityManager;
 import engine.entity.component.BasicComponent;
-import engine.entity.component.BodyComponent;
-import engine.entity.component.Component;
 import engine.entity.component.MoveComponent;
 import engine.entity.component.ParticleComponent;
 import engine.entity.component.RenderComponent;
-import engine.entity.system.BodySystem;
-import engine.entity.system.ControllerSystem;
-import engine.entity.system.MoveSystem;
-import engine.entity.system.RenderSystem;
-import engine.entity.system.SystemManager;
-import engine.utilities.ResourceManager;
 import gameStates.Game;
 import glm.vec._2.Vec2;
-import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
 
 public class WalkingParticleEmitter extends ParticleEmitter{
@@ -29,20 +19,20 @@ public class WalkingParticleEmitter extends ParticleEmitter{
 	private int offset;
 	private Vec2 previousPosition;
 	private Random r = new Random();
-	private org.jbox2d.common.Vec2 speed = new org.jbox2d.common.Vec2(0,0);
-	private int maxParticles = 20;
-	private Entity particles[];
+	private int maxParticles = 100;
+	private long particlesId[];
 	private ArrayList<Integer> freeParticles = new ArrayList<>();
 	
 	@Override
 	public void init() {
 		this.hasLifeTime = false;
-		particles = new Entity[maxParticles];
+		particlesId = new long[maxParticles];
 		
 		for(int i=0; i<maxParticles; i++) {
 			Entity particle = Game.getSelf().getEm().newEntity();
+			float fl = r.nextFloat();
 			
-			Vec2 size = new Vec2(15,15);
+			Vec2 size = new Vec2(15*fl,15*fl);
 			Vec2 pos = new Vec2(20 + position.x + 40*r.nextFloat(), position.y + offset);
 			
 			RenderComponent rc = new RenderComponent(particle.getID());
@@ -64,10 +54,10 @@ public class WalkingParticleEmitter extends ParticleEmitter{
 			
 			ParticleComponent pac = new ParticleComponent(particle.getID());
 			pac.startTime = System.nanoTime();
-			pac.lifeTime = 400;
+			pac.lifeTime = 500;
 			Game.getSelf().getEm().addComponentTo(particle, pac);
 			
-			particles[i]= particle;
+			particlesId[i]= particle.getID();
 		}
 	}
 	
@@ -89,11 +79,14 @@ public class WalkingParticleEmitter extends ParticleEmitter{
 		
 		
 		for(int i=0; i< maxParticles; i++) {
-			ParticleComponent pc = (ParticleComponent) Game.getSelf().getEm().getFirstComponent(particles[i], ParticleComponent.class);
+			ParticleComponent pc = (ParticleComponent) Game.getSelf().getEm().getFirstComponent(particlesId[i], ParticleComponent.class);
 			if ((System.nanoTime() - pc.startTime)/Engine.MILISECOND > pc.lifeTime) {
-				freeParticles.add(i);
-				RenderComponent rc = (RenderComponent) Game.getSelf().getEm().getFirstComponent(particles[i], RenderComponent.class);
-				rc.setDisabled(true);
+				
+				if(!freeParticles.contains(i)) {
+					freeParticles.add(i);
+					RenderComponent rc = (RenderComponent) Game.getSelf().getEm().getFirstComponent(particlesId[i], RenderComponent.class);
+					rc.setDisabled(true);
+				}
 			}
 		}
 	}
@@ -103,17 +96,18 @@ public class WalkingParticleEmitter extends ParticleEmitter{
 			int index = freeParticles.get(0);
 			Vec2 pos = new Vec2(20 + position.x + 40*r.nextFloat(), position.y + offset);
 			
-			RenderComponent rc = (RenderComponent) Game.getSelf().getEm().getFirstComponent(particles[index], RenderComponent.class);
+			
+			RenderComponent rc = (RenderComponent) Game.getSelf().getEm().getFirstComponent(particlesId[index], RenderComponent.class);
 			rc.setRenderPosition(pos);
 			rc.setDisabled(false);
 			
-			BasicComponent pc = (BasicComponent) Game.getSelf().getEm().getFirstComponent(particles[index], BasicComponent.class);
+			BasicComponent pc = (BasicComponent) Game.getSelf().getEm().getFirstComponent(particlesId[index], BasicComponent.class);
 			pc.setPosition(pos);
 			
-			MoveComponent mc = (MoveComponent) Game.getSelf().getEm().getFirstComponent(particles[index], MoveComponent.class);
+			MoveComponent mc = (MoveComponent) Game.getSelf().getEm().getFirstComponent(particlesId[index], MoveComponent.class);
 			mc.direction = new Vec2((1 - 2*r.nextInt(2))*r.nextFloat(),-1*r.nextFloat());
 			
-			ParticleComponent pac = (ParticleComponent) Game.getSelf().getEm().getFirstComponent(particles[index], ParticleComponent.class);
+			ParticleComponent pac = (ParticleComponent) Game.getSelf().getEm().getFirstComponent(particlesId[index], ParticleComponent.class);
 			pac.startTime = System.nanoTime();
 			
 			freeParticles.remove(0);
