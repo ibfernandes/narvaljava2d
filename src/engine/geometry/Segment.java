@@ -4,16 +4,16 @@ import glm.vec._2.Vec2;
 
 public class Segment {
 	private float length;
-	private Vec2  start;
-	private Vec2  end;
-	
+	private Vec2 start;
+	private Vec2 end;
+
 	public Segment(Vec2 start, Vec2 end) {
 		this.start = start;
 		this.end = end;
 	}
-	
+
 	public Segment(float ax, float ay, float bx, float by) {
-		this(new Vec2(ax,ay), new Vec2(bx, by));
+		this(new Vec2(ax, ay), new Vec2(bx, by));
 	}
 
 	public float getLength() {
@@ -23,30 +23,32 @@ public class Segment {
 	public void setLength(float length) {
 		this.length = length;
 	}
-	
+
 	/**
-	 * delta [0,length]
-	 * @param delta
+	 * Gets the point along the segment at delta. Delta varies from [0, segment.length].
+	 * 
+	 * @param distance
 	 * @return
 	 */
-	public Vec2 getPointAt(float delta) { //TODO check if delta doesnt pass length
-		  float ratio = delta/length;
-		  float x = ratio*end.x + (1.0f - ratio)*start.x;
-		  float y = ratio*end.y + (1.0f - ratio)*start.y;
-		  
-		  return new Vec2(x,y);
+	public Vec2 getPointAt(float distance) {
+		float ratio = distance / length;
+		return getPointAtNormalized(ratio);
 	}
-	
+
 	/**
-	 * delta [0,1]
+	 * Get the point along the segment at delta. Delta varies from [0,1].
+	 * 
 	 * @param delta
 	 * @return
 	 */
-	public Vec2 getPointAtNormalized(float delta) { //TODO check if delta doesnt pass 1
-		  float x = delta*end.x + (1.0f - delta)*start.x;
-		  float y = delta*end.y + (1.0f - delta)*start.y;
-		  
-		  return new Vec2(x,y);
+	public Vec2 getPointAtNormalized(float delta) {
+		if (delta > 1)
+			delta = 1;
+		
+		float x = delta * end.x + (1.0f - delta) * start.x;
+		float y = delta * end.y + (1.0f - delta) * start.y;
+
+		return new Vec2(x, y);
 	}
 
 	public Vec2 getStart() {
@@ -64,5 +66,5 @@ public class Segment {
 	public void setEnd(Vec2 end) {
 		this.end = end;
 	}
-	
+
 }

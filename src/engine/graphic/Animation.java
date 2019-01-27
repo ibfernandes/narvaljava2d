@@ -4,73 +4,104 @@ import java.io.Serializable;
 
 import engine.engine.Engine;
 import engine.utilities.ResourceManager;
+import engine.utilities.Timer;
 import glm.vec._2.Vec2;
-import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
 
-public class Animation implements Serializable{
+public class Animation implements Serializable {
 	private Vec4 frames[];
 	private int currentFrame = 0;
 	private String texture;
+	private long frameDurations[];
 	private long frameDuration = -1;
 	private long startTime = System.nanoTime();
 	private boolean playedOnce = false;
 
 	/**
-	 * Frame duration in milliseconds
+	 * Sets the texture from where to extract the frames and each frame's even
+	 * duration in milliseconds.
+	 * 
 	 * @param texture
 	 * @param frameDurantion
 	 */
-	public Animation(String texture, long frameDuration) { //TODO: pass a vector of frame times instead of a linear one
+	public Animation(String texture, long frameDuration) {
 		this.texture = texture;
 		this.frameDuration = frameDuration;
 	}
-	
+
 	/**
-	 * Get frames from a spritesheet horizontally;
+	 * Sets the texture from where to extract the frames and each frame's duration
+	 * in milliseconds.
+	 * 
+	 * @param texture
+	 * @param frameDurations
+	 */
+	public Animation(String texture, long frameDurations[]) {
+		this.texture = texture;
+		this.frameDurations = frameDurations;
+	}
+
+	/**
+	 * Sets frames horizontally and evenly from a sprite sheet.
+	 * 
 	 * @param quantity
 	 * @param offset
 	 * @param size
 	 */
 	public void setFrames(int quantity, Vec2 offset, Vec2 size) {
-	
 		frames = new Vec4[quantity];
 		float width = ResourceManager.getSelf().getTexture(texture).getWidth();
-		float height = ResourceManager.getSelf().getTexture(texture).getHeight(); //TODO: there's something wrong in here that is making ()
-		
-		for(int i= 0; i< quantity; i++){
-			frames[i] = new Vec4(
-						((float)i*size.x + offset.x)/width,
-						(offset.y)/height,
-						(size.x)/width,
-						(size.y)/height
-					);
+		float height = ResourceManager.getSelf().getTexture(texture).getHeight();
+
+		for (int i = 0; i < quantity; i++) {
+			frames[i] = new Vec4((i * size.x + offset.x) / width, (offset.y) / height, (size.x) / width,
+					(size.y) / height);
 		}
-		
+
 	}
-	
+
+	/**
+	 * Sets this animation's frames.
+	 * 
+	 * @param frames
+	 */
+	public void setFrames(Vec4 frames[]) {
+		this.frames = frames;
+	}
+
 	public Vec4 getFrame(int index) {
 		return frames[index];
 	}
-	
+
 	public Vec4 getCurrentFrame() {
 		return frames[currentFrame];
 	}
-	
+
 	public String getTexture() {
 		return texture;
 	}
-	
+
 	public void update() {
-		
-		if(frameDuration>0) {
-			long elapsed = (System.nanoTime() - startTime) / Engine.MILISECOND;
-			
-			if(elapsed > frameDuration) {
+
+		if (frameDuration > 0) {
+			long elapsed = (System.nanoTime() - startTime) / Timer.MILLISECOND;
+
+			if (elapsed > frameDuration) {
 				currentFrame++;
 				startTime = System.nanoTime();
 			}
-			if(currentFrame == frames.length) {
+			if (currentFrame == frames.length) {
+				currentFrame = 0;
+				playedOnce = true;
+			}
+		} else if (frameDurations != null) {
+			long elapsed = (System.nanoTime() - startTime) / Timer.MILLISECOND;
+
+			if (elapsed > frameDurations[currentFrame]) {
+				currentFrame++;
+				startTime = System.nanoTime();
+			}
+			if (currentFrame == frames.length) {
 				currentFrame = 0;
 				playedOnce = true;
 			}

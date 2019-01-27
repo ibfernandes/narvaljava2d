@@ -2,10 +2,13 @@ package engine.utilities;
 
 public class Timer {
 	private long startTime;
+	private long reverseTimeStart;
 	/**
 	 * Duration in miliseconds.
 	 */
 	private long duration;
+	private boolean reverse = false;
+	private float reverseDeltaStart = 0;
 
 	/**
 	 * A second measured in nanoseconds. 10^9
@@ -15,13 +18,6 @@ public class Timer {
 	 * A millisecond measured in nanoseconds. 10^6
 	 */
 	public static final long MILLISECOND = 1000000L;
-
-	/**
-	 * Instantiates this class setting the start time as now.
-	 */
-	public Timer() {
-		startTime = System.nanoTime();
-	}
 
 	/**
 	 * Instantiates this class setting the start time as now and duration as @param
@@ -52,6 +48,10 @@ public class Timer {
 	 */
 	public void setStartTime(long startTime) {
 		this.startTime = startTime;
+	}
+
+	public long getStartTime() {
+		return startTime;
 	}
 
 	/**
@@ -90,17 +90,55 @@ public class Timer {
 	public void resetWithResidousTime() {
 		long durationNano = duration * MILLISECOND;
 		long residue = (System.nanoTime() - startTime) - durationNano;
-		startTime = System.nanoTime() - (residue%durationNano);
+		startTime = System.nanoTime() - (residue % durationNano);
 	}
 
 	/**
-	 * Returns the elapsed delta since start time.
+	 * Starts counting backwards from now() to startTime.
+	 */
+	public void reverse() {
+		if (!reverse) {
+			reverseTimeStart = System.nanoTime();
+			reverseDeltaStart = getElapsedDelta();
+		} else {
+			startTime = System.nanoTime();
+			reverseDeltaStart = getElapsedDelta();
+		}
+
+		reverse = !reverse;
+	}
+
+	public boolean isReversed() {
+		return reverse;
+	}
+
+	/**
+	 * Returns the elapsed delta since start time. In reverse mode it decreases its
+	 * value. Elapsed delta is always in the range of [0,1].
 	 * 
 	 * @return
 	 */
 	public float getElapsedDelta() {
-		long elapsed = (System.nanoTime() - startTime) / MILLISECOND;
+		long elapsed;
+
+		if (reverse)
+			elapsed = (System.nanoTime() - reverseTimeStart) / MILLISECOND;
+		else
+			elapsed = (System.nanoTime() - startTime) / MILLISECOND;
+
 		float delta = (float) elapsed / (float) duration;
+
+		if (reverse)
+			delta = (reverseDeltaStart - delta);
+		else
+			delta = reverseDeltaStart + delta;
+
+		if (delta >= 1)
+			delta = 1;
+
+		if (delta <= 0)
+			delta = 0;
+
 		return delta;
 	}
 }

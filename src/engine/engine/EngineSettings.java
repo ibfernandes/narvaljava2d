@@ -1,4 +1,6 @@
-package engine.logic;
+package engine.engine;
+
+import java.io.File;
 
 import engine.utilities.Vec2i;
 
@@ -8,6 +10,10 @@ public class EngineSettings {
 	private Vec2i mapSize;
 	private Vec2i chunkSize;
 	private int mapSeed;
+	public static final String GAME_FOLDER = System.getProperty("user.home") + File.separator + "Documents"
+			+ File.separator + "Traveller" + File.separator;
+	public static final String MAPS_FOLDER = GAME_FOLDER + "Maps" + File.separator;
+	public static final String SAVES_FOLDER = GAME_FOLDER + "Saves" + File.separator;
 	
 	private EngineSettings() {}
 	

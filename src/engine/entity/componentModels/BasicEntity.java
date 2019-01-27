@@ -1,16 +1,12 @@
 package engine.entity.componentModels;
 
-import engine.controllers.PlayerController;
+import demo.Game;
 import engine.entity.Entity;
 import engine.entity.EntityManager;
 import engine.entity.component.BasicComponent;
-import engine.entity.component.ControllerComponent;
-import engine.entity.component.MoveComponent;
 import engine.entity.component.RenderComponent;
 import engine.geometry.Rectangle;
-import engine.graphic.Animation;
 import engine.logic.AnimationStateManager;
-import gameStates.Game;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
 

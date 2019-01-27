@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import demo.Game;
 import engine.utilities.Vec2i;
-import gameStates.Game;
 
 public class AStar {
 	private ArrayList<Anode> openSet = new ArrayList<>();
@@ -26,33 +26,21 @@ public class AStar {
 		startNode.pos 	= start;
 		endNode.pos 	= end;
 		
-		
 		startNode.setgScore(0);
 		startNode.setfScore( heuristic(startNode, endNode)  );
 		
 		openSet.add(startNode);
 		
 		int k=0;
-		int index = 0;
 		while(!openSet.isEmpty()) {
 			if (k++ > MAXSTEPS) 
 				return null;
 			
 			Collections.sort(openSet);
 			
-			//current = getlowestF;
 			current = openSet.get(0);
-
-			/*for(Anode a: openSet)
-				if(!isSizeOccupied(current)) {
-					current = a;
-					break;
-				}*/
 			
 			if(current.pos.compareTo(endNode.pos) == 0) {
-				/*System.out.println("cameFrom: " + current.cameFrom);
-				System.out.println("openSet: " + openSet.size());
-				System.out.println("closedSet: " + closedSet.size());*/
 				return constructPath(current);
 			}
 			
@@ -64,17 +52,21 @@ public class AStar {
 					closedSet.add(neighbor);
 				}
 				
+				//ignore the neighbor which is already evaluated
 				if(closedSet.contains(neighbor))
-					continue; //ignore the neighbor which is already evaluated
+					continue;
 				
-				if(!openSet.contains(neighbor)) //discover new node
+				//discover new node
+				if(!openSet.contains(neighbor))
 					openSet.add(neighbor);
 						
 				float gScore = current.getgScore() + distance(current,neighbor);
-				if(gScore >= neighbor.getgScore())
-					continue; // not a better path
 				
-				neighbor.cameFrom = current;
+				// not a better path
+				if(gScore >= neighbor.getgScore())
+					continue; 
+				
+				neighbor.antecessor = current;
 				neighbor.setgScore( gScore );
 				neighbor.setfScore( neighbor.getgScore() + heuristic(neighbor, endNode) );
 			}
@@ -137,78 +129,7 @@ public class AStar {
 		
 		temp = new Anode(current.pos.x + 1, current.pos.y - 1);
 		neighbors.add(temp);
-		
-		
-		/*ArrayList<Anode> right = new ArrayList<>();
-		ArrayList<Anode> bottom = new ArrayList<>();
-		ArrayList<Anode> left = new ArrayList<>();
-		ArrayList<Anode> top = new ArrayList<>();
-		boolean rightFlag = false;
-		boolean bottomFlag = false;
-		boolean leftFlag = false;
-		boolean topFlag = false;
-		
-		//right bar
-		for(int y=0; y<heightSize; y++) {
-			temp = new Anode(current.pos.x + widthSize, current.pos.y + y);
-			right.add(temp);
-			
-			//if(isOccupied(temp))
-			//	rightFlag = true;
-		}
-		
-		//bottom bar
-		for(int x=widthSize+1; x>=-1; x--) {
-			temp = new Anode(current.pos.x + x, current.pos.y + heightSize);
-			bottom.add(temp);
-			
-			//if(isOccupied(temp))
-			//	bottomFlag = true;
-		}
-		
-		//left bar
-		for(int y=heightSize; y>=0; y--) {
-			temp = new Anode(current.pos.x - 1, current.pos.y + y);
-			left.add(temp);
-			
-			//if(isOccupied(temp))
-				//leftFlag = true;
-		}
-		
-		//top bar
-		for(int x=-1; x<widthSize +1; x++) {
-			temp = new Anode(current.pos.x + x, current.pos.y - 1);
-			top.add(temp);
-			
-			//if(isOccupied(temp))
-			//	topFlag = true;
-		}
-		
-		
-		if(rightFlag) 
-			for(Anode a: right)
-				closedSet.add(a);
-		else
-			neighbors.addAll(right);
-		
-		if(bottomFlag) 
-			for(Anode a: bottom)
-				closedSet.add(a);
-		else
-			neighbors.addAll(bottom);
-		
-		if(leftFlag) 
-			for(Anode a: left)
-				closedSet.add(a);
-		else
-			neighbors.addAll(left);
-		
-		if(topFlag) 
-			for(Anode a: top)
-				closedSet.add(a);
-		else
-			neighbors.addAll(top);*/
-		
+
 		return neighbors;
 	}
 	
@@ -216,9 +137,9 @@ public class AStar {
 		Anode temp = current;
 		ArrayList<Anode> path = new ArrayList<>();
 		
-		while(temp.cameFrom!=null) {
-			path.add(temp.cameFrom);
-			temp = temp.cameFrom;
+		while(temp.antecessor!=null) {
+			path.add(temp.antecessor);
+			temp = temp.antecessor;
 		}
 		
 		return path;
@@ -253,5 +174,9 @@ public class AStar {
 		}
 		
 		return current;
+	}
+
+	public ArrayList<Anode> getClosedSet() {
+		return closedSet;
 	}
 }

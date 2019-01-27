@@ -2,32 +2,29 @@ package engine.ai;
 
 import java.util.ArrayList;
 
-import engine.entity.Entity;
 import engine.entity.EntityManager;
-import engine.logic.GameObject;
-import gameStates.Game;
 
 public class ConsiderationTree {
 	private ArrayList<Consideration> considerations = new ArrayList<Consideration>();
-	
+
 	public void addConsideration(Consideration c) {
 		considerations.add(c);
 	}
-	
-	public Action calculateAction(long EntityID, EntityManager context){
+
+	public Action calculateAction(long EntityID, EntityManager context) {
 		Consideration considerationBuffer = considerations.get(0);
 		float buffer = considerationBuffer.evaluate(EntityID, context);
-		
-		for(int i=1; i<considerations.size(); i++) {
-			float currentEval = considerations.get(i).evaluate( EntityID, context );
-			if(currentEval>buffer) {
+
+		for (int i = 1; i < considerations.size(); i++) {
+			float currentEval = considerations.get(i).evaluate(EntityID, context);
+			if (currentEval > buffer) {
 				considerationBuffer = considerations.get(i);
 				buffer = currentEval;
 			}
 		}
-		
-		if(buffer>0)
-			return considerationBuffer.getAction();	
+
+		if (buffer > 0)
+			return considerationBuffer.getAction();
 		else
 			return new Action("");
 	}

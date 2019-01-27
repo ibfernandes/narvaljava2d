@@ -47,14 +47,12 @@
     </display>  
   </class>  
   <association id="6">    
-    <bendpoint x="317" y="183"/>    
-    <bendpoint x="336" y="211"/>    
-    <bendpoint x="323" y="221"/>    
-    <end type="SOURCE" refId="2" navigable="false">      
+    <bendpoint x="124" y="314"/>    
+    <end type="SOURCE" refId="3" navigable="false">      
       <attribute id="7" name="cameFrom">        
-        <position height="18" width="60" x="338" y="193"/>      
+        <position height="0" width="0" x="0" y="0"/>      
       </attribute>      
-      <multiplicity id="8" minimum="0" maximum="1">        
+      <multiplicity id="8" minimum="0" maximum="2147483647">        
         <position height="0" width="0" x="0" y="0"/>      
       </multiplicity>    
     </end>    
@@ -62,9 +60,9 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="9">    
-    <bendpoint x="329" y="295"/>    
+    <bendpoint x="184" y="312"/>    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="10" name="gScore">        
+      <attribute id="10" name="openSet">        
         <position height="0" width="0" x="0" y="0"/>      
       </attribute>      
       <multiplicity id="11" minimum="0" maximum="2147483647">        
@@ -75,9 +73,9 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="12">    
-    <bendpoint x="295" y="311"/>    
+    <bendpoint x="329" y="295"/>    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="13" name="closedSet">        
+      <attribute id="13" name="gScore">        
         <position height="0" width="0" x="0" y="0"/>      
       </attribute>      
       <multiplicity id="14" minimum="0" maximum="2147483647">        
@@ -88,34 +86,36 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="15">    
-    <bendpoint x="124" y="314"/>    
-    <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="16" name="cameFrom">        
-        <position height="0" width="0" x="0" y="0"/>      
-      </attribute>      
-      <multiplicity id="17" minimum="0" maximum="2147483647">        
-        <position height="0" width="0" x="0" y="0"/>      
-      </multiplicity>    
-    </end>    
-    <end type="TARGET" refId="2" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <association id="18">    
     <end type="SOURCE" refId="5" navigable="false">      
-      <attribute id="19" name="considerations">        
+      <attribute id="16" name="considerations">        
         <position height="0" width="0" x="20" y="-1"/>      
       </attribute>      
-      <multiplicity id="20" minimum="0" maximum="2147483647">        
+      <multiplicity id="17" minimum="0" maximum="2147483647">        
         <position height="0" width="0" x="20" y="-1"/>      
       </multiplicity>    
     </end>    
     <end type="TARGET" refId="4" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
+  <association id="18">    
+    <bendpoint x="317" y="183"/>    
+    <bendpoint x="336" y="211"/>    
+    <bendpoint x="323" y="221"/>    
+    <end type="SOURCE" refId="2" navigable="false">      
+      <attribute id="19" name="antecessor">        
+        <position height="18" width="60" x="338" y="193"/>      
+      </attribute>      
+      <multiplicity id="20" minimum="0" maximum="1">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="2" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
   <association id="21">    
-    <bendpoint x="184" y="312"/>    
+    <bendpoint x="295" y="311"/>    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="22" name="openSet">        
+      <attribute id="22" name="closedSet">        
         <position height="0" width="0" x="0" y="0"/>      
       </attribute>      
       <multiplicity id="23" minimum="0" maximum="2147483647">        

@@ -71,7 +71,7 @@ public class GrassRenderer implements Renderer{
 				1f/20f,
 				1f/16f,
 				1f/14f,
-				1f/2f	//topo
+				1f/8f	//topo
 		};
 		
 		float baseWeight[] = new float[numOfLayers];

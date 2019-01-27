@@ -2,10 +2,10 @@ package engine.utilities;
 
 import java.util.ArrayList;
 
+import demo.Game;
 import engine.entity.Entity;
 import engine.entity.component.BasicComponent;
 import engine.geometry.Rectangle;
-import gameStates.Game;
 
 public class QuadTree {
 	public static final int NODE_CAPACITY = 4;

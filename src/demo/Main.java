@@ -1,9 +1,9 @@
-package game;
+package demo;
 
 
 import engine.engine.Engine;
+import engine.engine.EngineSettings;
 import engine.engine.Window;
-import engine.logic.EngineSettings;
 public class Main {
 	public static void main(String args[]) {
 		

@@ -307,9 +307,9 @@ public class Font {
            float height = (float)g.height/(float)texture.getHeight();
            
            Vec4 frame = new Vec4(xStart, yStart,width, height);
-           batchRenderer.render(new Vec2(drawX,drawY), new Vec2(g.width*.5,g.height*.5f), 0f, color, frame, new Vec2(0,1));
+           batchRenderer.render(new Vec2(drawX,drawY), new Vec2(g.width*.2,g.height*.2f), 0f, color, frame, new Vec2(0,1));
            
-           drawX += g.width*.5f;
+           drawX += g.width*.2f;
        }
        
 		batchRenderer.end();

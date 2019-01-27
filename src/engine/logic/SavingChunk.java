@@ -19,8 +19,7 @@ public class SavingChunk {
 		this.id = Chunk.getID(chunk.getX(), chunk.getY());
 
 		try {
-			AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(filePath, StandardOpenOption.WRITE,
-					StandardOpenOption.CREATE);
+			AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);

@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL30.*;
 import engine.graphic.Shader;
 import engine.graphic.Texture;
 import engine.utilities.BufferUtilities;
+import engine.utilities.ResourceManager;
 import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
@@ -19,7 +20,7 @@ public class TextureRenderer implements Renderer{
 	private Mat4 skew = new Mat4();
 	private Mat4 model = new Mat4();
 	private Vec2 defaultZero2f = new Vec2(0,0);
-	private Vec4 defaultZero4f = new Vec4(0,0,0,0);
+	private Vec4 defaultSpriteFrame = new Vec4(0,0,1,1);
 	
 	public TextureRenderer(Shader shader) {
 		this.shader = shader;
@@ -68,8 +69,21 @@ public class TextureRenderer implements Renderer{
 		return vertices;
 	}
 	
+	/**
+	 * Renders a pre-loaded texture using ResourceManger.
+	 * 
+	 * @param texName
+	 * @param position
+	 * @param size
+	 * @param rotate
+	 * @param color
+	 */
+	public void render(String texName, Vec2 position, Vec2 size, float rotate, Vec4 color) {
+		render(ResourceManager.getSelf().getTexture(texName).getId(), -1, position, size, rotate, color, defaultSpriteFrame, defaultZero2f, defaultZero2f);
+	}
+	
 	public void render(Texture texture, Vec2 position, Vec2 size, float rotate, Vec4 color) {
-		render(texture.getId(), -1, position, size, rotate, color, defaultZero4f, defaultZero2f, defaultZero2f);
+		render(texture.getId(), -1, position, size, rotate, color, defaultSpriteFrame, defaultZero2f, defaultZero2f);
 	}
 
 	public void render(Texture texture, Texture normal, Vec2 position, Vec2 size,

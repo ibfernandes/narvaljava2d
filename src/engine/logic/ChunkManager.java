@@ -3,10 +3,12 @@ package engine.logic;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import demo.Game;
 import engine.engine.Engine;
-import engine.engine.Settings;
+import engine.engine.EngineSettings;
+import engine.utilities.Timer;
 import engine.utilities.Vec2i;
-import gameStates.Game;
 
 public class ChunkManager {
 	private HashMap<Integer, HashMap<Integer, Chunk>> chunks;
@@ -30,7 +32,7 @@ public class ChunkManager {
 	public ChunkManager(int seed) {
 		chunks = new HashMap<>();
 		this.seed = seed;
-		mapPath = Settings.mapsFolder + this.seed + File.separator;
+		mapPath = EngineSettings.MAPS_FOLDER+ this.seed + File.separator;
 	}
 
 	private void put(Chunk chunk) {
@@ -114,7 +116,13 @@ public class ChunkManager {
 			savingChunks.remove(toRemove);
 
 	}
-
+	
+	/**
+	 * Loads a chunk from disk using current seed.
+	 * 
+	 * @param x
+	 * @param y
+	 */
 	public void loadFromFile(int x, int y) {
 
 		long start = System.nanoTime();
@@ -123,9 +131,14 @@ public class ChunkManager {
 		loadingChunks.add(r);
 
 		System.out.println(
-				"\nreadFile: \t" + x + "_" + y + " \t" + (System.nanoTime() - start) / Engine.MILISECOND + "ms");
+				"\nreadFile: \t" + x + "_" + y + " \t" + (System.nanoTime() - start) / Timer.MILLISECOND + "ms");
 	}
-
+	
+	/**
+	 * Saves a chunk to disk using current seed.
+	 * 
+	 * @param chunk
+	 */
 	public void saveFile(Chunk chunk) {
 		long start = System.nanoTime();
 
@@ -136,7 +149,7 @@ public class ChunkManager {
 		savingChunks.add(r);
 
 		System.out.println("savefile END: \t\t" + chunk.getFileName() + " \t"
-				+ (System.nanoTime() - start) / Engine.MILISECOND + "ms");
+				+ (System.nanoTime() - start) / Timer.MILLISECOND + "ms");
 		System.out.println("---------");
 	}
 

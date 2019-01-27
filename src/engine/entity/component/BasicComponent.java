@@ -4,8 +4,8 @@ import engine.geometry.Rectangle;
 import glm.vec._2.Vec2;
 
 public class BasicComponent extends Component{
-	private Vec2 position;
-	private Vec2 previousPosition;
+	private Vec2 position  = new Vec2(0,0);;
+	private Vec2 previousPosition  = new Vec2(0,0);;
 	private Vec2 size = new Vec2(0,0);
 	private Rectangle boundingBox = new Rectangle(0,0,0,0);
 
@@ -17,7 +17,13 @@ public class BasicComponent extends Component{
 		return position;
 	}
 	public void setPosition(Vec2 position) {
-		this.position = position;
+		this.position.x = position.x;
+		this.position.y = position.y;
+	}
+	
+	public Vec2 getCenterPoint() {
+		Rectangle r  = getBoundingBox();
+		return new Vec2(r.x + r.width/2, r.y + r.height/2);
 	}
 	
 	public Vec2 getSize() {
@@ -41,6 +47,7 @@ public class BasicComponent extends Component{
 	}
 
 	public void setPreviousPosition(Vec2 previousPosition) {
-		this.previousPosition = previousPosition;
+		this.previousPosition.x = previousPosition.x;
+		this.previousPosition.y = previousPosition.y;
 	}
 }

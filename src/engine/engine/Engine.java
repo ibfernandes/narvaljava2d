@@ -1,33 +1,27 @@
 package engine.engine;
+
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.openal.ALC10.ALC_DEFAULT_DEVICE_SPECIFIER;
 import static org.lwjgl.openal.ALC10.alcCreateContext;
 import static org.lwjgl.openal.ALC10.alcGetString;
 import static org.lwjgl.openal.ALC10.alcMakeContextCurrent;
 import static org.lwjgl.openal.ALC10.alcOpenDevice;
-import static org.lwjgl.opengl.GL11.*;
 
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
-import org.lwjgl.openal.ALCCapabilities;
-import org.lwjgl.openal.ALCapabilities;
-import org.lwjgl.opengl.GL;
-
 import engine.input.JoystickControl;
 import engine.input.KeyboardControl;
 import engine.input.MouseControl;
-import engine.particle.ParticleEngine;
-import gameStates.GSM;
+import engine.states.GSM;
+import engine.utilities.Timer;
 
-public class Engine implements Runnable{
+public class Engine implements Runnable {
 	private Window window;
 	private long deltaTime, currentFrame, lastFrame, lastSecond;
 	private int updates = 0, fps = 0;
-	public static final long SECOND = 1000000000L; //10^9
-	public static final long MILISECOND = 1000000L;//10^6
-	public static final long MEGABYTE = MILISECOND;
+	public static final long MEGABYTE = 1000000L;
 	public static final int TARGET_UPDATES = 60;
-	public static final float TARGET_DT = 1f/(float)TARGET_UPDATES; //TODO: use double instead of float
+	public static final float TARGET_UPDATES_DT = 1f / TARGET_UPDATES;
 	private float accumulator = 0;
 	private static Engine self;
 	private long higher = 0;
@@ -35,96 +29,104 @@ public class Engine implements Runnable{
 	private long avg = 0;
 	private int longestDelay = 0;
 	private float alphaInterpolator = 1;
-	
 	private long higherRender = 0;
 	private long avgRender = 0;
 
-	private Engine() {}
-	
-	public static Engine getSelf() {
-		return (self==null) ? self = new Engine(): self;
+	private Engine() {
 	}
-	
+
+	public static Engine getSelf() {
+		return (self == null) ? self = new Engine() : self;
+	}
+
 	/**
-	 * Attach a window only and only once.
+	 * Attaches a window only once.
+	 * 
 	 * @param w
 	 */
 	public void attachWindow(Window w) {
-		if(window==null)
+		if (window == null)
 			window = w;
 	}
-	
+
 	private void init() {
 		window.init();
 		initAudioSystem();
-		
+
 		GSM.getSelf().changeStateTo(GSM.GAME_STATE);
-		
+
 		KeyboardControl keyboard = new KeyboardControl();
 		MouseControl mouse = new MouseControl();
 		JoystickControl joystick = new JoystickControl();
-		
+
 		glfwSetKeyCallback(window.getId(), keyboard);
 		glfwSetCursorPosCallback(window.getId(), mouse);
-		
+
 		GSM.getSelf().setKeyboard(keyboard);
 		GSM.getSelf().setMouse(mouse);
 		GSM.getSelf().setJoystick(joystick);
 	}
-	
+
 	private void initAudioSystem() {
 		String defaultDeviceName = alcGetString(0, ALC_DEFAULT_DEVICE_SPECIFIER);
 		long device = alcOpenDevice(defaultDeviceName);
-		
-		int[] attributes = {0};
+
+		int[] attributes = { 0 };
 		long context = alcCreateContext(device, attributes);
 		alcMakeContextCurrent(context);
 
-		ALCCapabilities alcCapabilities = ALC.createCapabilities(device);
-		ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
+		AL.createCapabilities(ALC.createCapabilities(device));
 	}
 	
+	/**
+	 * This method is called around <code>TARGET_UPDATES</code> times per second.
+	 * 
+	 * @return
+	 */
 	private int update() {
 		int count = 0;
-		currentFrame = System.nanoTime(); 
+		currentFrame = System.nanoTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-		
-		float deltaTimeMiliSeconds = (float)deltaTime/(float)SECOND;
-		
-		if(deltaTimeMiliSeconds> TARGET_DT*(TARGET_UPDATES*0.1f))
-			deltaTimeMiliSeconds = TARGET_DT*(TARGET_UPDATES*0.1f);
-		
+
+		float deltaTimeMiliSeconds = (float) deltaTime / (float) Timer.SECOND;
+
+		if (deltaTimeMiliSeconds > TARGET_UPDATES_DT * (TARGET_UPDATES * 0.1f))
+			deltaTimeMiliSeconds = TARGET_UPDATES_DT * (TARGET_UPDATES * 0.1f);
+
 		accumulator += deltaTimeMiliSeconds;
-			
-		while (accumulator > TARGET_DT) {
+
+		while (accumulator > TARGET_UPDATES_DT) {
 			count++;
-            accumulator -= TARGET_DT;
+			accumulator -= TARGET_UPDATES_DT;
 		}
-		
-		alphaInterpolator = accumulator / TARGET_DT;
-		
-		for(int i=0; i<count;i++) {
+
+		alphaInterpolator = accumulator / TARGET_UPDATES_DT;
+
+		for (int i = 0; i < count; i++) {
 			long previous = System.nanoTime();
-			
+
 			glfwPollEvents();
-			GSM.getSelf().update(TARGET_DT);
-			PhysicsEngine.getSelf().update(TARGET_DT);
-			
+			GSM.getSelf().update(TARGET_UPDATES_DT);
+			PhysicsEngine.getSelf().update(TARGET_UPDATES_DT);
+
 			long elapsed = System.nanoTime() - previous;
-			if(elapsed>higher)
+			if (elapsed > higher)
 				higher = elapsed;
-			else if(elapsed<lower)
+			else if (elapsed < lower)
 				lower = elapsed;
-			
-			avg +=elapsed;
+
+			avg += elapsed;
 		}
-		
-		if(count>longestDelay)
+
+		if (count > longestDelay)
 			longestDelay = count;
 		return count;
 	}
 	
+	/**
+	 * This method is called as many times as render().
+	 */
 	public void variableUpdate() {
 		GSM.getSelf().variableUpdate(alphaInterpolator);
 	}
@@ -134,42 +136,37 @@ public class Engine implements Runnable{
 
 		GSM.getSelf().render();
 		glfwSwapBuffers(window.getId());
-		
+
 		long elapsed = System.nanoTime() - previous;
-		if(elapsed>higherRender)
+		if (elapsed > higherRender)
 			higherRender = elapsed;
-		avgRender +=elapsed;
+		avgRender += elapsed;
 	}
-	
+
 	@Override
 	public void run() {
 		init();
 		lastSecond = System.nanoTime();
-		
-		while(!glfwWindowShouldClose(window.getId())) {
+
+		while (!glfwWindowShouldClose(window.getId())) {
 			updates += update();
-			
+
 			variableUpdate();
 			render();
 			fps++;
-			
-			if((currentFrame-lastSecond)>SECOND) {
-				
-				long usedMemory = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
-				usedMemory = usedMemory/MEGABYTE;
-				System.out.printf(
-								"\n==============================="+
-								"\nUPS:\t"+updates+
-								"\nFPS:\t"+fps+'\n'+
-								"\nUPS AVG:\t"+(float)(avg/updates)/MILISECOND+"ms"+
-								"\nUPS pike:\t"+(float)higher/MILISECOND+"ms"+
-								"\nUPS pike calls:\t"+longestDelay+'\n'+
-								"\nFPS AVG:\t"+(float)(avgRender/fps)/MILISECOND+"ms"+
-								"\nFPS pike:\t"+(float)higherRender/MILISECOND+"\n"+
-								"\nMem. usage:\t"+usedMemory+" MB"
-								
-						);
-				
+
+			if ((currentFrame - lastSecond) > Timer.SECOND) {
+
+				long usedMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+				usedMemory = usedMemory / MEGABYTE;
+				System.out.printf("\n===============================" + "\nUPS:\t" + updates + "\nFPS:\t" + fps + '\n'
+						+ "\nUPS AVG:\t" + (float) (avg / updates) / Timer.MILLISECOND + "ms" + "\nUPS pike:\t"
+						+ (float) higher / Timer.MILLISECOND + "ms" + "\nUPS pike calls:\t" + longestDelay + '\n'
+						+ "\nFPS AVG:\t" + (float) (avgRender / fps) / Timer.MILLISECOND + "ms" + "\nFPS pike:\t"
+						+ (float) higherRender / Timer.MILLISECOND + "\n" + "\nMem. usage:\t" + usedMemory + " MB"
+
+				);
+
 				lastSecond = System.nanoTime();
 				updates = 0;
 				fps = 0;
@@ -177,11 +174,11 @@ public class Engine implements Runnable{
 				higher = 0;
 				avg = 0;
 				longestDelay = 0;
-				
+
 				avgRender = 0;
 				higherRender = 0;
 			}
-			
+
 		}
 	}
 

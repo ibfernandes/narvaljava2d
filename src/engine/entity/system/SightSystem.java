@@ -1,15 +1,11 @@
 package engine.entity.system;
 
-import engine.entity.component.Component;
-import engine.entity.component.MoveComponent;
-import engine.entity.component.SightComponent;
-import gameStates.Game;
+import demo.Game;
 
-public class SightSystem extends ComponentSystem{
+public class SightSystem extends ComponentSystem {
 
 	public SightSystem(Game context) {
 		super(context);
-		
 	}
 
 	@Override

@@ -16,7 +16,7 @@ import java.util.ArrayList;
 
 import org.lwjgl.BufferUtils;
 
-import game.Main;
+import demo.Main;
 import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;

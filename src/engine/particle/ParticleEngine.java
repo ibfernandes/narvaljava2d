@@ -2,6 +2,7 @@ package engine.particle;
 
 import java.util.ArrayList;
 import engine.engine.Engine;
+import engine.utilities.Timer;
 
 public class ParticleEngine {
 	private static ParticleEngine self;
@@ -30,7 +31,7 @@ public class ParticleEngine {
 		
 		long currentTime = System.nanoTime();
 		for(ParticleEmitter pb: particleEmitters) {
-			if(pb.hasLifeTime && (currentTime - pb.startTime)/Engine.MILISECOND >= pb.lifeTime) {
+			if(pb.hasLifeTime && (currentTime - pb.startTime)/Timer.MILLISECOND >= pb.lifeTime) {
 				particlesToRemove.add(pb);
 				continue;
 			}

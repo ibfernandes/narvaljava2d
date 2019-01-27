@@ -1,12 +1,9 @@
 package engine.ai;
 
-import engine.entity.Entity;
-import engine.logic.GameObject;
-
 public class Action {
 	private String actionName;
 	private long targetEntityID;
-	
+
 	public Action(String actionName) {
 		this.actionName = actionName;
 	}

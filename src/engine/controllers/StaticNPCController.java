@@ -7,6 +7,7 @@ import java.util.Random;
 import org.jbox2d.dynamics.BodyType;
 import org.lwjgl.glfw.GLFW;
 
+import demo.Game;
 import engine.ai.AStar;
 import engine.ai.Action;
 import engine.ai.Anode;
@@ -15,7 +16,6 @@ import engine.ai.ConsiderationAttack;
 import engine.ai.ConsiderationTalk;
 import engine.ai.ConsiderationTree;
 import engine.ai.ConsiderationWander;
-import engine.ai.State;
 import engine.engine.Engine;
 import engine.engine.PhysicsEngine;
 import engine.entity.Entity;
@@ -23,15 +23,12 @@ import engine.entity.EntityManager;
 import engine.entity.component.BasicComponent;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.RenderComponent;
-import engine.entity.component.TextComponent;
 import engine.graphic.Animation;
 import engine.logic.AnimationStateManager;
-import engine.logic.GameObject;
+import engine.states.GSM;
 import engine.utilities.ArraysExt;
 import engine.utilities.ResourceManager;
 import engine.utilities.Vec2i;
-import gameStates.GSM;
-import gameStates.Game;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
@@ -84,15 +81,15 @@ public class StaticNPCController extends Controller{
 		
 		Vec2 parentPos = ((BasicComponent) em.getFirstComponent(parent, BasicComponent.class)).getPosition();
 		
-		TextComponent tc = new TextComponent(talkingBox.getID());
-		tc.setFontColor(new Vec4(1,0,0,1));
-		tc.setFontName("monospace");
-		tc.setText("Teste dialogo");
-		tc.setFontSize(230);
-		tc.setPosition(parentPos);
-		tc.setDisabled(true);
+//		TextComponent tc = new TextComponent(talkingBox.getID());
+//		tc.setFontColor(new Vec4(1,0,0,1));
+//		tc.setFontName("monospace");
+//		tc.setText("Teste dialogo");
+//		tc.setFontSize(230);
+//		tc.setPosition(parentPos);
+//		tc.setDisabled(true);
 		
-		em.addComponentTo(talkingBox, tc);
+//		em.addComponentTo(talkingBox, tc);
 	}
 
 	@Override
@@ -108,12 +105,12 @@ public class StaticNPCController extends Controller{
 			createDialogBox(EntityID, context.getEm());
 		}
 		
-		TextComponent tc = (TextComponent) context.getEm().getFirstComponent(talkingBox, TextComponent.class);
+		//TextComponent tc = (TextComponent) context.getEm().getFirstComponent(talkingBox, TextComponent.class);
 		if(a.getActionName().equals("talk")) {
 			
-			tc.setDisabled(false);
+		//	tc.setDisabled(false);
 		}else {
-			tc.setDisabled(true);
+	//		tc.setDisabled(true);
 		}
 		
 		boolean flagShowButton = false;

@@ -2,14 +2,14 @@ package engine.entity;
 
 import java.io.Serializable;
 
-public class Entity implements Serializable{
+public class Entity implements Serializable {
 	private long id;
 	private String name;
-	
+
 	public Entity(long id) {
 		this.id = id;
 	}
-	
+
 	public long getID() {
 		return id;
 	}

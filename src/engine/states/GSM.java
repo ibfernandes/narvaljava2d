@@ -1,5 +1,6 @@
-package gameStates;
+package engine.states;
 
+import demo.Game;
 import engine.engine.GameState;
 import engine.input.JoystickControl;
 import engine.input.KeyboardControl;

@@ -1,60 +1,32 @@
-package gameStates;
+package demo;
 
-import static org.lwjgl.opengl.GL11.GL_BLEND;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
-import static org.lwjgl.opengl.GL11.GL_CULL_FACE;
 import static org.lwjgl.opengl.GL11.GL_NEAREST;
-import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11.GL_RGBA;
 import static org.lwjgl.opengl.GL11.GL_RGBA8;
-import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
-import static org.lwjgl.opengl.GL11.glBlendFunc;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
-import static org.lwjgl.opengl.GL11.glEnable;
 import static org.lwjgl.opengl.GL11.glTexImage2D;
 import static org.lwjgl.opengl.GL11.glTexParameteri;
-import static org.lwjgl.opengl.GL11.glViewport;
-
-import static org.lwjgl.openal.AL10.*;
-
-import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Random;
 
-import org.jbox2d.collision.shapes.PolygonShape;
-import org.jbox2d.dynamics.Body;
-import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
-import org.jbox2d.dynamics.FixtureDef;
-import org.jbox2d.dynamics.World;
-import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL32;
-
-
 import static org.lwjgl.opengl.GL30.*;
 
-import editor.Editor;
-import engine.audio.AudioFile;
-import engine.audio.AudioSource;
 import engine.controllers.AIController;
-import engine.controllers.DeerController;
 import engine.controllers.PlayerController;
 import engine.controllers.StaticNPCController;
 import engine.engine.AudioEngine;
 import engine.engine.Engine;
+import engine.engine.EngineSettings;
 import engine.engine.GameState;
 import engine.engine.PhysicsEngine;
 import engine.entity.Entity;
@@ -62,28 +34,21 @@ import engine.entity.EntityManager;
 import engine.entity.component.BasicComponent;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.ControllerComponent;
-import engine.entity.component.HealthComponent;
 import engine.entity.component.MoveComponent;
 import engine.entity.component.RenderComponent;
 import engine.entity.component.SightComponent;
-import engine.entity.component.TextComponent;
 import engine.entity.system.BodySystem;
 import engine.entity.system.ControllerSystem;
 import engine.entity.system.MoveSystem;
 import engine.entity.system.RenderSystem;
-import engine.entity.system.SightSystem;
 import engine.entity.system.SystemManager;
-import engine.entity.system.TextSystem;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
 import engine.graphic.Texture;
-import engine.input.KeyboardControl;
-import engine.input.MouseControl;
 import engine.logic.AnimationStateManager;
 import engine.logic.Camera;
 import engine.logic.Chunk;
 import engine.logic.ChunkManager;
-import engine.noise.FastNoise;
 import engine.particle.ParticleEngine;
 import engine.particle.WalkingParticleEmitter;
 import engine.renderer.CubeRenderer;
@@ -91,10 +56,6 @@ import engine.renderer.GrassRenderer;
 import engine.renderer.ShadowRenderer;
 import engine.renderer.TextureRenderer;
 import engine.renderer.TextureBatchRenderer;
-import engine.ui.Font;
-import engine.utilities.BufferUtilities;
-import engine.utilities.Color;
-import engine.utilities.MathExt;
 import engine.utilities.QuadTree;
 import engine.utilities.ResourceManager;
 import engine.utilities.Timer;
@@ -102,16 +63,12 @@ import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 import glm.vec._4.Vec4;
-import javafx.scene.image.PixelWriter;
 import net.jafama.FastMath;
 
 public class Game extends GameState{
 	
 	//Layers
-	private ArrayList<Entity> movableLayer;
-	private ArrayList<Entity> staticLayer;
-	private ArrayList<Entity> finalLayer; //composes all other layers into one, so it can be properly sorted and drawn
-	private QuadTree quadTree; // Contains all objects currently on screen
+	private QuadTree quadTree;
 	private Camera camera;
 	private Rectangle screenView;
 	private Entity player;
@@ -120,13 +77,12 @@ public class Game extends GameState{
 	private int shadowFBO;
 	private int shadowLayerTexture;
 
-	private Timer timer = new Timer();
-	private Timer timerWetSand = new Timer();
+	private Timer timer;
+	private Timer timerWetSand;
 	private Random random = new Random();
 	
 	//Map
 	private ChunkManager chunkMap;
-	private int seed = 12345;
 
 	private int rowSize = (int) (Math.ceil((double)Engine.getSelf().getWindow().getWidth()/(double)ChunkManager.CHUNK_WIDTH)) +2; //chunks along y axis
 	private int columnSize = (int) (Math.ceil((double)Engine.getSelf().getWindow().getHeight()/(double)ChunkManager.CHUNK_HEIGHT)) +2; //chunks along x axis
@@ -146,7 +102,6 @@ public class Game extends GameState{
 	
 	//Others
 	private Vec2 startPoint = new Vec2(48000, 48000);
-	//private Vec2 startPoint = new Vec2(6000, 6000);
 	
 	//Entity System 
 	private EntityManager em = new EntityManager();
@@ -165,7 +120,7 @@ public class Game extends GameState{
 		initShadowLayer();
 		
 		screenView = new Rectangle(0,0,Engine.getSelf().getWindow().getWidth(),Engine.getSelf().getWindow().getHeight());
-		chunkMap = new ChunkManager(seed);
+		chunkMap = new ChunkManager(EngineSettings.getSelf().getMapSeed());
 		
 		//==================================
 		//Loads all shaders
@@ -244,18 +199,18 @@ public class Game extends GameState{
 				"sprites/tree2.png");
 		ResourceManager.getSelf().loadTexture("deer", 
 				"sprites/deer.png");
+		ResourceManager.getSelf().loadTexture("logo", 
+				"logo.png");
 		
 		//==================================
 		//Loads all Audio
 		//==================================
 		ResourceManager.getSelf().loadAudio("ocean_waves","audio/ocean_waves.ogg" );
-		AudioSource as =  AudioEngine.getSelf().newAudioSource("ocean_waves", startPoint, 1200);
-		//as.play();
 		
 		//==================================
 		//Loads all fonts
 		//==================================
-		ResourceManager.getSelf().loadFont("sourcesanspro","fonts/SourceSansPro.ttf" );//TODO Implement font loading from file
+		ResourceManager.getSelf().loadFont("sourcesanspro","fonts/SourceSansPro.ttf");
 
 		//==================================
 		//Set all Uniforms
@@ -268,10 +223,14 @@ public class Game extends GameState{
 		
 		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setMat4("projection", projection);
-		ResourceManager.getSelf().getShader("texture").setPointLight(0, new Vec3(startPoint.x-2000, startPoint.y-400, 300), new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
+		ResourceManager.getSelf().getShader("texture").setPointLight(0, new Vec3(startPoint.x-3000, startPoint.y, 300),
+				new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
+		//ResourceManager.getSelf().getShader("texture").setPointLight(1, new Vec3(startPoint.x-200, startPoint.y, 300),
+		//		new Vec3(1,1,1), new Vec3(0,1,0), 1f, 0.001f, 0.000002f);
+		
 		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1f);
 		ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0,0,0));
-		//DON'T FORGET TO ALSO CHANGE ON CAMERA
+		
 		ResourceManager.getSelf().getShader("texturev2").use();
 		ResourceManager.getSelf().getShader("texturev2").setMat4("projection", projection);
 		ResourceManager.getSelf().getShader("texturev2").setPointLight(0, new Vec3(startPoint.x, startPoint.y, 300), new Vec3(1,1,1), new Vec3(1,0,0), 1f, 0.001f, 0.000002f);
@@ -300,23 +259,10 @@ public class Game extends GameState{
 		ResourceManager.getSelf().setRenderer("batchTextureRenderer", t2);
 		
 		//==================================
-		//Instantiate Layers
-		//==================================
-		movableLayer = new ArrayList<>();
-		staticLayer = new ArrayList<>();
-		finalLayer = new ArrayList<>();
-
-		//==================================
-		//Create GameObjects
-		//==================================
-		//createClerics(1);
-		//createBirds(30);
-	
-		//==================================
 		//Creates player
 		//==================================
+		float playerSpeed = 1200;
 		player = em.newEntity();
-		em.setPlayerID(player.getID());
 		player.setName("player");
 
 		AnimationStateManager asm = new AnimationStateManager();
@@ -357,11 +303,11 @@ public class Game extends GameState{
 		em.addComponentTo(player, rc);
 
 		ControllerComponent cp = new ControllerComponent(player.getID());
-		cp.controller = new PlayerController();
+		cp.setController(new PlayerController());
 		em.addComponentTo(player, cp);
 		
 		MoveComponent mc = new MoveComponent(player.getID());
-		mc.velocity = 600;
+		mc.setVelocity(playerSpeed);
 		em.addComponentTo(player, mc);
 		
 		BasicComponent pc = new BasicComponent(player.getID());
@@ -385,9 +331,8 @@ public class Game extends GameState{
 		//==================================
 		//Tests
 		//==================================
-		timer.setDurationInMiliseconds(8*1000);
-		timerWetSand.setDurationInMiliseconds(80*1000);
-		//ResourceManager.getSelf().playAudio("ocean_waves", player.getPosition(), 3000);
+		timer = new Timer(8*1000);
+		timerWetSand = new Timer(80*1000);
 
 		Entity npc = em.newEntity();
 
@@ -427,7 +372,7 @@ public class Game extends GameState{
 		em.addComponentTo(npc, rc);
 
 		cp = new ControllerComponent(npc.getID());
-		cp.controller = new StaticNPCController();
+		cp.setController(new StaticNPCController());
 		em.addComponentTo(npc, cp);
 		
 		pc = new BasicComponent(npc.getID());
@@ -444,6 +389,7 @@ public class Game extends GameState{
 		
 		//Following npc
 		Entity followingNpc = em.newEntity();
+		followingNpc.setName("AI");
 
 		asm = new AnimationStateManager();
 		
@@ -480,7 +426,7 @@ public class Game extends GameState{
 		em.addComponentTo(followingNpc, rc);
 
 		cp = new ControllerComponent(followingNpc.getID());
-		cp.controller = new AIController();
+		cp.setController(new AIController());
 		em.addComponentTo(followingNpc, cp);
 		
 		pc = new BasicComponent(followingNpc.getID());
@@ -489,7 +435,7 @@ public class Game extends GameState{
 		em.addComponentTo(followingNpc, pc);
 		
 		mc = new MoveComponent(followingNpc.getID());
-		mc.velocity = 80;
+		mc.setVelocity(playerSpeed*0.2f);
 		em.addComponentTo(followingNpc, mc);
 		
 		SightComponent sc = new SightComponent(followingNpc.getID());
@@ -502,9 +448,7 @@ public class Game extends GameState{
 		bc.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
 		em.addComponentTo(followingNpc, bc);
 		
-		
 		createBoxes(); 
-		
 		
 		//Create fire
 		Entity bonfire = em.newEntity();
@@ -540,22 +484,21 @@ public class Game extends GameState{
 		BodySystem bs = new BodySystem(this);
 		ControllerSystem cs = new ControllerSystem(this);
 		RenderSystem rs = new RenderSystem(this);
-		//TextSystem ts = new TextSystem(this);
-		//SightSystem ss = new SightSystem(this);
 		
 		sm.addSystem(ms);
-		
 		sm.addSystem(cs);
 		sm.addSystem(rs);
 		sm.addSystem(bs);
-		//sm.addSystem(ts);
-		//sm.addSystem(ss);
-		
+
 		previousCameraGridX =  -1; 
 		previousCameraGridY =  -1; 
 		currentCameraGridX = (int) (camera.getX()/ChunkManager.CHUNK_WIDTH); 
 		currentCameraGridY = (int) (camera.getY()/ChunkManager.CHUNK_HEIGHT);
 		generateQuadTree();
+		
+		//==================================
+		// Particle Emitters
+		//==================================
 		
 		WalkingParticleEmitter emitter = new WalkingParticleEmitter();
 		emitter.setAnchor(startPoint, (int) size.y);
@@ -573,9 +516,6 @@ public class Game extends GameState{
 			if(bc.getBoundingBox().intersects(screenView))
 				quadTree.insert(e);
 		}
-		
-//		System.out.println(em.getAllEntitiesWithComponent(BasicComponent.class).size());
-//		System.out.println(quadTree.queryRange(screenView).size());
 	}
 	
 	private void initShadowLayer() {
@@ -591,8 +531,7 @@ public class Game extends GameState{
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
 
-        //Setup texture scaling filtering
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); //GL_LINEAR for smooth
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadowLayerTexture, 0);
@@ -645,7 +584,6 @@ public class Game extends GameState{
 			pc.setSize(size);
 			pc.setPosition(positions[i]);
 			em.addComponentTo(box, pc);
-
 			
 			BodyComponent bc = new BodyComponent(box.getID());
 			bc.setBaseBox(new Rectangle(0f,0.6f,1.0f,0.4f));
@@ -675,13 +613,13 @@ public class Game extends GameState{
 			int sizeY = (int) (baseBox.height/GRAPH_DIVISOR) +1;
 			
 			
-			if(coordXMapS<0 || coordYMapS<0) //TODO: Should consider the INTERVAL, not just the start and fisnish poitn
+			if(coordXMapS<0 || coordYMapS<0)
 				continue;
 			
 			for(int y=coordYMapS; y< coordYMapS+sizeY; y++)
 				for(int x=coordXMapS; x<coordXMapS + sizeX; x++)
 					if(x<obstacleMap.length && y<obstacleMap[0].length)
-						obstacleMap[x][y] = true; 	// true onde ta bloqueado
+						obstacleMap[x][y] = true;
 		}
 	}
 	
@@ -694,7 +632,7 @@ public class Game extends GameState{
 		int sizeX = (int) (baseBox.width/GRAPH_DIVISOR) + 1;
 		int sizeY = (int) (baseBox.height/GRAPH_DIVISOR) +1;
 		
-		if(coordXMapS<0 || coordYMapS<0) //TODO: Should consider the INTERVAL, not just the start and fisnish poitn
+		if(coordXMapS<0 || coordYMapS<0)
 			return temp;
 		
 		for(int y=coordYMapS; y< coordYMapS+sizeY; y++)
@@ -732,7 +670,7 @@ public class Game extends GameState{
 	}
 	
 	public void renderShadow() {
-		glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);// makes OpenGL reading data from your "framebuffer"
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 
 		glClearColor(1,1,1,0);
 		glClear(GL11.GL_COLOR_BUFFER_BIT);
@@ -747,45 +685,11 @@ public class Game extends GameState{
 		glClearColor(1,1,1,1);
 	}
 	
-	Chunk showCase = new Chunk(0,0,ChunkManager.CHUNK_WIDTH, ChunkManager.CHUNK_HEIGHT, ChunkManager.MAP_WIDTH, ChunkManager.MAP_HEIGHT,em);
-	Texture terrainTexture = new Texture(ChunkManager.CHUNK_WIDTH/Chunk.NOISE_DIVISOR,ChunkManager.CHUNK_HEIGHT/Chunk.NOISE_DIVISOR);
-	
 	@Override
 	public void render() {
 		
 		renderShadow();
-
-		
 		glClear(GL_COLOR_BUFFER_BIT);
-		
-		//TODO: Versão dinâmica só pra poder gerar o show case
-		/*showCase.setX((int) (camera.getX() / ChunkMap.CHUNK_WIDTH) );
-		showCase.setY((int) (camera.getY() / ChunkMap.CHUNK_HEIGHT) );
-		showCase.setWaterDx(FastMath.sin(Math.toRadians(timer.getDegree())));
-		showCase.setWetSandDx(FastMath.sin(Math.toRadians(timerWetSand.getDegree())));
-	
-		showCase.generateTerrain();
-				ResourceManager.getSelf().getTextureRenderer().render( new Texture(showCase.getTerrain()).getId(),
-						new Vec2(showCase.getX()*ChunkMap.CHUNK_WIDTH, showCase.getY()*ChunkMap.CHUNK_HEIGHT),
-						new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));*/
-		
-		
-		 //SHOW CASE CHUNK SYSTEM
-		  //NAO ESQUECER DE MUDAR AS COORDS no Chunk.java*
-		/*  showCase.setX((int) camera.getX());
-		showCase.setY((int) camera.getY());
-		showCase.setWaterDx(FastMath.sin(Math.toRadians(timer.getDegree())));
-		showCase.setWetSandDx(FastMath.sin(Math.toRadians(timerWetSand.getDegree())));
-		
-		showCase.generateNoise();
-		showCase.generateTerrain();
-		
-		terrainTexture.createAndSendBuffer(showCase.getTerrain());
-	
-		ResourceManager.getSelf().getTextureRenderer().render( terrainTexture.getId(),
-				new Vec2(camera.getX(), camera.getY()),
-				new Vec2(ChunkMap.CHUNK_WIDTH, ChunkMap.CHUNK_HEIGHT), 0, new Vec4(1,1,1,1), new Vec4(0,0,1,1), new Vec2(0,0), new Vec2(0,0));*/
-		
 		
 		generateChunks();
 		for(int y=0; y<chunksOnScreen[0].length; y++) 
@@ -808,62 +712,22 @@ public class Game extends GameState{
 		((TextureRenderer)ResourceManager.getSelf().getRenderer("textureRenderer")).render(shadowLayerTexture, new Vec2(camera.getX(),camera.getY()),
 				Engine.getSelf().getWindow().getSize(), 0, new Vec4(1,1,1,0.2f), new Vec4(0,0,1,1), new Vec2(0,1), new Vec2(0,0));
 		
-		
-	//	for(Entity e: finalLayer) {
-		//	BodyComponent bc = (BodyComponent) em.getFirstComponent(e, BodyComponent.class);
-		//	RenderComponent rc = (RenderComponent) em.getFirstComponent(e, RenderComponent.class);
-			
-			//if(!bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize()).intersects(screenView))
-				//continue;
-			
-			//TODO: draw debug
-			//o.renderDebug();
-			/*if(o.getController()!=null)
-				o.getController().renderDebug();
-			
-			if(o.getGroup()!=null && o.getGroup().equals("vegetation"))
-				ResourceManager.getSelf().getGrassRenderer().render(o);
-			else
-				o.render();*/
-		//}
-		
-		if(obstacleMap!=null)
-			for(int y=0; y< obstacleMap[0].length; y++)
-				for(int x=0; x< obstacleMap.length; x++) {
-					
-					int rx = (int) (camera.getX() + x*GRAPH_DIVISOR);
-					int ry = (int) (camera.getY() + y*GRAPH_DIVISOR);
-					
-					//if(obstacleMap[x][y])
-					//	ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(18,18), 0, new Vec3(1,0,1));
-					//if(!obstacleMap[x][y])
-					//	ResourceManager.getSelf().getCubeRenderer().render(new Vec2(rx, ry), new Vec2(18,18), 0, new Vec3(0,1,0));
-				}
+		//renderObstacleMap();
 	    
 		sm.render();
 		ParticleEngine.getSelf().render();
-		
-		
-		ResourceManager.getSelf().getFont("sourcesanspro").render("Vamos lá então!", camera.getX()+300, camera.getY()+300, new Vec4(1,1,1,1));
+		camera.render();
 	}
+	
 	@Override
 	public void variableUpdate(float alpha) {
 		chunkMap.update();
-		
-		//for(Entity o: quadTree.queryRange(screenView))  //TODO: verify only objects on screen
-		//	o.variableUpdate(alpha);
-		
 		sm.variableUpdate(alpha);
 		camera.variableUpdate(alpha);
 	}
 	
-	public boolean intersectsScreenView(Rectangle rec) {
-		return screenView.intersects(rec);
-	}
-	
 	@Override
 	public void update(float deltaTime) {
-		
 		BasicComponent ppc= em.getFirstComponent(player, BasicComponent.class);
 		AudioEngine.getSelf().setListenerAt(ppc.getPosition());
 		
@@ -879,27 +743,9 @@ public class Game extends GameState{
 		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1f*1);
 		//ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0.42f*1/sin,0.06f*1/sin,0.5176f*1/sin));
 		
-		//generateChunks();
-		
-		finalLayer.clear();
-		
-		
-		
-		
-		
-		//finalLayer.addAll(em.getAllEntities());
-		//finalLayer.addAll(staticLayer);
-		//finalLayer.add(player);
-		//Collections.sort(finalLayer); //TODO: get a better sort method
-										// excluir os objetos fora da tela. não precisa dar sort neles. só return.
-		
-		//for(GameObject o: quadTree.queryRange(screenView))  //TODO: verify only objects on screen
-			//o.update(deltaTime, this);
-		
 		sm.update(deltaTime);
 		
-		camera.update(deltaTime); //TODO: why should it be after all obj update?
-		
+		camera.update(deltaTime);
 		
 		screenView.x = camera.getX();
 		screenView.y = camera.getY();
@@ -910,8 +756,23 @@ public class Game extends GameState{
 		ParticleEngine.getSelf().update(deltaTime);
 	}
 	
-	private void renderQuadTree() {
-		
+	private void renderObstacleMap() {
+		if(obstacleMap!=null)
+			for(int y=0; y< obstacleMap[0].length; y++)
+				for(int x=0; x< obstacleMap.length; x++) {
+					
+					int rx = (int) (camera.getX() + x*GRAPH_DIVISOR);
+					int ry = (int) (camera.getY() + y*GRAPH_DIVISOR);
+					
+					if(obstacleMap[x][y])
+						((CubeRenderer)ResourceManager.getSelf().getRenderer("cubeRenderer")).render(new Vec2(rx, ry), new Vec2(18,18), 0, new Vec4(1,0,1,0.2f));
+					if(!obstacleMap[x][y])
+						((CubeRenderer)ResourceManager.getSelf().getRenderer("cubeRenderer")).render(new Vec2(rx, ry), new Vec2(18,18), 0, new Vec4(0,1,0,0.2f));
+				}
+	}
+	
+	public boolean intersectsScreenView(Rectangle rec) {
+		return screenView.intersects(rec);
 	}
 
 	public Camera getCamera() {
@@ -920,19 +781,6 @@ public class Game extends GameState{
 
 	public void setCamera(Camera camera) {
 		this.camera = camera;
-	}
-
-
-	public ArrayList<Entity> getStaticLayer() {
-		return staticLayer;
-	}
-	
-	/**
-	 * Do not modify the finalLayer. It's always mutating in order to the system's work
-	 * @return
-	 */
-	public ArrayList<Entity> getFinalLayer() {
-		return finalLayer;
 	}
 
 	public QuadTree getQuadTree() {

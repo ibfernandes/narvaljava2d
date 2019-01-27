@@ -14,36 +14,36 @@ public class Window {
 	private Vec2 size;
 	private String name;
 	private long id;
-	
-	
+
 	public Window(int width, int height, String name) {
 		this.width = width;
 		this.height = height;
 		this.name = name;
-		size = new Vec2(width,height);
+		size = new Vec2(width, height);
 	}
-	
+
 	public void init() {
-		if (!glfwInit()) 
+		if (!glfwInit())
 			System.err.println("Could not initialize GLFW.");
-		
+
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	    
-	    id = glfwCreateWindow(width, height, name,  NULL,  NULL);
-	    glfwMakeContextCurrent(id);
-	    
-	    glfwSetWindowPos(id, 60, 60); //TODO: [NOTE]Set it to my second monitor (for debug purposes)
-	    glfwShowWindow(id);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+		id = glfwCreateWindow(width, height, name, NULL, NULL);
+		glfwMakeContextCurrent(id);
+
+		glfwSetWindowPos(id, 60, 60);
+		glfwShowWindow(id);
 		GL.createCapabilities();
-		glfwSwapInterval(0);//VSYNC
-	    
-	    glViewport(0,0, width, height);
-	    glEnable(GL_CULL_FACE);
-	    glEnable(GL_BLEND);
-	    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		// VSYNC
+		glfwSwapInterval(0);
+
+		glViewport(0, 0, width, height);
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	public long getId() {
