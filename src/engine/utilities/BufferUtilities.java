@@ -53,6 +53,41 @@ public class BufferUtilities {
 	}
 	
 	/**
+	 * Creates a FloaBuffer from @param values.
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public static FloatBuffer createFloatBuffer(float[][] values){
+		FloatBuffer buffer = createFloatBuffer(values.length*values[0].length);
+		
+		for(int c = 0; c < values[0].length; c++)
+			for(int l = 0; l < values.length; l++)
+				buffer.put(values[l][c]);
+
+		buffer.flip();
+		return buffer;
+	}
+	
+	/**
+	 * Creates a ByteBuffer from @param values.
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public static ByteBuffer create32bitsByteBuffer(float[][] values){
+		ByteBuffer buffer = ByteBuffer.allocateDirect(values.length*values[0].length*Float.BYTES).order(ByteOrder.nativeOrder());
+		
+		for(int l = 0; l < values.length; l++)
+			for(int c = 0; c < values[0].length; c++) {
+				buffer.putFloat(values[l][c]);
+			}
+		
+		buffer.flip();
+		return buffer;
+	}
+	
+	/**
 	 * Creates a IntBuffer from @param values.
 	 * 
 	 * @param values

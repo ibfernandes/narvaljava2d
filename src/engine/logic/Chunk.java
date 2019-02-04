@@ -20,6 +20,7 @@ import engine.noise.FastNoise;
 import engine.utilities.BufferUtilities;
 import engine.utilities.ByteBufferExt;
 import engine.utilities.Color;
+import engine.utilities.MathExt;
 import engine.utilities.Vec2i;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
@@ -32,6 +33,7 @@ public class Chunk implements Serializable {
 	private int textureWidth, textureHeight;
 	private int mapWidth, mapHeight;
 	public static final int NOISE_DIVISOR = 5;
+	private static final float PERLIN_BOUNDARIES = (float) Math.sqrt(3.0/4.0);
 	private HashMap<Float, Entity> objects;
 	private HashMap<Long, ArrayList<Component>> componentsOfEntities = new HashMap<>();
 	private transient Random random = new Random();
@@ -174,7 +176,10 @@ public class Chunk implements Serializable {
 
 					objects.put(whiteNoise[x][y], generateRandomGroundVegetation(x, y));
 				}
-
+				
+				mapRGB[x][y] = mapNoiseToGreyScale(perlinNoise[x][y]);
+	
+				
 				// RGBA color
 				terrainBuffer.getBytebuffer().put((byte) ((mapRGB[x][y] >> 16) & 0xFF));
 				terrainBuffer.getBytebuffer().put((byte) ((mapRGB[x][y] >> 8) & 0xFF));
@@ -183,6 +188,20 @@ public class Chunk implements Serializable {
 			}
 		}
 		terrainBuffer.getBytebuffer().flip();
+	}
+	
+	private int mapNoiseToGreyScale(float value) {
+		float result;
+		
+		if(value<0) {
+			value = value * -1;
+			result = value * 0 + (PERLIN_BOUNDARIES - value) * 127;
+		}else {
+			result = value * 128 + (PERLIN_BOUNDARIES - value) * 255;
+		}
+		int RGB = (int) result;
+
+		return 255 <<24 | RGB << 16 | RGB << 8 | RGB;
 	}
 
 	public Entity generateRandomTree(int x, int y) {
@@ -321,5 +340,13 @@ public class Chunk implements Serializable {
 
 	public Rectangle getBoundingBox() {
 		return boundingBox;
+	}
+
+	public float[][] getPerlinNoise() {
+		return perlinNoise;
+	}
+
+	public void setPerlinNoise(float[][] perlinNoise) {
+		this.perlinNoise = perlinNoise;
 	}
 }

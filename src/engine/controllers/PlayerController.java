@@ -7,6 +7,7 @@ import org.lwjgl.glfw.GLFW;
 import demo.Game;
 import engine.entity.component.MoveComponent;
 import engine.entity.component.RenderComponent;
+import engine.input.JoystickControl;
 import engine.states.GSM;
 import engine.utilities.ArraysExt;
 import glm.vec._2.Vec2;
@@ -32,40 +33,44 @@ public class PlayerController extends Controller {
 	@Override
 	public void update(float deltaTime, long entityID, Game context) {
 
-		Arrays.fill(directions, false);
-
 		RenderComponent rc = (RenderComponent) context.getEm().getFirstComponent(entityID, RenderComponent.class);
 		MoveComponent mc = (MoveComponent) context.getEm().getFirstComponent(entityID, MoveComponent.class);
 
 		Vec2 dir = new Vec2(0, 0);
 
-		if (GSM.getSelf().getKeyboard().isKeyPressed(GLFW.GLFW_KEY_W)) {
+		if (GSM.getSelf().getKeyboard().isKeyPressed(GLFW.GLFW_KEY_W))
 			dir.y = -1;
-			directions[0] = true;
-		}
 
-		if (GSM.getSelf().getKeyboard().isKeyPressed(GLFW.GLFW_KEY_S)) {
+		if (GSM.getSelf().getKeyboard().isKeyPressed(GLFW.GLFW_KEY_S)) 
 			dir.y = 1;
-			directions[1] = true;
-		}
 
-		if (GSM.getSelf().getKeyboard().isKeyPressed(GLFW.GLFW_KEY_A)) {
+		if (GSM.getSelf().getKeyboard().isKeyPressed(GLFW.GLFW_KEY_A)) 
 			dir.x = -1;
-
-			rc.setOrientation(faceLeft);
-			directions[2] = true;
-		}
-		if (GSM.getSelf().getKeyboard().isKeyPressed(GLFW.GLFW_KEY_D)) {
+		
+		if (GSM.getSelf().getKeyboard().isKeyPressed(GLFW.GLFW_KEY_D)) 
 			dir.x = 1;
 
-			rc.setOrientation(faceRight);
-			directions[3] = true;
-		}
-
 		mc.setDirection(dir);
-		// mc.setDirection(GSM.getSelf().getJoystick().getThumbDirection(JoystickControl.LEFT_THUMB_STICK));
+		if(GSM.getSelf().getJoystick().isThereAJoystick()) {
+			dir = GSM.getSelf().getJoystick().getThumbDirection(JoystickControl.LEFT_THUMB_STICK);
+			
+			if(Math.abs(dir.x) < 0.25)
+				dir.x = 0;
+			if(Math.abs(dir.y) < 0.25)
+				dir.y = 0;
+			
+			mc.setDirection(dir);
+		}
+		
+		
+		if(dir.x>0)
+			rc.setOrientation(faceRight);
+		else if(dir.x<0)
+			rc.setOrientation(faceLeft);
 
-		if (ArraysExt.areAllElementsEqualTo(directions, false)) {
+		if (dir.x!=0 || dir.y!=0) {
+			rc.getAnimations().changeStateTo("walking");
+		}else{
 			rc.getAnimations().changeStateTo("idle_1");
 		}
 

@@ -2,6 +2,7 @@ package engine.input;
 
 import static org.lwjgl.glfw.GLFW.GLFW_JOYSTICK_1;
 import static org.lwjgl.glfw.GLFW.glfwGetJoystickAxes;
+import static org.lwjgl.glfw.GLFW.glfwGetJoystickName;
 import java.nio.FloatBuffer;
 
 import glm.vec._2.Vec2;
@@ -43,6 +44,10 @@ public class JoystickControl implements Control {
 	@Override
 	public boolean isKeyPressed(int key) {
 		return false;
+	}
+	
+	public boolean isThereAJoystick() {
+		return (glfwGetJoystickName(GLFW_JOYSTICK_1)==null) ? false : true;
 	}
 
 }

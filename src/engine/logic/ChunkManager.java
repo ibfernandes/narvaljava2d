@@ -72,7 +72,7 @@ public class ChunkManager {
 			for (Vec2i pos : loadingOrder) {
 				Chunk ck = chunks.get(pos.x).get(pos.y);
 
-				if (!Game.getSelf().intersectsScreenView(ck.getBoundingBox())) {
+				if (ck!=null && !Game.getSelf().intersectsScreenView(ck.getBoundingBox())) {
 					chunks.get(pos.x).get(pos.y).removeAllEntities();
 					chunks.get(pos.x).remove(pos.y);
 					loadingOrder.remove(pos);
@@ -154,7 +154,8 @@ public class ChunkManager {
 	}
 
 	public boolean chunkExistsOnDisk(int x, int y) {
-		return (new File(mapPath + Chunk.getFileName(x, y)).exists());
+		return false;
+//		return (new File(mapPath + Chunk.getFileName(x, y)).exists());
 	}
 
 	public boolean chunkExists(int x, int y) {

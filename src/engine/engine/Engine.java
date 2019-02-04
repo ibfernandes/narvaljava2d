@@ -18,7 +18,7 @@ import engine.utilities.Timer;
 public class Engine implements Runnable {
 	private Window window;
 	private long deltaTime, currentFrame, lastFrame, lastSecond;
-	private int updates = 0, fps = 0;
+	private int updates = 0, maxFPS = 0;
 	public static final long MEGABYTE = 1000000L;
 	public static final int TARGET_UPDATES = 60;
 	public static final float TARGET_UPDATES_DT = 1f / TARGET_UPDATES;
@@ -153,23 +153,23 @@ public class Engine implements Runnable {
 
 			variableUpdate();
 			render();
-			fps++;
+			maxFPS++;
 
 			if ((currentFrame - lastSecond) > Timer.SECOND) {
 
 				long usedMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 				usedMemory = usedMemory / MEGABYTE;
-				System.out.printf("\n===============================" + "\nUPS:\t" + updates + "\nFPS:\t" + fps + '\n'
+				System.out.printf("\n===============================" + "\nUPS:\t" + updates + "\nFPS:\t" + maxFPS + '\n'
 						+ "\nUPS AVG:\t" + (float) (avg / updates) / Timer.MILLISECOND + "ms" + "\nUPS pike:\t"
 						+ (float) higher / Timer.MILLISECOND + "ms" + "\nUPS pike calls:\t" + longestDelay + '\n'
-						+ "\nFPS AVG:\t" + (float) (avgRender / fps) / Timer.MILLISECOND + "ms" + "\nFPS pike:\t"
+						+ "\nFPS AVG:\t" + (float) (avgRender / maxFPS) / Timer.MILLISECOND + "ms" + "\nFPS pike:\t"
 						+ (float) higherRender / Timer.MILLISECOND + "\n" + "\nMem. usage:\t" + usedMemory + " MB"
 
 				);
 
 				lastSecond = System.nanoTime();
 				updates = 0;
-				fps = 0;
+				maxFPS = 0;
 				lower = Long.MAX_VALUE;
 				higher = 0;
 				avg = 0;

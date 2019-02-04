@@ -25,7 +25,7 @@ public class PhysicsEngine {
 	}
 	
 	public static Vec2 convertMetersToPixels(float x, float y){
-		return new Vec2(x*PhysicsEngine.BOX2D_SCALE_FACTOR, y*PhysicsEngine.BOX2D_SCALE_FACTOR);
+		return new Vec2(Math.floor(x*PhysicsEngine.BOX2D_SCALE_FACTOR), Math.floor(y*PhysicsEngine.BOX2D_SCALE_FACTOR));
 	}
 	
 	public static Vec2 convertPixelsToMeters(float x, float y){

@@ -20,9 +20,10 @@ public class WalkingParticleEmitter extends ParticleEmitter{
 	private int offset;
 	private Vec2 previousPosition;
 	private Random r = new Random();
-	private int maxParticles = 100;
+	private int maxParticles = 10;
 	private long particlesId[];
 	private ArrayList<Integer> freeParticles = new ArrayList<>();
+	private Timer t = new Timer(100);
 	
 	@Override
 	public void init() {
@@ -33,7 +34,7 @@ public class WalkingParticleEmitter extends ParticleEmitter{
 			Entity particle = Game.getSelf().getEm().newEntity();
 			float fl = r.nextFloat();
 			
-			Vec2 size = new Vec2(15*fl,15*fl);
+			Vec2 size = new Vec2(8*fl,8*fl);
 			Vec2 pos = new Vec2(20 + position.x + 40*r.nextFloat(), position.y + offset);
 			
 			RenderComponent rc = new RenderComponent(particle.getID());
@@ -49,7 +50,7 @@ public class WalkingParticleEmitter extends ParticleEmitter{
 			Game.getSelf().getEm().addComponentTo(particle, pc);
 			
 			MoveComponent mc = new MoveComponent(particle.getID());
-			mc.setVelocity(200*r.nextFloat());
+			mc.setVelocity(100*r.nextFloat());
 			mc.setDirection(new Vec2((1 - 2*r.nextInt(2))*r.nextFloat(),-1*r.nextFloat()));
 			Game.getSelf().getEm().addComponentTo(particle, mc);
 			
@@ -71,9 +72,10 @@ public class WalkingParticleEmitter extends ParticleEmitter{
 	@Override
 	public void update(float deltaTime) {
 		if((int)position.x != (int)previousPosition.x || (int)position.y != (int)previousPosition.y) {
-			createParticle();
-			createParticle();
-			createParticle();
+			if(t.hasElapsed()) {
+				createParticle();
+				t.reset();
+			}
 		}
 		previousPosition.x = position.x;
 		previousPosition.y = position.y;
