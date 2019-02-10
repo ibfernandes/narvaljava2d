@@ -1,11 +1,14 @@
 package engine.logic;
 
+import java.nio.FloatBuffer;
+
 import engine.engine.Engine;
 import engine.entity.Entity;
 import engine.entity.EntityManager;
 import engine.entity.component.BasicComponent;
 import engine.entity.component.RenderComponent;
 import engine.renderer.CubeRenderer;
+import engine.utilities.BufferUtilities;
 import engine.utilities.Commons;
 import engine.utilities.ResourceManager;
 import engine.utilities.Timer;
@@ -23,11 +26,13 @@ public class Camera {
 	private Timer timer = new Timer(300);
 	private float offset = 50;
 	private Vec2 direction = new Vec2(0, 0);
+	private FloatBuffer floatBuffer;
 
 	public Camera(EntityManager em) {
 		this.em = em;
 		camera = new Mat4();
 		camera = camera.identity();
+		floatBuffer = BufferUtilities.createFloatBuffer(4*4);
 	}
 
 	/**
@@ -107,21 +112,22 @@ public class Camera {
 
 		transform = transform.identity();
 		transform.translate(this.x, this.y, 0);
+		floatBuffer = BufferUtilities.fillFloatBuffer(floatBuffer, transform);
 
 		ResourceManager.getSelf().getShader("texture").use();
-		ResourceManager.getSelf().getShader("texture").setMat4("camera", transform);
+		ResourceManager.getSelf().getShader("texture").setMat4("camera", floatBuffer);
 
 		ResourceManager.getSelf().getShader("texturev2").use();
-		ResourceManager.getSelf().getShader("texturev2").setMat4("camera", transform);
+		ResourceManager.getSelf().getShader("texturev2").setMat4("camera", floatBuffer);
 
 		ResourceManager.getSelf().getShader("shadow").use();
-		ResourceManager.getSelf().getShader("shadow").setMat4("camera", transform);
+		ResourceManager.getSelf().getShader("shadow").setMat4("camera", floatBuffer);
 
 		ResourceManager.getSelf().getShader("grass").use();
-		ResourceManager.getSelf().getShader("grass").setMat4("camera", transform);
+		ResourceManager.getSelf().getShader("grass").setMat4("camera", floatBuffer);
 
 		ResourceManager.getSelf().getShader("cube").use();
-		ResourceManager.getSelf().getShader("cube").setMat4("camera", transform);
+		ResourceManager.getSelf().getShader("cube").setMat4("camera", floatBuffer);
 	}
 
 	public void render() {

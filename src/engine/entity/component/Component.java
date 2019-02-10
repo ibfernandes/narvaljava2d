@@ -12,4 +12,8 @@ public abstract class Component implements Serializable{
 	public long getEntityID() {
 		return entityID;
 	}
+	
+	public void setEntityID(long entityID) {
+		this.entityID = entityID;
+	}
 }

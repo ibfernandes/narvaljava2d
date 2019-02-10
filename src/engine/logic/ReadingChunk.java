@@ -13,12 +13,13 @@ import java.util.concurrent.Future;
 public class ReadingChunk {
 	private Future<Integer> promise;
 	private ByteBuffer buffer = ByteBuffer.allocate(ChunkManager.CHUNK_BUFFER_SIZE);
-	private String id;
+	private Path filePath;
 
 	public ReadingChunk(String path, String id) {
-		Path filePath = Paths.get(path);
-		this.id = id;
-
+		filePath = Paths.get(path);
+	}
+	
+	public void read() {
 		try {
 			AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(filePath, StandardOpenOption.READ,
 					StandardOpenOption.READ);
@@ -31,7 +32,7 @@ public class ReadingChunk {
 	}
 
 	public boolean isDone() {
-		return promise.isDone();
+		return (promise==null)? false : promise.isDone();
 	}
 
 	/**

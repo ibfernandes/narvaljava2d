@@ -35,6 +35,7 @@ public class TextureBatchRenderer implements Renderer{
 	private float vertices[];
 	
 	private int objectsCount = 0;
+	private Mat4 model = new Mat4();
 	
 	
 	public TextureBatchRenderer(Shader shader) {
@@ -85,8 +86,7 @@ public class TextureBatchRenderer implements Renderer{
 	}
 	
 	public void render(Vec2 position, Vec2 size, float rotate, Vec4 color, Vec4 spriteFrame, Vec2 orientation) {
-		Mat4 model = new Mat4();
-		
+		model = model.identity();
 		model = model.translate(position.x, position.y, 0);
 		model = model.translate(0.5f * size.x, 0.5f * size.y, 0);
 		model = model.rotate(rotate, 0, 0, 1);

@@ -1,5 +1,9 @@
 package engine.entity.component;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.BodyDef;
@@ -7,16 +11,12 @@ import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.World;
 
+import engine.controllers.Controller;
 import engine.engine.PhysicsEngine;
 import engine.geometry.Rectangle;
 import glm.vec._2.Vec2;
 
 public class BodyComponent extends Component {
-	public BodyComponent(long entityID) {
-		super(entityID);
-
-	}
-
 	public transient Body body;
 	public BodyType type;
 	private Rectangle baseBox;
@@ -24,7 +24,11 @@ public class BodyComponent extends Component {
 	private Vec2 b2Size;
 	private Rectangle calculatedBaseBox = new Rectangle(0, 0, 0, 0);
 	private Vec2 position = new Vec2();
-
+	
+	public BodyComponent(long entityID) {
+		super(entityID);
+	}
+	
 	public Rectangle getBaseBox() {
 		return baseBox;
 	}
@@ -102,5 +106,15 @@ public class BodyComponent extends Component {
 
 	public void setB2Size(Vec2 b2Size) {
 		this.b2Size = b2Size;
+	}
+	
+	private void writeObject(ObjectOutputStream os) throws IOException {
+		os.defaultWriteObject();
+	}
+
+	private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException, InstantiationException, IllegalAccessException {
+		ois.defaultReadObject();
+		createBody(PhysicsEngine.getSelf().getWorld(), this.type);
+
 	}
 }

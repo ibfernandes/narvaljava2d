@@ -4,23 +4,25 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.lwjgl.glfw.GLFW;
+
 import demo.Game;
-import engine.engine.Engine;
 import engine.engine.EngineSettings;
-import engine.utilities.Timer;
+import engine.states.GSM;
 import engine.utilities.Vec2i;
 
 public class ChunkManager {
 	private HashMap<Integer, HashMap<Integer, Chunk>> chunks;
 	private int seed;
 	private String mapPath;
-	private int chunksInMemory = 0;
 	private ArrayList<ReadingChunk> loadingChunks = new ArrayList<>();
-	private ArrayList<ReadingChunk> loadingChunksToRemove = new ArrayList<>();
 	private ArrayList<SavingChunk> savingChunks = new ArrayList<>();
+	private ArrayList<Chunk> chunksToGenerateAndSave = new ArrayList<>();
+	private ArrayList<ReadingChunk> loadingChunksToRemove = new ArrayList<>();
 	private ArrayList<SavingChunk> savingChunksToRemove = new ArrayList<>();
-	private ArrayList<Chunk> chunksToSave = new ArrayList<>();
 	private ArrayList<Vec2i> loadingOrder = new ArrayList<>();
+	private int chunksInMemory = 0;
+	private boolean shouldBreak = false;
 
 	public static final int MAX_CHUNKS_IN_MEM = 10;
 	public static final int CHUNK_WIDTH = EngineSettings.getSelf().getChunkSizeX();
@@ -39,7 +41,7 @@ public class ChunkManager {
 
 		if (chunks.get(chunk.getX()) == null)
 			chunks.put(chunk.getX(), new HashMap<Integer, Chunk>());
-
+		
 		if (chunks.get(chunk.getX()).put(chunk.getY(), chunk) == null)
 			chunksInMemory++;
 
@@ -56,106 +58,129 @@ public class ChunkManager {
 	 */
 	public Chunk get(int x, int y) {
 		if (chunks.get(x) == null || chunks.get(x).get(y) == null)
-			if (chunkExistsOnDisk(x, y))
-				loadFromFile(x, y);
-			else
-				chunksToSave
+			if (chunkExistsOnDisk(x, y)) {
+				ReadingChunk r = loadFromFile(x, y);
+				r.read();
+				loadingChunks.add(r);
+			}else {
+				chunksToGenerateAndSave
 						.add(new Chunk(x, y, CHUNK_WIDTH, CHUNK_HEIGHT, MAP_WIDTH, MAP_HEIGHT, Game.getSelf().getEm()));
+			}
 
 		return (chunks.get(x) == null) ? null : chunks.get(x).get(y);
 	}
 
 	public void update() {
-
-		if (chunksInMemory > MAX_CHUNKS_IN_MEM) {
-
-			for (Vec2i pos : loadingOrder) {
-				Chunk ck = chunks.get(pos.x).get(pos.y);
-
-				if (ck!=null && !Game.getSelf().intersectsScreenView(ck.getBoundingBox())) {
-					chunks.get(pos.x).get(pos.y).removeAllEntities();
-					chunks.get(pos.x).remove(pos.y);
-					loadingOrder.remove(pos);
-					chunksInMemory--;
-					break;
+		//----------------------------------
+		// Manages Excess chunks
+		//----------------------------------
+		shouldBreak = false;
+		
+		if(chunksInMemory>MAX_CHUNKS_IN_MEM) {
+			for(Integer x: chunks.keySet()) {
+				for(Integer y: chunks.get(x).keySet()) {
+					if(!Game.getSelf().intersectsScreenView(chunks.get(x).get(y).getBoundingBox())) {
+						savingChunks.add(saveFile((chunks.get(x).get(y))));
+						chunksInMemory--;
+						shouldBreak = true;
+					}
+					if(shouldBreak)
+						break;
 				}
+				if(shouldBreak)
+					break;
 			}
 		}
+		
+		//----------------------------------
+		// Generate chunks contents
+		//----------------------------------
 
+		for(Chunk c: chunksToGenerateAndSave) {
+			c.generateNoiseAndTerrain();
+			put(c);
+		}
+		
+		chunksToGenerateAndSave.clear();
+		
+		//----------------------------------
+		// Reading block
+		//----------------------------------
 		loadingChunksToRemove.clear();
-		for (ReadingChunk r : loadingChunks)
+		
+		for (ReadingChunk r : loadingChunks) {
 			if (r.isDone()) {
 				loadingChunksToRemove.add(r);
 				try {
 					put(r.getChunk());
-					r.getChunk().addAllEntitiesToEntityManager();
+					r.getChunk().transferAllEntitiesToEntityManager();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
-
+		}
+		
 		for (ReadingChunk r : loadingChunksToRemove)
 			loadingChunks.remove(r);
-
-		if (!chunksToSave.isEmpty() && savingChunks.isEmpty()) {
-
-			chunksToSave.get(0).generateNoise();
-			chunksToSave.get(0).generateTerrain();
-			put(chunksToSave.get(0));
-			saveFile(chunksToSave.get(0));
-
-			chunksToSave.remove(0);
-		}
-
-		for (SavingChunk s : savingChunks)
-			if (s.isDone()) {
+		
+		//----------------------------------
+		// Saving block
+		//----------------------------------
+		savingChunksToRemove.clear();
+		
+		for (SavingChunk s : savingChunks) {
+			if(s.isDone()) {
 				savingChunksToRemove.add(s);
 			}
-
-		for (SavingChunk toRemove : savingChunksToRemove)
-			savingChunks.remove(toRemove);
-
+			chunks.get(s.getChunk().getX()).remove(s.getChunk().getY());
+		}
+		
+		for (SavingChunk s : savingChunksToRemove) 
+			savingChunks.remove(s);
+		
+		for (SavingChunk s : savingChunks) {
+			if(!s.hasStarted()) {
+				s.getChunk().getEntitiesFromEntityManager();
+				s.getChunk().removeAllEntitiesFromEntityManager();
+				s.save();
+			}
+		}
+		
+		if (GSM.getSelf().getKeyboard().isKeyPressed(GLFW.GLFW_KEY_Y)) {
+			for(Integer x: chunks.keySet()) {
+				for(Integer y: chunks.get(x).keySet()) {
+					if(!Game.getSelf().intersectsScreenView(chunks.get(x).get(y).getBoundingBox())) {
+						savingChunks.add(saveFile((chunks.get(x).get(y))));
+					}
+				}
+			}
+		}
+		
 	}
 	
 	/**
-	 * Loads a chunk from disk using current seed.
+	 * Returns a container to load this chunk.
 	 * 
 	 * @param x
 	 * @param y
 	 */
-	public void loadFromFile(int x, int y) {
-
-		long start = System.nanoTime();
-
+	public ReadingChunk loadFromFile(int x, int y) {
 		ReadingChunk r = new ReadingChunk(mapPath + Chunk.getFileName(x, y), Chunk.getID(x, y));
-		loadingChunks.add(r);
-
-		System.out.println(
-				"\nreadFile: \t" + x + "_" + y + " \t" + (System.nanoTime() - start) / Timer.MILLISECOND + "ms");
+		return r;
 	}
 	
 	/**
-	 * Saves a chunk to disk using current seed.
+	 * Returns a container to save this chunk.
 	 * 
 	 * @param chunk
 	 */
-	public void saveFile(Chunk chunk) {
-		long start = System.nanoTime();
-
-		System.out.println("---------");
-		System.out.println("savefile START");
-
+	public SavingChunk saveFile(Chunk chunk) {
 		SavingChunk r = new SavingChunk(mapPath + Chunk.getFileName(chunk.getX(), chunk.getY()), chunk);
-		savingChunks.add(r);
-
-		System.out.println("savefile END: \t\t" + chunk.getFileName() + " \t"
-				+ (System.nanoTime() - start) / Timer.MILLISECOND + "ms");
-		System.out.println("---------");
+		return r;
 	}
 
 	public boolean chunkExistsOnDisk(int x, int y) {
-		return false;
-//		return (new File(mapPath + Chunk.getFileName(x, y)).exists());
+		return (new File(mapPath + Chunk.getFileName(x, y)).exists());
 	}
 
 	public boolean chunkExists(int x, int y) {

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import demo.Game;
-import engine.engine.Engine;
 import engine.entity.Entity;
 import engine.entity.component.BasicComponent;
 import engine.entity.component.MoveComponent;
@@ -32,6 +31,7 @@ public class WalkingParticleEmitter extends ParticleEmitter{
 		
 		for(int i=0; i<maxParticles; i++) {
 			Entity particle = Game.getSelf().getEm().newEntity();
+			particle.setShouldSave(false);
 			float fl = r.nextFloat();
 			
 			Vec2 size = new Vec2(8*fl,8*fl);

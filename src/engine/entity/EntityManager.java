@@ -108,6 +108,8 @@ public class EntityManager {
 	 * @return
 	 */
 	public <T extends Component> T getFirstComponent(long id, Class<?> cls) {
+		if(componentsOf.get(id)==null)
+			return null;
 		for (Component cp : componentsOf.get(id))
 			if (cls.isInstance(cp))
 				return (T) cp;
@@ -159,6 +161,10 @@ public class EntityManager {
 	 */
 	public <T extends Component> ArrayList<T> getAllComponents(Class c) {
 		return (ArrayList<T>) componentsByClass.get(c.getName());
+	}
+	
+	public ArrayList<Component> getAllComponentsOfEntity(Entity e){
+		return componentsOf.get(e.getID());
 	}
 
 	public ArrayList<Entity> getAllEntitiesWithComponent(Class c) {

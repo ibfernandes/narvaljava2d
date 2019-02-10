@@ -13,6 +13,8 @@ import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
 import static org.lwjgl.opengl.GL11.glTexImage2D;
 import static org.lwjgl.opengl.GL11.glTexParameteri;
+
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -55,6 +57,7 @@ import engine.renderer.CubeRenderer;
 import engine.renderer.GrassRenderer;
 import engine.renderer.ShadowRenderer;
 import engine.renderer.TextureRenderer;
+import engine.ui.Font;
 import engine.renderer.TextureBatchRenderer;
 import engine.utilities.BufferUtilities;
 import engine.utilities.QuadTree;
@@ -79,8 +82,7 @@ public class Game extends GameState {
 	private int shadowLayerTexture;
 
 	private Timer timer;
-	private Timer timerWetSand;
-	private Random random = new Random();
+	private Timer seconds = new Timer(1000);
 
 	// Map
 	private ChunkManager chunkMap;
@@ -110,7 +112,7 @@ public class Game extends GameState {
 	public boolean obstacleMap[][];
 
 	// Others
-	private Vec2 startPoint = new Vec2(48000, 48000 - 2000);
+	private Vec2 startPoint = new Vec2(48000 + 500, 48000 - 2000);
 
 	// Entity System
 	private EntityManager em = new EntityManager();
@@ -191,10 +193,13 @@ public class Game extends GameState {
 				Engine.getSelf().getWindow().getHeight(), 0, -1f, 1f);
 
 		ResourceManager.getSelf().getShader("cube").use();
-		ResourceManager.getSelf().getShader("cube").setMat4("projection", projection);
+		FloatBuffer projectionBuffer = BufferUtilities.createFloatBuffer(4*4);
+		projectionBuffer = BufferUtilities.fillFloatBuffer(projectionBuffer, projection);
+		
+		ResourceManager.getSelf().getShader("cube").setMat4("projection", projectionBuffer);
 
 		ResourceManager.getSelf().getShader("texture").use();
-		ResourceManager.getSelf().getShader("texture").setMat4("projection", projection);
+		ResourceManager.getSelf().getShader("texture").setMat4("projection", projectionBuffer);
 		ResourceManager.getSelf().getShader("texture").setPointLight(0,
 				new Vec3(startPoint.x - 3000, startPoint.y, 300), new Vec3(1, 1, 1), new Vec3(1, 0, 0), 1f, 0.001f,
 				0.000002f);
@@ -206,17 +211,17 @@ public class Game extends GameState {
 		ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0, 0, 0));
 
 		ResourceManager.getSelf().getShader("texturev2").use();
-		ResourceManager.getSelf().getShader("texturev2").setMat4("projection", projection);
+		ResourceManager.getSelf().getShader("texturev2").setMat4("projection", projectionBuffer);
 		ResourceManager.getSelf().getShader("texturev2").setPointLight(0, new Vec3(startPoint.x, startPoint.y, 300),
 				new Vec3(1, 1, 1), new Vec3(1, 0, 0), 1f, 0.001f, 0.000002f);
 		ResourceManager.getSelf().getShader("texturev2").setFloat("dayTime", 1f);
 		ResourceManager.getSelf().getShader("texturev2").setVec3("ambientColor", new Vec3(0, 0, 0));
 
 		ResourceManager.getSelf().getShader("shadow").use();
-		ResourceManager.getSelf().getShader("shadow").setMat4("projection", projection);
+		ResourceManager.getSelf().getShader("shadow").setMat4("projection", projectionBuffer);
 
 		ResourceManager.getSelf().getShader("grass").use();
-		ResourceManager.getSelf().getShader("grass").setMat4("projection", projection);
+		ResourceManager.getSelf().getShader("grass").setMat4("projection", projectionBuffer);
 
 		// ==================================
 		// Start renderers
@@ -295,7 +300,6 @@ public class Game extends GameState {
 		// Tests
 		// ==================================
 		timer = new Timer(8 * 1000);
-		timerWetSand = new Timer(80 * 1000);
 
 		Entity npc = em.newEntity();
 
@@ -626,9 +630,10 @@ public class Game extends GameState {
 
 		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setInteger("terrainMode", 1);
-		ResourceManager.getSelf().getShader("texture").setFloat("waveDx", timer.getElapsedDelta());
+		ResourceManager.getSelf().getShader("texture").setFloat("waveDx", (float) FastMath.sin(Math.toRadians(260 * timer.getElapsedDelta())));
 		generateChunks();
 		renderChunks();
+		ResourceManager.getSelf().getShader("texture").use();
 		ResourceManager.getSelf().getShader("texture").setInteger("terrainMode", 0);
 
 		((TextureRenderer) ResourceManager.getSelf().getRenderer("textureRenderer")).render(shadowLayerTexture,
@@ -651,6 +656,10 @@ public class Game extends GameState {
 
 	@Override
 	public void update(float deltaTime) {
+		if(seconds.hasElapsed()) {
+			seconds.reset();
+			System.out.println("\nEntities loaded:\t "+getEm().getAllEntities().size());
+		}
 		BasicComponent ppc = em.getFirstComponent(player, BasicComponent.class);
 		AudioEngine.getSelf().setListenerAt(ppc.getPosition());
 
@@ -706,6 +715,7 @@ public class Game extends GameState {
 					chunksOnScreen[x][y] = chunkMap.get(currentCameraGridX + x - 1, currentCameraGridY + y - 1);
 					Texture t = new Texture();
 					
+					//TODO: mem. leak
 					t.generateFloatTextureFromBuffer(
 							BufferUtilities.createFloatBuffer(chunksOnScreen[x][y].getPerlinNoise()),
 							chunksOnScreen[x][y].getPerlinNoise().length,
@@ -720,15 +730,17 @@ public class Game extends GameState {
 			for (int x = 0; x < chunksOnScreen.length; x++)
 				if (texturenOnScreen[x][y] != null && chunksOnScreen[x][y] != null
 						&& chunksOnScreen[x][y].getBoundingBox().intersects(screenView)) {
-					chunksOnScreen[x][y].setWaterDx(FastMath.sin(Math.toRadians(260 * timer.getElapsedDelta())));
-					chunksOnScreen[x][y].setWetSandDx(FastMath.sin(Math.toRadians(180 * timer.getElapsedDelta())));
-
+					Vec2 pos = new Vec2(chunksOnScreen[x][y].getX() * ChunkManager.CHUNK_WIDTH * 1.00,
+							chunksOnScreen[x][y].getY() * ChunkManager.CHUNK_HEIGHT * 1.00);
+					
 					((TextureRenderer) ResourceManager.getSelf().getRenderer("textureRenderer")).render(
 							texturenOnScreen[x][y].getId(),
-							new Vec2(chunksOnScreen[x][y].getX() * ChunkManager.CHUNK_WIDTH * 1.00,
-									chunksOnScreen[x][y].getY() * ChunkManager.CHUNK_HEIGHT * 1.00),
+							pos,
 							new Vec2(ChunkManager.CHUNK_WIDTH, ChunkManager.CHUNK_HEIGHT), 0, new Vec4(1, 1, 1, 1),
 							new Vec4(0, 0, 1, 1), new Vec2(0, 0), new Vec2(0, 0));
+					
+					ResourceManager.getSelf().getFont("sourcesanspro").render("["+chunksOnScreen[x][y].getX() + ", "+ chunksOnScreen[x][y].getY()+"]", pos.x, pos.y, new Vec4(1,1,1,1));
+					ResourceManager.getSelf().getFont("sourcesanspro").render(x+", "+y, pos.x + 100, pos.y, new Vec4(1,1,1,1));
 				}
 	}
 

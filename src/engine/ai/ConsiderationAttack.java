@@ -13,6 +13,8 @@ public class ConsiderationAttack implements Consideration {
 	@Override
 	public float evaluate(long obj, EntityManager em) {
 		SightComponent sm = em.getFirstComponent(obj, SightComponent.class);
+		if(sm==null)
+			return 0;
 		RenderComponent rc = em.getFirstComponent(obj, RenderComponent.class);
 		Rectangle r = sm.calculateSightView(rc.getRenderPosition());
 

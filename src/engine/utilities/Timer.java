@@ -1,6 +1,9 @@
 package engine.utilities;
 
 public class Timer {
+	/**
+	 * Start time in nanoseconds
+	 */
 	private long startTime;
 	private long reverseTimeStart;
 	/**

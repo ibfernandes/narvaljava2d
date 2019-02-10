@@ -35,6 +35,11 @@ public class Font {
    private final Texture texture;
    private int fontHeight;
    private Vec2 boxSize = new Vec2(0,0);
+   private Vec2 position = new Vec2();
+   private Vec2 size = new Vec2();
+   private Vec4 spriteFrame = new Vec4();
+   private Vec2 orientation = new Vec2(0,1);
+   
 
    /**
     * Creates a default font with monospaced glyphs and default size 128.
@@ -301,13 +306,18 @@ public class Font {
            
            Glyph g = glyphs.get(ch);
           
-           float xStart = (float)g.x/(float)texture.getWidth();
-           float yStart = (float)g.y/(float)texture.getHeight();
-           float width = (float)g.width/(float)texture.getWidth();
-           float height = (float)g.height/(float)texture.getHeight();
+           spriteFrame.x = (float)g.x/(float)texture.getWidth();
+           spriteFrame.y = (float)g.y/(float)texture.getHeight();
+           spriteFrame.z = (float)g.width/(float)texture.getWidth();
+           spriteFrame.w = (float)g.height/(float)texture.getHeight();
            
-           Vec4 frame = new Vec4(xStart, yStart,width, height);
-           batchRenderer.render(new Vec2(drawX,drawY), new Vec2(g.width*.2,g.height*.2f), 0f, color, frame, new Vec2(0,1));
+           position.x = drawX;
+           position.y = drawY;
+           
+           size.x = g.width*.2f;
+           size.y = g.height*.2f;
+           
+           batchRenderer.render(position, size, 0f, color, spriteFrame, orientation);
            
            drawX += g.width*.2f;
        }

@@ -20,6 +20,21 @@ public class MathExt {
 	}
 	
 	/**
+	 * Calculates the distance between two vectors.
+	 * 
+	 * @param vecA
+	 * @param vecB
+	 * @return
+	 */
+	public static float calculateDistance(float xa, float ya, float xb, float yb) {
+		return (float) Math.sqrt(
+				Math.pow(xa - xb, 2)
+				+
+				Math.pow(ya - yb, 2)
+				);
+	}
+	
+	/**
 	 * Calculates the angle in degrees between two vectors.
 	 * 
 	 * @param vecA

@@ -5,6 +5,8 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import java.nio.FloatBuffer;
+
 import engine.graphic.Shader;
 import engine.graphic.Texture;
 import engine.utilities.BufferUtilities;
@@ -21,9 +23,11 @@ public class TextureRenderer implements Renderer{
 	private Mat4 model = new Mat4();
 	private Vec2 defaultZero2f = new Vec2(0,0);
 	private Vec4 defaultSpriteFrame = new Vec4(0,0,1,1);
+	private FloatBuffer floatBuffer;
 	
 	public TextureRenderer(Shader shader) {
 		this.shader = shader;
+		floatBuffer = BufferUtilities.createFloatBuffer(4*4);
 		init();
 	}
 	
@@ -123,7 +127,9 @@ public class TextureRenderer implements Renderer{
 		model = model.mul(skew);
 		model = model.scale(size.x, size.y, 1);
 		
-		shader.setMat4("model", model);
+		floatBuffer = BufferUtilities.fillFloatBuffer(floatBuffer, model);
+		
+		shader.setMat4("model", floatBuffer);
 		shader.setVec4("spriteColor", color);
 		shader.setVec2("flip", orientation);
 		shader.setVec4("spriteFrame", spriteFrame);

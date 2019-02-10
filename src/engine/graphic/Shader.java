@@ -3,6 +3,8 @@ package engine.graphic;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL32.*;
 
+import java.nio.FloatBuffer;
+
 import engine.utilities.BufferUtilities;
 import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
@@ -62,7 +64,7 @@ public class Shader {
 		if (geometrySource != null)
 			glDeleteShader(geometryShader);
 	}
-	
+
 	/**
 	 * Checks and print compiling ERRORS.
 	 * 
@@ -124,8 +126,8 @@ public class Shader {
 		glUniform4f(glGetUniformLocation(id, name), pos.x, pos.y, pos.z, pos.w);
 	}
 
-	public void setMat4(String name, Mat4 m) {
-		glUniformMatrix4fv(glGetUniformLocation(id, name), false, BufferUtilities.createFloatBuffer(m));
+	public void setMat4(String name, FloatBuffer bf) {
+		glUniformMatrix4fv(glGetUniformLocation(id, name), false, bf);
 	}
 
 	public void setPointLight(int index, Vec3 pos, Vec3 ambientColor, Vec3 lightColor, float constant, float linear,

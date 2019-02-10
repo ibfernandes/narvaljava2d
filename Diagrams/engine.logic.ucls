@@ -65,63 +65,39 @@
     </display>  
   </class>  
   <association id="8">    
+    <bendpoint x="737" y="451"/>    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="9" name="savingChunks">        
+      <attribute id="9" name="loadingChunksToRemove">        
         <position height="0" width="0" x="0" y="0"/>      
       </attribute>      
       <multiplicity id="10" minimum="0" maximum="2147483647">        
         <position height="0" width="0" x="0" y="0"/>      
       </multiplicity>    
     </end>    
-    <end type="TARGET" refId="5" navigable="true"/>    
+    <end type="TARGET" refId="4" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="11">    
+    <bendpoint x="768" y="380"/>    
+    <bendpoint x="926" y="564"/>    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="12" name="chunksToSave">        
+      <attribute id="12" name="loadingChunks">        
         <position height="0" width="0" x="0" y="0"/>      
       </attribute>      
       <multiplicity id="13" minimum="0" maximum="2147483647">        
         <position height="0" width="0" x="0" y="0"/>      
       </multiplicity>    
     </end>    
-    <end type="TARGET" refId="2" navigable="true"/>    
+    <end type="TARGET" refId="4" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="14">    
-    <bendpoint x="768" y="380"/>    
-    <bendpoint x="926" y="564"/>    
+    <bendpoint x="414" y="475"/>    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="15" name="loadingChunks">        
+      <attribute id="15" name="savingChunksToRemove">        
         <position height="0" width="0" x="0" y="0"/>      
       </attribute>      
       <multiplicity id="16" minimum="0" maximum="2147483647">        
-        <position height="0" width="0" x="0" y="0"/>      
-      </multiplicity>    
-    </end>    
-    <end type="TARGET" refId="4" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <association id="17">    
-    <bendpoint x="737" y="451"/>    
-    <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="18" name="loadingChunksToRemove">        
-        <position height="0" width="0" x="0" y="0"/>      
-      </attribute>      
-      <multiplicity id="19" minimum="0" maximum="2147483647">        
-        <position height="0" width="0" x="0" y="0"/>      
-      </multiplicity>    
-    </end>    
-    <end type="TARGET" refId="4" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <association id="20">    
-    <bendpoint x="414" y="475"/>    
-    <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="21" name="savingChunksToRemove">        
-        <position height="0" width="0" x="0" y="0"/>      
-      </attribute>      
-      <multiplicity id="22" minimum="0" maximum="2147483647">        
         <position height="0" width="0" x="0" y="0"/>      
       </multiplicity>    
     </end>    

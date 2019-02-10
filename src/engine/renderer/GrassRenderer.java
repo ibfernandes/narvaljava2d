@@ -5,6 +5,7 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import java.nio.FloatBuffer;
 import java.util.Arrays;
 import engine.entity.component.RenderComponent;
 import engine.graphic.Shader;
@@ -21,10 +22,12 @@ public class GrassRenderer implements Renderer{
 	private int numOfLayers = 8;
 	private Mat4 skew = new Mat4();
 	private Mat4 model = new Mat4();
+	private FloatBuffer floatBuffer;
 
 	
 	public GrassRenderer(Shader shader) {
 		this.shader = shader;
+		floatBuffer = BufferUtilities.createFloatBuffer(4*4);
 		init();
 	}
 	
@@ -137,9 +140,9 @@ public class GrassRenderer implements Renderer{
 		model = model.translate(-0.5f * size.x, -0.5f *size.y, 0); //Move the origin of rotation back to it's top left
 		model = model.mul(skew);
 		model = model.scale(size.x, size.y, 1);
-		
+		floatBuffer = BufferUtilities.fillFloatBuffer(floatBuffer, model);
 
-		shader.setMat4("model", model);
+		shader.setMat4("model", floatBuffer);
 		shader.setVec4("spriteColor", color);
 		shader.setVec2("flip", orientation);
 		shader.setVec4("spriteFrame", spriteFrame);

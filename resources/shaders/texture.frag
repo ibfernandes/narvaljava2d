@@ -84,7 +84,9 @@ vec3 calculatePointLightLOPENGL(PointLight light){
 #define SAND vec4(0.956, 0.917, 0.733 , 1)
 #define WET_SAND vec4(0.956, 0.839, 0.654,1)
 
-
+float normalize(float xmin, float xmax, float x, float a, float b) {
+	return (b-a) * (x - xmin)/(xmax - xmin) + a;
+}
 
 void main(){
 
@@ -95,10 +97,6 @@ void main(){
 		if (perlinTex.x > -.1) { // land
 			imgTex = GRASS; 
 		}
-		
-		if (perlinTex.x <= -0.1f) // preenche tudo com água
-			imgTex = TURKISH;
-
 		if (perlinTex.x <= -0.1f) { // sand
 			imgTex =  SAND;
 		//	if (whiteNoise[x][y] > 0)
@@ -122,8 +120,9 @@ void main(){
 			//}
 		}
 
-		if (perlinTex.x <= -0.266f + waveDx * 0.016f) // water
-			imgTex = TURKISH;
+		if (perlinTex.x <= -0.266f + waveDx * 0.016f){ // water
+			imgTex = TURKISH * normalize(-0.8f, -0.283f, perlinTex.x, 0.7f, 1.0f);
+		}
 	}else{
 		imgTex =  texture(image, TexCoords).xyzw;
 	}

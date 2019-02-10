@@ -1,8 +1,5 @@
 package engine.utilities;
 
-import org.lwjgl.glfw.GLFW;
-
-import engine.states.GSM;
 import glm.vec._2.Vec2;
 
 public class Commons {

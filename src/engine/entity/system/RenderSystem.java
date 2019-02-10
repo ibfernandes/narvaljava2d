@@ -54,7 +54,6 @@ public class RenderSystem extends ComponentSystem {
 
 	@Override
 	public void render() {
-
 		for (RenderComponent rc : components) {
 			if (!rc.isDisabled()) {
 				if (rc.getRenderer().equals("textureRenderer"))
@@ -72,20 +71,6 @@ public class RenderSystem extends ComponentSystem {
 				}
 			}
 		}
-	}
-
-	public void renderv2() {
-		TextureBatchRenderer t2 = ResourceManager.getSelf().getRenderer("textureRendererv2");
-
-		// t2.start();
-
-		for (RenderComponent rc : components) {
-			if (!rc.isDisabled()) {
-				t2.render(rc);
-			}
-		}
-
-		t2.end();
 	}
 
 	@Override

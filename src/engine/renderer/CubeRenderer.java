@@ -4,6 +4,8 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import java.nio.FloatBuffer;
+
 import engine.entity.component.RenderComponent;
 import engine.geometry.Rectangle;
 import engine.graphic.Shader;
@@ -15,9 +17,12 @@ import glm.vec._4.Vec4;
 public class CubeRenderer implements Renderer{
 	private Shader shader;
 	private int quadVAO;
+	private FloatBuffer floatBuffer;
+	private Mat4 model = new Mat4();
 	
 	public CubeRenderer(Shader shader) {
 		this.shader = shader;
+		floatBuffer = BufferUtilities.createFloatBuffer(4*4);
 		init();
 	}
 	
@@ -47,15 +52,17 @@ public class CubeRenderer implements Renderer{
 	
 	public void render(Vec2 position, Vec2 size, float rotate, Vec4 color) {
 		shader.use();
-		Mat4 model = new Mat4();
 		
+		model = model.identity();
 		model = model.translate(position.x, position.y, 0);
 		model = model.translate(0.5f * size.x, 0.5f *size.y, 0);
 		model = model.rotate(rotate, 0, 0, 1);
 		model = model.translate(-0.5f * size.x, -0.5f *size.y, 0);
 		model = model.scale(size.x, size.y, 1);
+		
+		floatBuffer = BufferUtilities.fillFloatBuffer(floatBuffer, model);
 
-		shader.setMat4("model", model);
+		shader.setMat4("model", floatBuffer);
 		shader.setVec4("cubeColor", color);
 		
 		glBindVertexArray(quadVAO);

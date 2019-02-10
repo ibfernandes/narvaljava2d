@@ -7,6 +7,8 @@ import static org.lwjgl.openal.ALC10.alcGetString;
 import static org.lwjgl.openal.ALC10.alcMakeContextCurrent;
 import static org.lwjgl.openal.ALC10.alcOpenDevice;
 
+import java.text.DecimalFormat;
+
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
 import engine.input.JoystickControl;
@@ -31,6 +33,7 @@ public class Engine implements Runnable {
 	private float alphaInterpolator = 1;
 	private long higherRender = 0;
 	private long avgRender = 0;
+	private DecimalFormat df;
 
 	private Engine() {
 	}
@@ -65,6 +68,9 @@ public class Engine implements Runnable {
 		GSM.getSelf().setKeyboard(keyboard);
 		GSM.getSelf().setMouse(mouse);
 		GSM.getSelf().setJoystick(joystick);
+		
+		df = new DecimalFormat();
+        df.applyPattern("0.00");
 	}
 
 	private void initAudioSystem() {
@@ -160,10 +166,10 @@ public class Engine implements Runnable {
 				long usedMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 				usedMemory = usedMemory / MEGABYTE;
 				System.out.printf("\n===============================" + "\nUPS:\t" + updates + "\nFPS:\t" + maxFPS + '\n'
-						+ "\nUPS AVG:\t" + (float) (avg / updates) / Timer.MILLISECOND + "ms" + "\nUPS pike:\t"
-						+ (float) higher / Timer.MILLISECOND + "ms" + "\nUPS pike calls:\t" + longestDelay + '\n'
-						+ "\nFPS AVG:\t" + (float) (avgRender / maxFPS) / Timer.MILLISECOND + "ms" + "\nFPS pike:\t"
-						+ (float) higherRender / Timer.MILLISECOND + "\n" + "\nMem. usage:\t" + usedMemory + " MB"
+						+ "\nUPS AVG:\t" + df.format((float) (avg / updates) / Timer.MILLISECOND) + "\t ms" + "\nUPS pike:\t"
+						+ df.format((float) higher / Timer.MILLISECOND) + "\t ms" + "\nUPS pike calls:\t" + longestDelay + '\n'
+						+ "\nFPS AVG:\t" + df.format((float) (avgRender / maxFPS) / Timer.MILLISECOND) + "\t ms" + "\nFPS pike:\t"
+						+ df.format((float) higherRender / Timer.MILLISECOND) + "\t ms \n" + "\nMem. usage:\t" + usedMemory + " MB"
 
 				);
 

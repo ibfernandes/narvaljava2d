@@ -147,6 +147,18 @@ public class BufferUtilities {
 		return buffer;
 	}
 	
+	public static FloatBuffer fillFloatBuffer(FloatBuffer buffer, Mat4 mat){
+		buffer.clear();
+		
+		buffer.put(mat.m00);	buffer.put(mat.m01);	buffer.put(mat.m02);	buffer.put(mat.m03);
+		buffer.put(mat.m10);	buffer.put(mat.m11);	buffer.put(mat.m12);	buffer.put(mat.m13);
+		buffer.put(mat.m20);	buffer.put(mat.m21);	buffer.put(mat.m22);	buffer.put(mat.m23);
+		buffer.put(mat.m30);	buffer.put(mat.m31);	buffer.put(mat.m32);	buffer.put(mat.m33);
+
+		buffer.flip();
+		return buffer;
+	}
+	
 	private static ByteBuffer resizeBuffer(ByteBuffer buffer, int newCapacity) {
         ByteBuffer newBuffer = BufferUtils.createByteBuffer(newCapacity);
         buffer.flip();

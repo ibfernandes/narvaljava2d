@@ -1,7 +1,6 @@
 package engine.particle;
 
 import java.util.ArrayList;
-import engine.engine.Engine;
 import engine.utilities.Timer;
 
 public class ParticleEngine {

@@ -1,7 +1,6 @@
 package engine.logic;
 
 import java.io.Serializable;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -11,41 +10,31 @@ import engine.entity.Entity;
 import engine.entity.EntityManager;
 import engine.entity.component.BasicComponent;
 import engine.entity.component.Component;
+import engine.entity.component.MoveComponent;
 import engine.entity.component.RenderComponent;
 import engine.entity.componentModels.BasicEntity;
 import engine.geometry.Rectangle;
 import engine.graphic.Animation;
-import engine.graphic.Texture;
 import engine.noise.FastNoise;
-import engine.utilities.BufferUtilities;
-import engine.utilities.ByteBufferExt;
-import engine.utilities.Color;
-import engine.utilities.MathExt;
 import engine.utilities.Vec2i;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
 
 public class Chunk implements Serializable {
 
-	private int mapRGB[][];
 	private int x, y;
 	private int chunkWidth, chunkHeight;
 	private int textureWidth, textureHeight;
 	private int mapWidth, mapHeight;
 	public static final int NOISE_DIVISOR = 5;
 	private static final float PERLIN_BOUNDARIES = (float) Math.sqrt(3.0/4.0);
-	private HashMap<Float, Entity> objects;
 	private HashMap<Long, ArrayList<Component>> componentsOfEntities = new HashMap<>();
 	private transient Random random = new Random();
 	private transient EntityManager em;
-	private double waterDx = 1;
-	private double wetSandDx = 1;
 	private float perlinNoise[][];
 	private float whiteNoise[][];
 	private float fractalNoise[][];
 	private transient FastNoise fastNoise = new FastNoise();
-	private ByteBufferExt terrainBuffer;
-	private double waveVariation = 0.016;
 	private Rectangle boundingBox = new Rectangle(0, 0, 0, 0);
 
 	public Chunk(int x, int y, int chunkWidth, int chunkHeight, int mapWidth, int mapHeight, EntityManager em) {
@@ -65,20 +54,12 @@ public class Chunk implements Serializable {
 		textureWidth = chunkWidth / NOISE_DIVISOR;
 		textureHeight = chunkHeight / NOISE_DIVISOR;
 
-		mapRGB = new int[textureWidth][textureHeight];
 		perlinNoise = new float[textureWidth][textureHeight];
 		whiteNoise = new float[textureWidth][textureHeight];
 		fractalNoise = new float[textureWidth][textureHeight];
-		objects = new HashMap<>();
 		fastNoise.SetSeed(12345);
-
-		terrainBuffer = new ByteBufferExt(
-				BufferUtilities.createByteBuffer(new byte[textureWidth * textureHeight * Texture.BYTES_PER_PIXEL]));
 	}
 
-	public int[][] getTerrain() {
-		return mapRGB;
-	}
 
 	public float noise(FastNoise fastNoise, float x, float y) {
 		float noise = 0;
@@ -92,7 +73,7 @@ public class Chunk implements Serializable {
 		return noise;
 	}
 
-	public void generateNoise() {
+	public void generateNoiseAndTerrain() {
 		float d;
 		float a = 0.15f;
 		float b = 0.9f;
@@ -117,91 +98,19 @@ public class Chunk implements Serializable {
 				fractalNoise[x][y] = fastNoise.GetPerlinFractal(coordX / 4, coordY);
 
 				perlinNoise[x][y] = perlinNoise[x][y] + a - b * (float) Math.pow(d, c);
-			}
-		}
-	}
-
-	public void generateTerrain() {
-		terrainBuffer.getBytebuffer().clear();
-
-		for (int y = 0; y < textureHeight; y++) {
-			for (int x = 0; x < textureWidth; x++) {
-
-				// NOTE: values grow downwards
-				if (perlinNoise[x][y] > -.1) { // land
-					mapRGB[x][y] = Color.GRASS_GROUND; // esmeralda
-					if (fractalNoise[x][y] > 0.2)
-						mapRGB[x][y] = Color.GRASS_GROUND_LIGHTER;
-				}
-
-				if (perlinNoise[x][y] <= -.1) // preenche tudo com água
-					mapRGB[x][y] = Color.OCEAN_GROUND; // turquesa
-
-				if (perlinNoise[x][y] <= -.1) { // sand
-					mapRGB[x][y] = (255 << 24) | (244 << 16) | (234 << 8) | (187); // ARGB
-					if (whiteNoise[x][y] > 0)
-						mapRGB[x][y] = (255 << 24) | (234 << 16) | (224 << 8) | (167); // ARGB
-				}
-
-				if (perlinNoise[x][y] < -.230 + wetSandDx * waveVariation) { // wet sand
-					mapRGB[x][y] = (255 << 24) | (224 << 16) | (214 << 8) | (167); // ARGB
-					if (whiteNoise[x][y] > 0)
-						mapRGB[x][y] = (255 << 24) | (234 << 16) | (224 << 8) | (167); // ARGB
-				}
-
-				if (perlinNoise[x][y] < -.230 + waterDx * waveVariation) // espuma
-					mapRGB[x][y] = Color.WHITE; // ARGB
-
-				if (perlinNoise[x][y] < -.244 + waterDx * waveVariation) { // espuma back
-					mapRGB[x][y] = (255 << 24) | (22 << 16) | (160 << 8) | (133); // green se
-					if (perlinNoise[x][y] > -.2445 + waterDx * waveVariation) {
-						if (whiteNoise[x][y] < 0.2f)
-							mapRGB[x][y] = Color.WHITE;
-					}
-				}
-
-				if (perlinNoise[x][y] <= -.266 + waterDx * waveVariation) // water
-					mapRGB[x][y] = Color.TURKISH; // turquesa
-
+				
 				if (whiteNoise[x][y] > 0.9999
-						&& (mapRGB[x][y] == Color.GRASS_GROUND || mapRGB[x][y] == Color.DARKED_ESMERALDA)) {
-					if (objects.containsKey(whiteNoise[x][y]))
-						continue;
+						&& perlinNoise[x][y] > -.1) {
 
-					objects.put(whiteNoise[x][y], generateRandomTree(x, y));
+
+					generateRandomTree(x, y);
 				} else if (whiteNoise[x][y] > 0.99
-						&& (mapRGB[x][y] == Color.GRASS_GROUND || mapRGB[x][y] == Color.DARKED_ESMERALDA)) {
-					if (objects.containsKey(whiteNoise[x][y]))
-						continue;
+						&& perlinNoise[x][y] > -.1) {
 
-					objects.put(whiteNoise[x][y], generateRandomGroundVegetation(x, y));
+					generateRandomGroundVegetation(x, y);
 				}
-				
-				mapRGB[x][y] = mapNoiseToGreyScale(perlinNoise[x][y]);
-	
-				
-				// RGBA color
-				terrainBuffer.getBytebuffer().put((byte) ((mapRGB[x][y] >> 16) & 0xFF));
-				terrainBuffer.getBytebuffer().put((byte) ((mapRGB[x][y] >> 8) & 0xFF));
-				terrainBuffer.getBytebuffer().put((byte) (mapRGB[x][y] & 0xFF));
-				terrainBuffer.getBytebuffer().put((byte) ((mapRGB[x][y] >> 24) & 0xFF));
 			}
 		}
-		terrainBuffer.getBytebuffer().flip();
-	}
-	
-	private int mapNoiseToGreyScale(float value) {
-		float result;
-		
-		if(value<0) {
-			value = value * -1;
-			result = value * 0 + (PERLIN_BOUNDARIES - value) * 127;
-		}else {
-			result = value * 128 + (PERLIN_BOUNDARIES - value) * 255;
-		}
-		int RGB = (int) result;
-
-		return 255 <<24 | RGB << 16 | RGB << 8 | RGB;
 	}
 
 	public Entity generateRandomTree(int x, int y) {
@@ -223,7 +132,8 @@ public class Chunk implements Serializable {
 
 		Entity e = BasicEntity.generate(em, "grassRenderer", position, null, orientation, new Vec2(740, 612), asm,
 				new Rectangle(0.0f, 0.99f, 1.0f, 0.1f));
-
+		e.setChunkX(this.x);
+		e.setChunkY(this.y);
 		return e;
 	}
 
@@ -265,26 +175,56 @@ public class Chunk implements Serializable {
 		components.add(rc);
 		components.add(pc);
 		componentsOfEntities.put(e.getID(), components);
-
+		e.setChunkX(this.x);
+		e.setChunkY(this.y);
 		return e;
 	}
 
-	public void addAllEntitiesToEntityManager() {
+	public void transferAllEntitiesToEntityManager() {
 		HashMap<Long, ArrayList<Component>> newHashMap = new HashMap<>();
-
+		
 		for (Long l : componentsOfEntities.keySet()) {
 			Entity e = Game.getSelf().getEm().newEntity();
+			e.setChunkX(this.x);
+			e.setChunkY(this.y);
 
-			for (Component c : componentsOfEntities.get(l))
+			for (Component c : componentsOfEntities.get(l)) {
+				c.setEntityID(e.getID());
 				Game.getSelf().getEm().addComponentTo(e, c);
+			}
 
 			newHashMap.put(e.getID(), componentsOfEntities.get(l));
 		}
-
-		componentsOfEntities = newHashMap;
+		
+		componentsOfEntities.clear();
+	}
+	
+	private void copyEntityAndComponentsFromEntityManager(Entity e) {
+		ArrayList<Component> compos = Game.getSelf().getEm().getAllComponentsOfEntity(e);
+		componentsOfEntities.put(e.getID(),compos);
+	}
+	
+	public void getEntitiesFromEntityManager() {
+		componentsOfEntities.clear();
+		
+		for(Entity e: Game.getSelf().getEm().getAllEntities()) {
+			if(!e.shouldSave())
+				continue;
+			
+			if(Game.getSelf().getEm().getFirstComponent(e, MoveComponent.class)==null) {
+				if(e.getChunkX()==this.x && e.getChunkY()==this.y) {
+					copyEntityAndComponentsFromEntityManager(e);
+				}
+			}else {
+				BasicComponent bc = Game.getSelf().getEm().getFirstComponent(e, BasicComponent.class);
+				if(bc.getBoundingBox().intersects(getBoundingBox())) {
+					copyEntityAndComponentsFromEntityManager(e);
+				}
+			}
+		}
 	}
 
-	public void removeAllEntities() {
+	public void removeAllEntitiesFromEntityManager() {
 		for (Long l : componentsOfEntities.keySet()) {
 			Game.getSelf().getEm().removeEntity(l);
 		}
@@ -312,30 +252,6 @@ public class Chunk implements Serializable {
 
 	public static String getID(int x, int y) {
 		return x + "_" + y;
-	}
-
-	public double getWaterDx() {
-		return waterDx;
-	}
-
-	public void setWaterDx(double waterDx) {
-		this.waterDx = waterDx;
-	}
-
-	public double getWetSandDx() {
-		return wetSandDx;
-	}
-
-	public void setWetSandDx(double wetSandDx) {
-		this.wetSandDx = wetSandDx;
-	}
-
-	public ByteBuffer getTerrainBuffer() {
-		return terrainBuffer.getBytebuffer();
-	}
-
-	public void setTerrainBuffer(ByteBuffer terrainBuffer) {
-		this.terrainBuffer.setBytebuffer(terrainBuffer);
 	}
 
 	public Rectangle getBoundingBox() {
