@@ -26,6 +26,9 @@ public class Animation implements Serializable {
 	 */
 	public Animation(String texture, long frameDuration) {
 		this.texture = texture;
+		if(ResourceManager.getSelf().getTexture(texture)==null)
+			throw new Error("Texture wasn't loaded");
+		
 		this.frameDuration = frameDuration;
 	}
 
@@ -38,11 +41,15 @@ public class Animation implements Serializable {
 	 */
 	public Animation(String texture, long frameDurations[]) {
 		this.texture = texture;
+		if(ResourceManager.getSelf().getTexture(texture)==null)
+			throw new Error("Texture wasn't loaded");
+		
 		this.frameDurations = frameDurations;
 	}
 
 	/**
-	 * Sets frames horizontally and evenly from a sprite sheet.
+	 * Sets frames horizontally and evenly spaced from a texture (sprite sheet). All
+	 * values are normalized using Texture.width and Texture.height.
 	 * 
 	 * @param quantity
 	 * @param offset
@@ -57,7 +64,32 @@ public class Animation implements Serializable {
 			frames[i] = new Vec4((i * size.x + offset.x) / width, (offset.y) / height, (size.x) / width,
 					(size.y) / height);
 		}
+	}
 
+	/**
+	 * Sets frames horizontally and evenly spaced from a texture (sprite sheet). All
+	 * values are normalized using Texture.width and Texture.height.
+	 * 
+	 * @param texture
+	 * @param quantity
+	 * @param offsetX
+	 * @param offsetY
+	 * @param sizeX
+	 * @param sizeY
+	 * @return
+	 */
+	public static Vec4[] generateFrames(String texture, int quantity, float offsetX, float offsetY, float sizeX,
+			float sizeY) {
+		Vec4 frames[] = new Vec4[quantity];
+
+		float width = ResourceManager.getSelf().getTexture(texture).getWidth();
+		float height = ResourceManager.getSelf().getTexture(texture).getHeight();
+
+		for (int i = 0; i < quantity; i++) {
+			frames[i] = new Vec4((i * sizeX + offsetX) / width, (offsetY) / height, (sizeX) / width, (sizeY) / height);
+		}
+
+		return frames;
 	}
 
 	/**

@@ -14,8 +14,11 @@ public class ReadingChunk {
 	private Future<Integer> promise;
 	private ByteBuffer buffer = ByteBuffer.allocate(ChunkManager.CHUNK_BUFFER_SIZE);
 	private Path filePath;
+	private int x,y;
 
-	public ReadingChunk(String path, String id) {
+	public ReadingChunk(String path, int x, int y) {
+		this.x=x;
+		this.y=y;
 		filePath = Paths.get(path);
 	}
 	
@@ -52,5 +55,13 @@ public class ReadingChunk {
 			return (Chunk) in.readObject();
 		}
 		return null;
+	}
+
+	public int getX() {
+		return x;
+	}
+
+	public int getY() {
+		return y;
 	}
 }

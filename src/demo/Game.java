@@ -59,6 +59,7 @@ import engine.renderer.ShadowRenderer;
 import engine.renderer.TextureRenderer;
 import engine.ui.Font;
 import engine.renderer.TextureBatchRenderer;
+import engine.utilities.ArraysExt;
 import engine.utilities.BufferUtilities;
 import engine.utilities.QuadTree;
 import engine.utilities.ResourceManager;
@@ -98,12 +99,12 @@ public class Game extends GameState {
 																												// x
 																												// axis
 	private Chunk chunksOnScreen[][] = new Chunk[rowSize][columnSize];
-	private boolean chunkHasLoaded[][] = new boolean[rowSize][columnSize];
 	private Texture texturenOnScreen[][] = new Texture[rowSize][columnSize];
 	private int previousCameraGridX;
 	private int previousCameraGridY;
 	private int currentCameraGridX;
 	private int currentCameraGridY;
+	private FloatBuffer chunkTextureFloatBuffer;
 
 	// Graph used for pathfinding
 	public static final int GRAPH_DIVISOR = 8;
@@ -119,6 +120,7 @@ public class Game extends GameState {
 	private SystemManager sm = new SystemManager();
 
 	private static Game self;
+	
 
 	private Game() {
 	};
@@ -134,6 +136,7 @@ public class Game extends GameState {
 		screenView = new Rectangle(0, 0, Engine.getSelf().getWindow().getWidth(),
 				Engine.getSelf().getWindow().getHeight());
 		chunkMap = new ChunkManager(EngineSettings.getSelf().getMapSeed());
+		chunkTextureFloatBuffer = BufferUtilities.createFloatBuffer(ChunkManager.CHUNK_WIDTH*ChunkManager.CHUNK_HEIGHT);
 
 		// ==================================
 		// Loads all shaders
@@ -147,33 +150,20 @@ public class Game extends GameState {
 		// ==================================
 		// Loads all textures
 		// ==================================
-		ResourceManager.getSelf().loadTexture("rogue", "sprites/rogue.png");
-		ResourceManager.getSelf().loadTexture("rogue_normal", "sprites/rogue_normal.png");
-		ResourceManager.getSelf().loadTexture("cleric", "sprites/cleric.png");
-		ResourceManager.getSelf().loadTexture("cleric_normal", "sprites/cleric_normal.png");
-		ResourceManager.getSelf().loadTexture("ranger", "sprites/ranger.png");
-		ResourceManager.getSelf().loadTexture("grass", "sprites/grass.png");
-		ResourceManager.getSelf().loadTexture("wheat", "sprites/wheat.png");
-		ResourceManager.getSelf().loadTexture("wooden_chair", "sprites/wooden_chair.png");
-		ResourceManager.getSelf().loadTexture("wooden_box", "sprites/wooden_box.png");
-		ResourceManager.getSelf().loadTexture("cube", "sprites/cube.png");
-		ResourceManager.getSelf().loadTexture("bonfire", "sprites/bonfire.png");
-		ResourceManager.getSelf().loadTexture("flower", "sprites/flower.png");
-		ResourceManager.getSelf().loadTexture("flower_blue", "sprites/flower_blue.png");
-		ResourceManager.getSelf().loadTexture("flower_red", "sprites/flower_red.png");
-		ResourceManager.getSelf().loadTexture("tree", "sprites/tree.png");
-		ResourceManager.getSelf().loadTexture("house", "sprites/house.png");
-		ResourceManager.getSelf().loadTexture("ranger_swimming", "sprites/ranger_swimming.png");
-		ResourceManager.getSelf().loadTexture("e_button", "sprites/e_button.png");
-		ResourceManager.getSelf().loadTexture("yellow_bird", "sprites/yellow_bird.png");
-		ResourceManager.getSelf().loadTexture("black_bird", "sprites/black_bird.png");
-		ResourceManager.getSelf().loadTexture("red_bird", "sprites/red_bird.png");
-		ResourceManager.getSelf().loadTexture("orange_bird", "sprites/orange_bird.png");
-		ResourceManager.getSelf().loadTexture("blue_bird", "sprites/blue_bird.png");
-		ResourceManager.getSelf().loadTexture("tree2", "sprites/tree2.png");
-		ResourceManager.getSelf().loadTexture("deer", "sprites/deer.png");
-		ResourceManager.getSelf().loadTexture("logo", "logo.png");
 		ResourceManager.getSelf().loadTexture("main_char", "sprites/main_char.png");
+		ResourceManager.getSelf().loadTexture("alt_char", "sprites/alt_char.png");
+		ResourceManager.getSelf().loadTexture("e_button", "sprites/e_button.png");
+		ResourceManager.getSelf().loadTexture("terrain_atlas", "sprites/terrain_atlas.png");
+		ResourceManager.getSelf().loadTexture("terrain_atlas_normal", "sprites/terrain_atlas.png");
+		
+		// ==================================
+		// Loads all spriteFrames
+		// ==================================
+		ResourceManager.getSelf().setSpriteFrame("red_mushroom", Animation.generateFrames("terrain_atlas", 1, 0, 0, 4, 4));
+		ResourceManager.getSelf().setSpriteFrame("orange_mushroom", Animation.generateFrames("terrain_atlas", 1, 4, 0, 4, 4));
+		ResourceManager.getSelf().setSpriteFrame("grass", Animation.generateFrames("terrain_atlas", 1, 85, 0, 7, 8));
+		ResourceManager.getSelf().setSpriteFrame("main_char_idle", Animation.generateFrames("terrain_atlas", 3, 0, 60, 20, 40));
+		ResourceManager.getSelf().setSpriteFrame("main_char_walking", Animation.generateFrames("terrain_atlas", 8, 0, 100, 20, 40));
 
 		// ==================================
 		// Loads all Audio
@@ -203,9 +193,6 @@ public class Game extends GameState {
 		ResourceManager.getSelf().getShader("texture").setPointLight(0,
 				new Vec3(startPoint.x - 3000, startPoint.y, 300), new Vec3(1, 1, 1), new Vec3(1, 0, 0), 1f, 0.001f,
 				0.000002f);
-		// ResourceManager.getSelf().getShader("texture").setPointLight(1, new
-		// Vec3(startPoint.x-200, startPoint.y, 300),
-		// new Vec3(1,1,1), new Vec3(0,1,0), 1f, 0.001f, 0.000002f);
 
 		ResourceManager.getSelf().getShader("texture").setFloat("dayTime", 1f);
 		ResourceManager.getSelf().getShader("texture").setVec3("ambientColor", new Vec3(0, 0, 0));
@@ -236,7 +223,7 @@ public class Game extends GameState {
 		ResourceManager.getSelf().setRenderer("cubeRenderer", r);
 		ResourceManager.getSelf().setRenderer("shadowRenderer", s);
 		ResourceManager.getSelf().setRenderer("grassRenderer", g);
-		ResourceManager.getSelf().setRenderer("batchTextureRenderer", t2);
+		ResourceManager.getSelf().setRenderer("textureBatchRenderer", t2);
 
 		// ==================================
 		// Creates player
@@ -247,12 +234,12 @@ public class Game extends GameState {
 
 		AnimationStateManager asm = new AnimationStateManager();
 
-		Animation a = new Animation("main_char", 1000);
-		a.setFrames(3, new Vec2(0, 0), new Vec2(20, 40));
+		Animation a = new Animation("terrain_atlas", 1000);
+		a.setFrames(ResourceManager.getSelf().getSpriteFrame("main_char_idle"));
 		asm.addAnimation("idle_1", a);
 
-		a = new Animation("main_char", 50);
-		a.setFrames(8, new Vec2(0, 40), new Vec2(20, 40));
+		a = new Animation("terrain_atlas", 50);
+		a.setFrames(ResourceManager.getSelf().getSpriteFrame("main_char_walking"));
 		asm.addAnimation("walking", a);
 
 		asm.changeStateTo("idle_1");
@@ -265,7 +252,7 @@ public class Game extends GameState {
 		rc.setColor(new Vec4(1, 1, 1, 1));
 		rc.setAnimations(asm);
 		rc.setBaseBox(baseBoxProportions);
-		rc.setRenderer("textureRenderer");
+		rc.setRenderer("textureBatchRenderer");
 		rc.setRenderPosition(startPoint);
 
 		em.addComponentTo(player, rc);
@@ -305,25 +292,13 @@ public class Game extends GameState {
 
 		asm = new AnimationStateManager();
 
-		a = new Animation("rogue", 150);
-		a.setFrames(10, new Vec2(0, 0), new Vec2(32, 32));
+		a = new Animation("alt_char", 1000);
+		a.setFrames(3, new Vec2(0, 0), new Vec2(20, 40));
 		asm.addAnimation("idle_1", a);
 
-		a = new Animation("rogue", 150);
-		a.setFrames(10, new Vec2(0, 32), new Vec2(32, 32));
-		asm.addAnimation("idle_2", a);
-
-		a = new Animation("rogue", 100);
-		a.setFrames(10, new Vec2(0, 64), new Vec2(32, 32));
+		a = new Animation("alt_char", 50);
+		a.setFrames(8, new Vec2(0, 40), new Vec2(20, 40));
 		asm.addAnimation("walking", a);
-
-		a = new Animation("rogue", 16);
-		a.setFrames(10, new Vec2(0, 96), new Vec2(32, 32));
-		asm.addAnimation("attacking", a);
-
-		a = new Animation("rogue", 150);
-		a.setFrames(10, new Vec2(0, 128), new Vec2(32, 32));
-		asm.addAnimation("dying", a);
 
 		asm.changeStateTo("idle_1");
 
@@ -354,36 +329,25 @@ public class Game extends GameState {
 		em.addComponentTo(npc, bc);
 
 		// Following npc
-		Entity followingNpc = em.newEntity();
+		/*Entity followingNpc = em.newEntity();
 		followingNpc.setName("AI");
 
 		asm = new AnimationStateManager();
 
-		a = new Animation("rogue", 150);
-		a.setFrames(10, new Vec2(0, 0), new Vec2(32, 32));
+		a = new Animation("alt_char", 1000);
+		a.setFrames(3, new Vec2(0, 0), new Vec2(20, 40));
 		asm.addAnimation("idle_1", a);
 
-		a = new Animation("rogue", 150);
-		a.setFrames(10, new Vec2(0, 32), new Vec2(32, 32));
-		asm.addAnimation("idle_2", a);
-
-		a = new Animation("rogue", 100);
-		a.setFrames(10, new Vec2(0, 64), new Vec2(32, 32));
+		a = new Animation("alt_char", 50);
+		a.setFrames(8, new Vec2(0, 40), new Vec2(20, 40));
 		asm.addAnimation("walking", a);
-
-		a = new Animation("rogue", 16);
-		a.setFrames(10, new Vec2(0, 96), new Vec2(32, 32));
-		asm.addAnimation("attacking", a);
-
-		a = new Animation("rogue", 150);
-		a.setFrames(10, new Vec2(0, 128), new Vec2(32, 32));
-		asm.addAnimation("dying", a);
 
 		asm.changeStateTo("idle_1");
 
 		pos = new Vec2(startPoint.x + 200, startPoint.y - 350);
+		
 		rc = new RenderComponent(followingNpc.getID());
-		rc.setSize(new Vec2(128, 128));
+		rc.setSize(size);
 		rc.setColor(new Vec4(1, 1, 1, 1));
 		rc.setAnimations(asm);
 		rc.setRenderer("textureRenderer");
@@ -412,34 +376,7 @@ public class Game extends GameState {
 		bc.setBaseBox(new Rectangle(0f, 0.8f, 1.0f, 0.2f));
 		bc.calculateBaseBox(pos, size);
 		bc.createBody(PhysicsEngine.getSelf().getWorld(), BodyType.DYNAMIC);
-		em.addComponentTo(followingNpc, bc);
-
-		createBoxes();
-
-		// Create fire
-		Entity bonfire = em.newEntity();
-
-		asm = new AnimationStateManager();
-		a = new Animation("bonfire", 90);
-		a.setFrames(10, new Vec2(0, 0), new Vec2(32, 32));
-		asm.addAnimation("idle_1", a);
-		asm.changeStateTo("idle_1");
-
-		rc = new RenderComponent(bonfire.getID());
-		rc.setSize(size);
-		rc.setColor(new Vec4(1, 1, 1, 1));
-		rc.setAnimations(asm);
-		rc.setRenderer("textureRenderer");
-		rc.setRenderPosition(new Vec2(startPoint.x - 2000, startPoint.y - 400));
-		rc.setBaseBox(new Rectangle(0f, 0.6f, 1.0f, 0.4f));
-		em.addComponentTo(bonfire, rc);
-
-		pc = new BasicComponent(bonfire.getID());
-		pc.setSize(size);
-		pc.setPosition(new Vec2(startPoint.x - 2000, startPoint.y - 400));
-		em.addComponentTo(bonfire, pc);
-
-		em.addComponentTo(bonfire, bc);
+		em.addComponentTo(followingNpc, bc);*/
 
 		// ==================================
 		// Entity Systems
@@ -468,6 +405,8 @@ public class Game extends GameState {
 		WalkingParticleEmitter emitter = new WalkingParticleEmitter();
 		emitter.setAnchor(startPoint, (int) size.y);
 		ParticleEngine.getSelf().addParticleEmitter(emitter);
+		
+		
 	}
 
 	private void generateQuadTree() {
@@ -652,6 +591,9 @@ public class Game extends GameState {
 		chunkMap.update();
 		sm.variableUpdate(alpha);
 		camera.variableUpdate(alpha);
+		
+		screenView.x = camera.getX();
+		screenView.y = camera.getY();
 	}
 
 	@Override
@@ -681,55 +623,53 @@ public class Game extends GameState {
 
 		camera.update(deltaTime);
 
-		screenView.x = camera.getX();
-		screenView.y = camera.getY();
-
 		quadTree.clear();
 		generateQuadTree();
 		generateCollisionGraph();
 		ParticleEngine.getSelf().update(deltaTime);
 	}
-
+	
 	public void generateChunks() {
 		currentCameraGridX = (int) (camera.getX() / ChunkManager.CHUNK_WIDTH);
 		currentCameraGridY = (int) (camera.getY() / ChunkManager.CHUNK_HEIGHT);
 
 		if (currentCameraGridX != previousCameraGridX || currentCameraGridY != previousCameraGridY) {
+			ArraysExt.shift(chunksOnScreen, previousCameraGridX - currentCameraGridX, previousCameraGridY - currentCameraGridY);
+			ArraysExt.shift(texturenOnScreen, previousCameraGridX - currentCameraGridX, previousCameraGridY - currentCameraGridY);
+
 			previousCameraGridX = currentCameraGridX;
 			previousCameraGridY = currentCameraGridY;
-
-			chunkHasLoaded = new boolean[rowSize][columnSize];
-
-			for (int y = 0; y < chunksOnScreen[0].length; y++) {
-				for (int x = 0; x < chunksOnScreen.length; x++) {
-					chunksOnScreen[x][y] = chunkMap.get(currentCameraGridX + x - 1, currentCameraGridY + y - 1);
-				}
-			}
 		}
+		
 
 		for (int y = 0; y < chunksOnScreen[0].length; y++)
-			for (int x = 0; x < chunksOnScreen.length; x++)
-				if (chunkMap.chunkExists(currentCameraGridX + x - 1, currentCameraGridY + y - 1)
-						&& !chunkHasLoaded[x][y]) {
-					chunkHasLoaded[x][y] = true;
-					chunksOnScreen[x][y] = chunkMap.get(currentCameraGridX + x - 1, currentCameraGridY + y - 1);
+			for (int x = 0; x < chunksOnScreen.length; x++) {
+				int chunkX = currentCameraGridX + x - 1;
+				int chunkY= currentCameraGridY + y - 1;
+				
+				if (chunksOnScreen[x][y]==null && chunkMap.chunkExists(chunkX, chunkY)) {
+					chunksOnScreen[x][y] = chunkMap.get( chunkX, chunkY);
 					Texture t = new Texture();
 					
-					//TODO: mem. leak
 					t.generateFloatTextureFromBuffer(
-							BufferUtilities.createFloatBuffer(chunksOnScreen[x][y].getPerlinNoise()),
+							BufferUtilities.fillFloatBuffer(chunkTextureFloatBuffer, chunksOnScreen[x][y].getPerlinNoise()),
 							chunksOnScreen[x][y].getPerlinNoise().length,
 							chunksOnScreen[x][y].getPerlinNoise()[0].length, false);
 					
 					texturenOnScreen[x][y] = t;
+				}else if(chunksOnScreen[x][y]==null){
+					if(!chunkMap.readChunkFromDiskIfExists(chunkX, chunkY)) {
+						chunkMap.generateChunkToSave(chunkX, chunkY);
+					}
 				}
+			}
 	}
 
 	private void renderChunks() {
 		for (int y = 0; y < chunksOnScreen[0].length; y++)
 			for (int x = 0; x < chunksOnScreen.length; x++)
 				if (texturenOnScreen[x][y] != null && chunksOnScreen[x][y] != null
-						&& chunksOnScreen[x][y].getBoundingBox().intersects(screenView)) {
+						&& chunksOnScreen[x][y].getBoundingBox().intersects(screenView)) { //TODO: aumentar screenview
 					Vec2 pos = new Vec2(chunksOnScreen[x][y].getX() * ChunkManager.CHUNK_WIDTH * 1.00,
 							chunksOnScreen[x][y].getY() * ChunkManager.CHUNK_HEIGHT * 1.00);
 					
@@ -741,7 +681,7 @@ public class Game extends GameState {
 					
 					ResourceManager.getSelf().getFont("sourcesanspro").render("["+chunksOnScreen[x][y].getX() + ", "+ chunksOnScreen[x][y].getY()+"]", pos.x, pos.y, new Vec4(1,1,1,1));
 					ResourceManager.getSelf().getFont("sourcesanspro").render(x+", "+y, pos.x + 100, pos.y, new Vec4(1,1,1,1));
-				}
+				} 
 	}
 
 	private void renderObstacleMap() {

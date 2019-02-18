@@ -289,7 +289,7 @@ public class Font {
            drawY += textHeight - fontHeight;
        }
        
-       TextureBatchRenderer batchRenderer = ResourceManager.getSelf().getRenderer("batchTextureRenderer");
+       TextureBatchRenderer batchRenderer = ResourceManager.getSelf().getRenderer("textureBatchRenderer");
        batchRenderer.start(texture);
 
        for (int i = 0; i < text.length(); i++) {

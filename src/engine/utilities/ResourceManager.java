@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import engine.audio.AudioFile;
@@ -21,11 +22,14 @@ import engine.graphic.Shader;
 import engine.graphic.Texture;
 import engine.renderer.Renderer;
 import engine.ui.Font;
+import glm.vec._2.Vec2;
+import glm.vec._4.Vec4;
 
 public final class ResourceManager {
 	private static ResourceManager self;
 	private static HashMap<String, Shader> shaders = new HashMap<String, Shader>();
 	private static HashMap<String, Texture> textures = new HashMap<String, Texture>();
+	private static HashMap<String, Vec4[]> spriteFrames = new HashMap<String, Vec4[]>();
 	private static HashMap<String, AudioFile> audio = new HashMap<String, AudioFile>();
 	private static HashMap<String, Font> fonts = new HashMap<String, Font>();
 	private static HashMap<String, Renderer> renderers = new HashMap<String, Renderer>();
@@ -156,6 +160,8 @@ public final class ResourceManager {
 	}
 
 	public Texture getTexture(String name) {
+		if(textures.get(name)==null)
+			throw new Error("Texture "+name+" doesn't exist");
 		return textures.get(name);
 	}
 
@@ -224,5 +230,13 @@ public final class ResourceManager {
 
 	public <T extends Renderer> T getRenderer(String name) {
 		return (T) renderers.get(name);
+	}
+	
+	public void setSpriteFrame(String name, Vec4 frames[]) {
+		spriteFrames.put(name, frames);
+	}
+	
+	public Vec4[] getSpriteFrame(String name){
+		return spriteFrames.get(name);
 	}
 }

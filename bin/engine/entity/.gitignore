@@ -1,0 +1,12 @@
+/BodySystem.class
+/ComponentSystem.class
+/ControllerSystem.class
+/Entity.class
+/EntityManager.class
+/HealthSystem.class
+/MoveSystem.class
+/RenderSystem.class
+/SightSystem.class
+/SystemManager.class
+/TextSystem.class
+/UISystem.class

@@ -22,9 +22,8 @@ public class ChunkManager {
 	private ArrayList<SavingChunk> savingChunksToRemove = new ArrayList<>();
 	private ArrayList<Vec2i> loadingOrder = new ArrayList<>();
 	private int chunksInMemory = 0;
-	private boolean shouldBreak = false;
 
-	public static final int MAX_CHUNKS_IN_MEM = 10;
+	public static final int MAX_CHUNKS_IN_MEM = 9;
 	public static final int CHUNK_WIDTH = EngineSettings.getSelf().getChunkSizeX();
 	public static final int CHUNK_HEIGHT = EngineSettings.getSelf().getChunkSizeY();
 	public static final int CHUNK_BUFFER_SIZE = ((CHUNK_WIDTH * CHUNK_HEIGHT) / CHUNK_WIDTH) * 10000;
@@ -57,40 +56,57 @@ public class ChunkManager {
 	 * @return
 	 */
 	public Chunk get(int x, int y) {
-		if (chunks.get(x) == null || chunks.get(x).get(y) == null)
-			if (chunkExistsOnDisk(x, y)) {
-				ReadingChunk r = loadFromFile(x, y);
-				r.read();
-				loadingChunks.add(r);
-			}else {
-				chunksToGenerateAndSave
-						.add(new Chunk(x, y, CHUNK_WIDTH, CHUNK_HEIGHT, MAP_WIDTH, MAP_HEIGHT, Game.getSelf().getEm()));
-			}
-
 		return (chunks.get(x) == null) ? null : chunks.get(x).get(y);
+	}
+	
+	public boolean readChunkFromDiskIfExists(int x, int y) {
+		if (!chunkExistsOnDisk(x, y) || chunkExists(x,y))
+			return false;
+		
+		for (ReadingChunk r : loadingChunks) {
+			if(r.getX()==x && r.getY()==y)
+				return false;
+		}
+		
+		ReadingChunk r = prepareReadingChunk(x, y);
+		r.read();
+		loadingChunks.add(r);
+		return true;
+	}
+	
+	public boolean generateChunkToSave(int x, int y) {
+		if (chunkExistsOnDisk(x, y) || chunkExists(x,y))
+			return false;
+		
+		for(Chunk c: chunksToGenerateAndSave) {
+			if(c.getX()==x && c.getY()==y)
+				return false;
+		}
+		
+		chunksToGenerateAndSave.add(new Chunk(x, y, CHUNK_WIDTH, CHUNK_HEIGHT, MAP_WIDTH, MAP_HEIGHT));
+		return true;
 	}
 
 	public void update() {
 		//----------------------------------
 		// Manages Excess chunks
 		//----------------------------------
-		shouldBreak = false;
-		
+		int index = -1;
 		if(chunksInMemory>MAX_CHUNKS_IN_MEM) {
-			for(Integer x: chunks.keySet()) {
-				for(Integer y: chunks.get(x).keySet()) {
-					if(!Game.getSelf().intersectsScreenView(chunks.get(x).get(y).getBoundingBox())) {
-						savingChunks.add(saveFile((chunks.get(x).get(y))));
-						chunksInMemory--;
-						shouldBreak = true;
-					}
-					if(shouldBreak)
-						break;
-				}
-				if(shouldBreak)
+			for(int i=0;i<loadingOrder.size(); i++) {
+				Vec2i chunk = loadingOrder.get(i);
+				if(!Game.getSelf().intersectsScreenView(chunks.get(chunk.x).get(chunk.y).getBoundingBox())) {
+					savingChunks.add(prepareSavingChunk((chunks.get(chunk.x).get(chunk.y))));
+					chunksInMemory--;
+					index = i;
 					break;
+				}
 			}
 		}
+		
+		if(index>=0) 
+			loadingOrder.remove(index);
+		
 		
 		//----------------------------------
 		// Generate chunks contents
@@ -150,7 +166,7 @@ public class ChunkManager {
 			for(Integer x: chunks.keySet()) {
 				for(Integer y: chunks.get(x).keySet()) {
 					if(!Game.getSelf().intersectsScreenView(chunks.get(x).get(y).getBoundingBox())) {
-						savingChunks.add(saveFile((chunks.get(x).get(y))));
+						savingChunks.add(prepareSavingChunk((chunks.get(x).get(y))));
 					}
 				}
 			}
@@ -164,8 +180,8 @@ public class ChunkManager {
 	 * @param x
 	 * @param y
 	 */
-	public ReadingChunk loadFromFile(int x, int y) {
-		ReadingChunk r = new ReadingChunk(mapPath + Chunk.getFileName(x, y), Chunk.getID(x, y));
+	public ReadingChunk prepareReadingChunk(int x, int y) {
+		ReadingChunk r = new ReadingChunk(mapPath + Chunk.getFileName(x, y), x, y);
 		return r;
 	}
 	
@@ -174,7 +190,7 @@ public class ChunkManager {
 	 * 
 	 * @param chunk
 	 */
-	public SavingChunk saveFile(Chunk chunk) {
+	public SavingChunk prepareSavingChunk(Chunk chunk) {
 		SavingChunk r = new SavingChunk(mapPath + Chunk.getFileName(chunk.getX(), chunk.getY()), chunk);
 		return r;
 	}

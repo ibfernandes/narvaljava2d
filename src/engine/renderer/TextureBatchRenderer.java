@@ -12,6 +12,7 @@ import engine.entity.component.RenderComponent;
 import engine.graphic.Shader;
 import engine.graphic.Texture;
 import engine.utilities.BufferUtilities;
+import engine.utilities.ResourceManager;
 import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._4.Vec4;
@@ -22,7 +23,7 @@ public class TextureBatchRenderer implements Renderer{
 	private Shader shader;
 
 	//per instance
-	private static final int INSTANCE_VBO_MAX_OBJECTS = 5000; // A maximum of 5.000 objects on the buffer at same time
+	private static final int INSTANCE_VBO_MAX_OBJECTS = 2000; // The maximum of objects on the buffer at same time
 
 	private static final int INSTANCE_DATA_STRIDE = 4 + 2 + (4 * 4); //vec4 spriteFrame, vec2 flip, mat4 model
 	private static final int INSTANCE_DATA_STRIDE_IN_BYTES = INSTANCE_DATA_STRIDE*Float.BYTES;
@@ -63,16 +64,19 @@ public class TextureBatchRenderer implements Renderer{
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	
+	public void start(String texture) {
+		start(ResourceManager.getSelf().getTexture(texture));
+	}
 	
 	public void start(Texture texture) {
 		objectBuffer.clear();
 		objectsCount = 0;
 		
-		glBindVertexArray(VAO);
-		
 		shader.use();
 		shader.setInteger("image", 0);
 		shader.setInteger("normalTex", 1);
+		
+		glBindVertexArray(VAO);
 		
 		glActiveTexture(GL_TEXTURE0);
 		texture.bind();

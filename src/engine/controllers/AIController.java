@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import org.lwjgl.glfw.GLFW;
+
 import demo.Game;
 import engine.ai.AStar;
 import engine.ai.Action;
@@ -21,7 +23,9 @@ import engine.entity.component.RenderComponent;
 import engine.entity.component.SightComponent;
 import engine.geometry.Rectangle;
 import engine.geometry.Segment;
+import engine.input.JoystickControl;
 import engine.renderer.CubeRenderer;
+import engine.states.GSM;
 import engine.utilities.ArraysExt;
 import engine.utilities.Commons;
 import engine.utilities.ResourceManager;
@@ -85,7 +89,6 @@ public class AIController extends Controller {
 				if (currentMove < 4)
 					directions[currentMove] = true;
 			}
-			move(thisEntityID, deltaTime);
 
 		} else if (selectedAction.getActionName() == "attack") {
 
@@ -218,35 +221,21 @@ public class AIController extends Controller {
 		direction.x = endPoint.x - baseBoxCenterPoint.x;
 		direction.y = endPoint.y - baseBoxCenterPoint.y;
 		mc.setDirection(direction);
+		changeAnimation();
 	}
-
-	private void move(long entityID, float deltaTime) {
-		org.jbox2d.common.Vec2 speed = new org.jbox2d.common.Vec2(0, 0);
-
-		if (directions[Commons.TOP]) {
-			speed.y = -mc.getVelocity() / PhysicsEngine.BOX2D_SCALE_FACTOR;
-			rc.getAnimations().changeStateTo("walking");
-		}
-		if (directions[Commons.BOTTOM]) {
-			speed.y = mc.getVelocity() / PhysicsEngine.BOX2D_SCALE_FACTOR;
-			rc.getAnimations().changeStateTo("walking");
-		}
-		if (directions[Commons.RIGHT]) {
-			speed.x = mc.getVelocity() / PhysicsEngine.BOX2D_SCALE_FACTOR;
+	
+	private void changeAnimation() {
+		
+		if(mc.getDirection().x>0)
 			rc.setOrientation(faceRight);
-			rc.getAnimations().changeStateTo("walking");
-		}
-		if (directions[Commons.LEFT]) {
-			speed.x = -mc.getVelocity() / PhysicsEngine.BOX2D_SCALE_FACTOR;
+		else if(mc.getDirection().x<0)
 			rc.setOrientation(faceLeft);
-			rc.getAnimations().changeStateTo("walking");
-		}
 
-		if (ArraysExt.areAllElementsEqualTo(directions, false)) {
+		if (mc.getDirection().x!=0 || mc.getDirection().y!=0) {
+			rc.getAnimations().changeStateTo("walking");
+		}else{
 			rc.getAnimations().changeStateTo("idle_1");
 		}
-		
-		mc.setDirection(new Vec2());
 	}
 
 	@Override

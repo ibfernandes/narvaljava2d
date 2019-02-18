@@ -5,13 +5,18 @@ import java.util.ArrayList;
 
 import engine.entity.Entity;
 import engine.entity.EntityManager;
+import engine.logic.Chunk;
+import engine.utilities.ArraysExt;
 import engine.utilities.Timer;
 
 public class Benchmark {
 	
 	public static void main(String args[]) {
-		System.out.println(normalize(-1f,-0.5f,-1.5f, 0,1));	
 		
+		Long l = null;
+		long test = 40;
+		if(l == test)
+			System.out.println(true);
 	}
 	
 	public static float normalize(float xmin, float xmax, float x, float a, float b) {
