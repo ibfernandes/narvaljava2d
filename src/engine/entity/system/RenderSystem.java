@@ -56,7 +56,6 @@ public class RenderSystem extends ComponentSystem {
 			}
 		}
 	}
-	Timer t = new Timer(1000);
 	@Override
 	public void render() {
 		lastTexture = "";
@@ -106,12 +105,6 @@ public class RenderSystem extends ComponentSystem {
 		if(starts>ends) {
 			ends++;
 			((TextureBatchRenderer) ResourceManager.getSelf().getRenderer("textureBatchRenderer")).end();
-		}
-
-		
-		if(t.hasElapsed()) {
-			t.reset();
-			System.out.println("Batches drawed: "+ends);
 		}
 	}
 

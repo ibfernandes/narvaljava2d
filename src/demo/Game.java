@@ -169,6 +169,7 @@ public class Game extends GameState {
 		// Loads all Audio
 		// ==================================
 		ResourceManager.getSelf().loadAudio("ocean_waves", "audio/ocean_waves.ogg");
+		ResourceManager.getSelf().loadAudio("foot_steps_grass", "audio/foot_steps_grass.ogg");
 
 		// ==================================
 		// Loads all fonts
@@ -556,7 +557,6 @@ public class Game extends GameState {
 				((ShadowRenderer) ResourceManager.getSelf().getRenderer("shadowRenderer")).render(rc,
 						new Vec2(48000, 48000));
 		}
-
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(1, 1, 1, 1);
 	}
@@ -580,7 +580,9 @@ public class Game extends GameState {
 				new Vec4(1, 1, 1, 0.2f), new Vec4(0, 0, 1, 1), new Vec2(0, 1), new Vec2(0, 0));
 
 		// renderObstacleMap();
-
+		ResourceManager.getSelf().getShader("texturev2").use();
+		ResourceManager.getSelf().getShader("texturev2").setFloat("windForce", timer.getElapsedDelta()%1);
+		
 		sm.render();
 		ParticleEngine.getSelf().render();
 		camera.render();
@@ -598,10 +600,6 @@ public class Game extends GameState {
 
 	@Override
 	public void update(float deltaTime) {
-		if(seconds.hasElapsed()) {
-			seconds.reset();
-			System.out.println("\nEntities loaded:\t "+getEm().getAllEntities().size());
-		}
 		BasicComponent ppc = em.getFirstComponent(player, BasicComponent.class);
 		AudioEngine.getSelf().setListenerAt(ppc.getPosition());
 

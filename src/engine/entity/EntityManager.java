@@ -169,7 +169,7 @@ public class EntityManager {
 
 	public ArrayList<Entity> getAllEntitiesWithComponent(Class c) {
 		ArrayList<Entity> ents = new ArrayList<>();
-
+		
 		for (Entity e : entities) {
 			if (componentsOf.get(e.getID()) == null)
 				continue;

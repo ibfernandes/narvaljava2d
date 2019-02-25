@@ -19,7 +19,7 @@ import glm.vec._4.Vec4;
 public class GrassRenderer implements Renderer{
 	private Shader shader;
 	private int quadVAO;
-	private int numOfLayers = 8;
+	public final static int numOfLayers = 8;
 	private Mat4 skew = new Mat4();
 	private Mat4 model = new Mat4();
 	private FloatBuffer floatBuffer;
@@ -38,7 +38,7 @@ public class GrassRenderer implements Renderer{
 		VBO = glGenBuffers();
 		
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, BufferUtilities.createFloatBuffer(getVertices(numOfLayers)), GL_STATIC_DRAW); 
+		glBufferData(GL_ARRAY_BUFFER, BufferUtilities.createFloatBuffer(generateLayers(numOfLayers)), GL_STATIC_DRAW); 
 		
 		glBindVertexArray(quadVAO);
 		
@@ -61,7 +61,7 @@ public class GrassRenderer implements Renderer{
 	 * @param layers
 	 * @return
 	 */
-	public float[] getVertices(int layers) {
+	public static float[] generateLayers(int layers) {
 		int p = 12 + 12 + 6; //total de coordenadas por camada, 12 dos dois triangulos + 12 das texturas + 6 dos pesos = stride
 		float vertices[] = new float[p*layers];
 		float offset = 1/(float)layers;
@@ -77,13 +77,13 @@ public class GrassRenderer implements Renderer{
 				1f/8f	//topo
 		};
 		
-		float baseWeight[] = new float[numOfLayers];
-		float upperWeight[] = new float[numOfLayers];
+		float baseWeight[] = new float[layers];
+		float upperWeight[] = new float[layers];
 		
 		Arrays.fill(baseWeight, 0);
 		Arrays.fill(upperWeight, 0);
 		
-		for(int i=0; i <numOfLayers; i++) {
+		for(int i=0; i <layers; i++) {
 			if(i==0)
 				baseWeight[i] = 0;
 			else
@@ -99,7 +99,7 @@ public class GrassRenderer implements Renderer{
 		ArraysExt.reverse(upperWeight);
 		
 		//for each row: Vec2 vertex, Vec2 texCoord, float weight
-		for(int i=0; i<numOfLayers; i++){
+		for(int i=0; i<layers; i++){
 			vertices[i*p +  0] = 0; vertices[i*p +  1] = offset + i*offset; 	vertices[i*p + 2] = 0; vertices[i*p + 3] = offset + i*offset; 	vertices[i*p +  4] = baseWeight[i];
 			vertices[i*p +  5] = 1; vertices[i*p +  6] = i*offset; 				vertices[i*p + 7] = 1; vertices[i*p + 8] = i*offset;			vertices[i*p +  9] = upperWeight[i]; 	//upper vertice
 			vertices[i*p + 10] = 0; vertices[i*p + 11] = i*offset; 				vertices[i*p +12] = 0; vertices[i*p +13] = i*offset;			vertices[i*p + 14] = upperWeight[i];	//upper vertice

@@ -19,6 +19,7 @@ public class RenderComponent extends Component implements Comparable<RenderCompo
 	private Rectangle baseBox = new Rectangle(0, 0, 0, 0);
 	private boolean disabled = false;
 	private String Renderer = "";
+	private boolean affectedByWind = false;
 
 	public RenderComponent(long entityID) {
 		super(entityID);
@@ -209,5 +210,13 @@ public class RenderComponent extends Component implements Comparable<RenderCompo
 
 	public void setLastRenderPosition(Vec2 lastRenderPosition) {
 		this.lastRenderPosition = lastRenderPosition;
+	}
+
+	public boolean isAffectedByWind() {
+		return affectedByWind;
+	}
+
+	public void setAffectedByWind(boolean affectedByWind) {
+		this.affectedByWind = affectedByWind;
 	}
 }

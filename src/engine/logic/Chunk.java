@@ -159,6 +159,7 @@ public class Chunk implements Serializable {
 		rc.setRenderPosition(position);
 		rc.setRenderer("textureBatchRenderer");
 		rc.setBaseBox(new Rectangle(0.0f, 0.9f, 1.0f, 0.1f));
+		rc.setAffectedByWind(true);
 		Game.getSelf().getEm().addComponentTo(e, rc);
 
 		BasicComponent pc = new BasicComponent(e.getID());

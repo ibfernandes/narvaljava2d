@@ -10,8 +10,10 @@ public class AudioSource {
 	private long id;
 	private int sourcePointer;
 	private float alMaxDistance;
+	private float pitch;
 	private Vec2 pos;
 	private float volume;
+	private boolean isPlaying = false;
 
 	public AudioSource(long id, String audioFileName, Vec2 pos, float maxDistance) {
 		this.id = id;
@@ -58,10 +60,12 @@ public class AudioSource {
 	}
 
 	public void play() {
+		isPlaying = true;
 		alSourcePlay(sourcePointer);
 	}
 
 	public void pause() {
+		isPlaying = false;
 		alSourcePause(sourcePointer);
 	}
 
@@ -75,5 +79,18 @@ public class AudioSource {
 
 	public long getId() {
 		return id;
+	}
+
+	public boolean isPlaying() {
+		return isPlaying;
+	}
+
+	public float getPitch() {
+		return pitch;
+	}
+
+	public void setPitch(float pitch) {
+		alSourcef(sourcePointer, AL_PITCH, pitch);
+		this.pitch = pitch;
 	}
 }

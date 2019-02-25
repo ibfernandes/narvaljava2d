@@ -1,6 +1,7 @@
 package engine.utilities;
 
 import glm.vec._2.Vec2;
+import net.jafama.FastMath;
 
 public class MathExt {
 	
@@ -42,7 +43,7 @@ public class MathExt {
 	 * @return
 	 */
 	public static float calculateAngle(Vec2 vecA, Vec2 vecB) {
-		return (float) Math.toDegrees(Math.atan2(vecA.y - vecB.y, vecA.x - vecB.x));
+		return (float) FastMath.toDegrees(FastMath.atan2(vecA.y - vecB.y, vecA.x - vecB.x));
 	}
 	
 	public static float clamp(float value, float min, float max) {

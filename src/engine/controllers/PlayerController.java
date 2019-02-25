@@ -5,6 +5,8 @@ import java.util.Arrays;
 import org.lwjgl.glfw.GLFW;
 
 import demo.Game;
+import engine.audio.AudioSource;
+import engine.engine.AudioEngine;
 import engine.entity.component.MoveComponent;
 import engine.entity.component.RenderComponent;
 import engine.input.JoystickControl;
@@ -16,6 +18,12 @@ public class PlayerController extends Controller {
 	private Vec2 faceLeft = new Vec2(1, 0);
 	private Vec2 faceRight = new Vec2(0, 0);
 	private boolean directions[] = new boolean[4];
+	private AudioSource walkingSound;
+	
+	public PlayerController() {
+		walkingSound = AudioEngine.getSelf().newAudioSource("foot_steps_grass", new Vec2(0,0), 100);
+		walkingSound.setPitch(2.2f);
+	}
 
 	public boolean attackFinished(RenderComponent rc) {
 		if (rc.getAnimations().getCurrentAnimationName() == "attacking"
@@ -69,9 +77,16 @@ public class PlayerController extends Controller {
 			rc.setOrientation(faceLeft);
 
 		if (dir.x!=0 || dir.y!=0) {
+			walkingSound.setPosition(rc.getCenterPoint());
+			if(!walkingSound.isPlaying()) {
+				walkingSound.play();
+			}
 			rc.getAnimations().changeStateTo("walking");
 		}else{
 			rc.getAnimations().changeStateTo("idle_1");
+			if(walkingSound.isPlaying()) {
+				walkingSound.pause();
+			}
 		}
 
 	}
