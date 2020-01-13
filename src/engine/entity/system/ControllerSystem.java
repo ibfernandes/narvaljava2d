@@ -30,7 +30,7 @@ public class ControllerSystem extends ComponentSystem {
 					ControllerComponent.class);
 			if (bc == null)
 				continue;
-			//bc.getController().renderDebug();
+//			bc.getController().renderDebug();
 		}
 
 	}

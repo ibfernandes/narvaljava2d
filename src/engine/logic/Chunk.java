@@ -103,7 +103,7 @@ public class Chunk implements Serializable {
 
 
 					//generateRandomTree(x, y);
-				} else if (whiteNoise[x][y] > 0.99
+				} else if (whiteNoise[x][y] > 0.98
 						&& perlinNoise[x][y] > -.1) {
 
 					generateRandomGroundVegetation(x, y);
@@ -143,10 +143,8 @@ public class Chunk implements Serializable {
 
 		Animation an;
 		an = new Animation("terrain_atlas", -1);
-		an.setFrames(ResourceManager.getSelf().getSpriteFrame("grass"));
-		
-		asm.addAnimation("idle_1", an);
-		asm.changeStateTo("idle_1");
+		float r = random.nextFloat();
+		float scaleFactor = 3;
 
 		Entity e = Game.getSelf().getEm().newEntity();
 		e.setChunkX(this.x);
@@ -159,12 +157,43 @@ public class Chunk implements Serializable {
 		rc.setRenderPosition(position);
 		rc.setRenderer("textureBatchRenderer");
 		rc.setBaseBox(new Rectangle(0.0f, 0.9f, 1.0f, 0.1f));
-		rc.setAffectedByWind(true);
 		Game.getSelf().getEm().addComponentTo(e, rc);
+		
+		if(r<0.8f) {
+			if(r<0.3) {
+				an.setFrames(ResourceManager.getSelf().getSpriteFrame("grass"));
+				rc.setSize(new Vec2(7 *scaleFactor, 8 *scaleFactor));
+			}else if(r<0.6) {
+				an.setFrames(ResourceManager.getSelf().getSpriteFrame("grass_2"));
+				rc.setSize(new Vec2(4 *scaleFactor, 4 *scaleFactor));
+			}else if(r<0.8f) {
+				an.setFrames(ResourceManager.getSelf().getSpriteFrame("grass_3"));
+				rc.setSize(new Vec2(2 *scaleFactor, 3 *scaleFactor));
+			}
+		}else {
+			if(r<0.83) {
+				an.setFrames(ResourceManager.getSelf().getSpriteFrame("red_mushroom"));
+				rc.setSize(new Vec2(4 *scaleFactor, 4 *scaleFactor));
+			}else if(r<0.86) {
+				an.setFrames(ResourceManager.getSelf().getSpriteFrame("grey_mushroom"));
+				rc.setSize(new Vec2(3 *scaleFactor, 3 *scaleFactor));
+			}else if(r<=0.99) {
+				an.setFrames(ResourceManager.getSelf().getSpriteFrame("blue_mushroom"));
+				rc.setSize(new Vec2(4 *scaleFactor, 4 *scaleFactor));
+			}else if(r>0.99) {
+				an.setFrames(ResourceManager.getSelf().getSpriteFrame("tree"));
+				rc.setSize(new Vec2(66 *8, 51 *8));
+			}
+		}
+		
+		rc.setAffectedByWind(true);
+		
+		asm.addAnimation("idle_1", an);
+		asm.changeStateTo("idle_1");
 
 		BasicComponent pc = new BasicComponent(e.getID());
 		pc.setPosition(position);
-		pc.setSize(new Vec2(30, 24));
+		pc.setSize(rc.getSize());
 		Game.getSelf().getEm().addComponentTo(e, pc);
 
 		ArrayList<Component> components = new ArrayList<>();
@@ -207,7 +236,7 @@ public class Chunk implements Serializable {
 				}
 			}else {
 				BasicComponent bc = Game.getSelf().getEm().getFirstComponent(e, BasicComponent.class);
-				if(getBoundingBox().intersectsPoint(bc.getPosition())) {
+				if(getBoundingBox().intersects(bc.getPosition())) {
 					copyEntityAndComponentsFromEntityManager(e);
 				}
 			}

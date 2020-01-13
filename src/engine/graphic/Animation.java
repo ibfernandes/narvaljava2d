@@ -16,6 +16,7 @@ public class Animation implements Serializable {
 	private long frameDuration = -1;
 	private long startTime = System.nanoTime();
 	private boolean playedOnce = false;
+	private Vec2 currentFrameSize = new Vec2();
 
 	/**
 	 * Sets the texture from where to extract the frames and each frame's even
@@ -107,6 +108,15 @@ public class Animation implements Serializable {
 
 	public Vec4 getCurrentFrame() {
 		return frames[currentFrame];
+	}
+	
+	public Vec2 getCurrentFrameSize() {
+		float width = ResourceManager.getSelf().getTexture(texture).getWidth();
+		float height = ResourceManager.getSelf().getTexture(texture).getHeight();
+		
+		currentFrameSize.x = frames[currentFrame].z * width;
+		currentFrameSize.y = frames[currentFrame].w * height;
+		return currentFrameSize;
 	}
 
 	public String getTexture() {

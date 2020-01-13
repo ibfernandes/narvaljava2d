@@ -7,7 +7,7 @@ import engine.engine.Window;
 public class Main {
 	public static void main(String args[]) {
 		
-		EngineSettings.getSelf().setWindowSize(1280, 720);
+		EngineSettings.getSelf().setWindowSize(960, 540);
 		EngineSettings.getSelf().setMapSize(60000, 60000);
 		EngineSettings.getSelf().setChunkSize(1920, 1080);
 		EngineSettings.getSelf().setMapSeed(12345);

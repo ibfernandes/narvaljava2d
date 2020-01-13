@@ -59,6 +59,15 @@ public class RenderComponent extends Component implements Comparable<RenderCompo
 	public Vec2 getCenterPoint() {
 		return new Vec2(renderPosition.x + size.x/ 2, renderPosition.y + size.y / 2);
 	}
+	
+	/**
+	 * Returns (position.x + x, position.y+y)
+	 * 
+	 * @return
+	 */
+	public Vec2 getOffsetPoint(float x, float y) {
+		return new Vec2(renderPosition.x + x, renderPosition.y + y);
+	}
 
 	/**
 	 * Returns the render position. The one used to interpolate between updates.

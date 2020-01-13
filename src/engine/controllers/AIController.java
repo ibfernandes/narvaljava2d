@@ -73,6 +73,7 @@ public class AIController extends Controller {
 		rc = context.getEm().getFirstComponent(thisEntityID, RenderComponent.class);
 		pc = context.getEm().getFirstComponent(thisEntityID, BasicComponent.class);
 		mc = context.getEm().getFirstComponent(thisEntityID, MoveComponent.class);
+		Rectangle rec = rc.calculateBaseBox();
 
 		Rectangle baseBox = bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize());
 		Vec2 centerPoint = bc.calculateBaseBox(rc.getRenderPosition(), rc.getSize()).getPos();
@@ -101,7 +102,10 @@ public class AIController extends Controller {
 
 			if (dist < 50) {
 				bc.body.setLinearVelocity(new org.jbox2d.common.Vec2(0, 0));
+				rc.getAnimations().changeStateTo("attacking");
+				rc.setSize(rc.getAnimations().getCurrentAnimation().getCurrentFrameSize().mul(4));
 				return;
+			}else {
 			}
 
 			// Calcula o caminho do target até o agente, pois o retorno do calculatePath é
@@ -110,11 +114,11 @@ public class AIController extends Controller {
 					targetRC.calculateBaseBox().getY());
 			startPoint.y = startPoint.y - 6;
 
-			if (System.nanoTime() - previous >= Timer.SECOND * 1 / TICKS_PER_SECOND) {
+			if (System.nanoTime() - previous >= Timer.SECOND * 1 / 2) {
 				Arrays.fill(directions, false);
 				
 				as = new AStar();
-				pathAstar = as.calculatePath(startPoint, endPoint, context.getPointOfViewCollisionGraph(baseBox));
+				pathAstar = as.calculatePath(startPoint, endPoint, rec.getSize(), context.getPointOfViewCollisionGraph(baseBox));
 
 				segments = new ArrayList<>();
 				direction = new ArrayList<>();
@@ -180,13 +184,13 @@ public class AIController extends Controller {
 	}
 
 	public Vec2i convertWorldCoordsToNodeCoords(float x, float y) {
-		return new Vec2i((int) ((Game.getSelf().getCamera().getX() - x) * -1 / Game.GRAPH_DIVISOR),
-				(int) ((Game.getSelf().getCamera().getY() - y) * -1 / Game.GRAPH_DIVISOR));
+		return new Vec2i((int) ((Game.getSelf().getCamera().getX() - x) * -1 / Game.GRID_CELL_SIZE),
+				(int) ((Game.getSelf().getCamera().getY() - y) * -1 / Game.GRID_CELL_SIZE));
 	}
 
 	public Vec2 convertNodeCoordsToWorldCoords(Vec2i node) {
-		return new Vec2(Game.getSelf().getCamera().getX() + node.x * Game.GRAPH_DIVISOR,
-				Game.getSelf().getCamera().getY() + node.y * Game.GRAPH_DIVISOR);
+		return new Vec2(Game.getSelf().getCamera().getX() + node.x * Game.GRID_CELL_SIZE,
+				Game.getSelf().getCamera().getY() + node.y * Game.GRID_CELL_SIZE);
 	}
 
 	private void moveAlongLine(Vec2 baseBoxCenterPoint, Vec2 targetRC) {
@@ -233,8 +237,10 @@ public class AIController extends Controller {
 
 		if (mc.getDirection().x!=0 || mc.getDirection().y!=0) {
 			rc.getAnimations().changeStateTo("walking");
+			rc.setSize(rc.getAnimations().getCurrentAnimation().getCurrentFrameSize().mul(4));
 		}else{
 			rc.getAnimations().changeStateTo("idle_1");
+			rc.setSize(rc.getAnimations().getCurrentAnimation().getCurrentFrameSize().mul(4));
 		}
 	}
 
@@ -243,7 +249,6 @@ public class AIController extends Controller {
 
 		SightComponent sm = Game.getSelf().getEm().getFirstComponent(lastEntityID, SightComponent.class);
 		RenderComponent rc = Game.getSelf().getEm().getFirstComponent(lastEntityID, RenderComponent.class);
-		Rectangle r = sm.calculateSightView(rc.getRenderPosition());
 		//((CubeRenderer) ResourceManager.getSelf().getRenderer("cubeRenderer")).render(new Vec2(r.x, r.y),
 		//		new Vec2(r.width, r.height), 0, new Vec4(1, 1, 1, 0.3f));
 
@@ -251,8 +256,8 @@ public class AIController extends Controller {
 
 			for (Anode state : pathAstar) {
 				((CubeRenderer) ResourceManager.getSelf().getRenderer("cubeRenderer")).render(
-						new Vec2(gameContext.getCamera().getX() + state.pos.x * Game.GRAPH_DIVISOR,
-								gameContext.getCamera().getY() + state.pos.y * Game.GRAPH_DIVISOR),
+						new Vec2(gameContext.getCamera().getX() + state.pos.x * Game.GRID_CELL_SIZE,
+								gameContext.getCamera().getY() + state.pos.y * Game.GRID_CELL_SIZE),
 						new Vec2(8, 8), 0, new Vec4(0, 0, 0, 1));
 			}
 			for (Segment s : segments) {
@@ -265,7 +270,7 @@ public class AIController extends Controller {
 			}
 
 			((CubeRenderer) ResourceManager.getSelf().getRenderer("cubeRenderer")).render(new Vec2(endPoint),
-					new Vec2(8, 8), 0, new Vec4(1, 1, 0, 1));
+					new Vec2(8,8), 0, new Vec4(1, 1, 0, 1));
 		}
 		
 		//renderNodesExpanded();
@@ -275,9 +280,9 @@ public class AIController extends Controller {
 		if(as!=null) {
 			for (Anode state : as.getClosedSet()) {
 				((CubeRenderer) ResourceManager.getSelf().getRenderer("cubeRenderer")).render(
-						new Vec2(gameContext.getCamera().getX() + state.pos.x * Game.GRAPH_DIVISOR,
-								gameContext.getCamera().getY() + state.pos.y * Game.GRAPH_DIVISOR),
-						new Vec2(8, 8), 0, new Vec4(0, 0, 0, 1));
+						new Vec2(gameContext.getCamera().getX() + state.pos.x * Game.GRID_CELL_SIZE,
+								gameContext.getCamera().getY() + state.pos.y * Game.GRID_CELL_SIZE),
+						new Vec2(Game.GRID_CELL_SIZE, Game.GRID_CELL_SIZE), 0, new Vec4(0, 0, 0, 1));
 			}
 		}
 	}

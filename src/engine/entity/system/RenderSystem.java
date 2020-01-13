@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import demo.Game;
 import engine.entity.Entity;
 import engine.entity.component.RenderComponent;
+import engine.geometry.Rectangle;
 import engine.renderer.TextureBatchRenderer;
 import engine.renderer.TextureRenderer;
 import engine.renderer.CubeRenderer;
 import engine.renderer.GrassRenderer;
 import engine.utilities.ResourceManager;
 import engine.utilities.Timer;
+import glm.vec._4.Vec4;
 
 public class RenderSystem extends ComponentSystem {
 
@@ -105,6 +107,22 @@ public class RenderSystem extends ComponentSystem {
 		if(starts>ends) {
 			ends++;
 			((TextureBatchRenderer) ResourceManager.getSelf().getRenderer("textureBatchRenderer")).end();
+		}
+		
+		//renderDebug();
+	}
+	
+	public void renderDebug() {
+		for (RenderComponent rc : components) {
+			
+			//Bounding Box
+			((CubeRenderer) ResourceManager.getSelf().getRenderer("cubeRenderer")).render(rc.getRenderPosition(), rc.getSize(), 0,
+			new Vec4(1, 0, 0, 0.2f));
+			
+			//Base box
+			Rectangle r = rc.calculateBaseBox();
+			((CubeRenderer) ResourceManager.getSelf().getRenderer("cubeRenderer")).render(r.getPos(), r.getSize(), 0,
+					new Vec4(0, 1, 0, 0.2f));
 		}
 	}
 

@@ -56,6 +56,44 @@ public class Commons {
 		return -1;
 	}
 	
+	public static Vec2 convertToVector(Vec2 vector, int direction) {
+		switch(direction) {
+			case TOP:
+				vector.x = 0;
+				vector.y = 1;
+				return vector;
+			case RIGHT:
+				vector.x = 1;
+				vector.y = 0;
+				return vector;
+			case BOTTOM:
+				vector.x = 0;
+				vector.y = -1;
+				return vector;
+			case LEFT:
+				vector.x = -1;
+				vector.y = 0;
+				return vector;
+			case TOP_DIAGONAL_LEFT:
+				vector.x = -1;
+				vector.y = 1;
+				return vector;
+			case TOP_DIAGONAL_RIGHT:
+				vector.x = 1;
+				vector.y = 1;
+				return vector;
+			case BOTTOM_DIAGONAL_RIGHT:
+				vector.x = 1;
+				vector.y = -1;
+				return vector;
+			case BOTTOM_DIAGONAL_LEFT:
+				vector.x = -1;
+				vector.y = -1;
+				return vector;
+		}
+		return vector;
+	}
+	
 	public static Vec2 calculateDirection(float x, float y, float x2, float y2) {
 		if(x-x2 == 0 && y-y2==0)
 			return new Vec2(0,0);

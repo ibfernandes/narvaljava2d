@@ -23,7 +23,7 @@ public class ChunkManager {
 	private ArrayList<Vec2i> loadingOrder = new ArrayList<>();
 	private int chunksInMemory = 0;
 
-	public static final int MAX_CHUNKS_IN_MEM = 9;
+	public static final int MAX_CHUNKS_IN_MEM = 18;
 	public static final int CHUNK_WIDTH = EngineSettings.getSelf().getChunkSizeX();
 	public static final int CHUNK_HEIGHT = EngineSettings.getSelf().getChunkSizeY();
 	public static final int CHUNK_BUFFER_SIZE = ((CHUNK_WIDTH * CHUNK_HEIGHT) / CHUNK_WIDTH) * 10000;

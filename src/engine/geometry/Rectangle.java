@@ -50,7 +50,7 @@ public class Rectangle implements Serializable {
 			return false;
 	}
 
-	public boolean intersectsPoint(Vec2 point) {
+	public boolean intersects(Vec2 point) {
 		if (point.x >= this.x && point.x <= this.x + this.width)
 			if (point.y >= this.y && point.y <= this.y + this.height)
 				return true;
@@ -115,5 +115,9 @@ public class Rectangle implements Serializable {
 
 	public Vec2 getSize() {
 		return new Vec2(width, height);
+	}
+	
+	public String toString() {
+		return "("+x+", "+y+", "+width+", "+height+")";
 	}
 }

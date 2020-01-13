@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import demo.Game;
 import engine.utilities.Vec2i;
+import glm.vec._2.Vec2;
 
 public class AStar {
 	private ArrayList<Anode> openSet = new ArrayList<>();
@@ -14,10 +15,12 @@ public class AStar {
 	private HashMap <Float, Anode> gScore = new HashMap<>(); //gScore -> distance between start Node and this ANode
 	private float M_SQRT2 = (float) Math.sqrt(2.0);
 	public static final int MAXSTEPS = 2000;
-	private int widthSize = (128/Game.GRAPH_DIVISOR) +1, heightSize = (20/Game.GRAPH_DIVISOR)+1;
+	private int widthSize,heightSize;
 	private boolean obstacleMap[][];
 	
-	public ArrayList<Anode> calculatePath(Vec2i start, Vec2i end, boolean obstacleMap[][]){
+	public ArrayList<Anode> calculatePath(Vec2i start, Vec2i end, Vec2 size, boolean obstacleMap[][]){
+		widthSize = (int) Math.ceil((double)size.x/(double)Game.GRID_CELL_SIZE);
+		heightSize = (int) Math.ceil((double)size.y/(double)Game.GRID_CELL_SIZE);
 		Anode startNode = new Anode();
 		Anode endNode	= new Anode();
 		Anode current;

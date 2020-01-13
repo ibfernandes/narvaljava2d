@@ -23,6 +23,7 @@ public class PlayerController extends Controller {
 	public PlayerController() {
 		walkingSound = AudioEngine.getSelf().newAudioSource("foot_steps_grass", new Vec2(0,0), 100);
 		walkingSound.setPitch(2.2f);
+		walkingSound.setVolume(0.1f);
 	}
 
 	public boolean attackFinished(RenderComponent rc) {
@@ -75,6 +76,12 @@ public class PlayerController extends Controller {
 			rc.setOrientation(faceRight);
 		else if(dir.x<0)
 			rc.setOrientation(faceLeft);
+		
+		if(rc.getAnimations().getCurrentAnimationName().equals("attacking") && rc.getAnimations().getCurrentAnimation().hasPlayedOnce()) {
+			rc.getAnimations().getCurrentAnimation().setPlayedOnce(false);
+		}else if(rc.getAnimations().getCurrentAnimationName().equals("attacking")) {
+			return;
+		}
 
 		if (dir.x!=0 || dir.y!=0) {
 			walkingSound.setPosition(rc.getCenterPoint());
@@ -82,11 +89,18 @@ public class PlayerController extends Controller {
 				walkingSound.play();
 			}
 			rc.getAnimations().changeStateTo("walking");
+			rc.setSize(rc.getAnimations().getCurrentAnimation().getCurrentFrameSize().mul(4));
 		}else{
 			rc.getAnimations().changeStateTo("idle_1");
+			rc.setSize(rc.getAnimations().getCurrentAnimation().getCurrentFrameSize().mul(4));
 			if(walkingSound.isPlaying()) {
 				walkingSound.pause();
 			}
+		}
+		
+		if(GSM.getSelf().getMouse().isKeyPressed(GLFW.GLFW_MOUSE_BUTTON_1)){
+			rc.getAnimations().changeStateTo("attacking");
+			rc.setSize(rc.getAnimations().getCurrentAnimation().getCurrentFrameSize().mul(4));
 		}
 
 	}

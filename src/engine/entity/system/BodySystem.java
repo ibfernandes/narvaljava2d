@@ -5,7 +5,10 @@ import engine.engine.PhysicsEngine;
 import engine.entity.Entity;
 import engine.entity.component.BodyComponent;
 import engine.entity.component.RenderComponent;
+import engine.renderer.CubeRenderer;
+import engine.utilities.ResourceManager;
 import glm.vec._2.Vec2;
+import glm.vec._4.Vec4;
 
 public class BodySystem extends ComponentSystem {
 
@@ -29,8 +32,8 @@ public class BodySystem extends ComponentSystem {
 			Vec2 pixelsPos = PhysicsEngine.convertMetersToPixels(bc.body.getPosition().x - bc.getB2Size().x / 2,
 					bc.body.getPosition().y - bc.getB2Size().y / 2);
 
-//			((CubeRenderer) ResourceManager.getSelf().getRenderer("cubeRenderer")).render(pixelsPos, sizePos, 0,
-//					new Vec4(1, 0, 0, 1));
+//		((CubeRenderer) ResourceManager.getSelf().getRenderer("cubeRenderer")).render(pixelsPos, sizePos, 0,
+//					new Vec4(0, 1, 0, 0.2f));
 		}
 	}
 

@@ -92,7 +92,7 @@ public class Camera {
 	public void variableUpdate(float alpha) {
 		RenderComponent rc = ((RenderComponent) (em.getFirstComponent(focus, RenderComponent.class)));
 		BasicComponent bc = ((BasicComponent) (em.getFirstComponent(focus, BasicComponent.class)));
-		Vec2 position = rc.getCenterPoint();
+		Vec2 position = rc.getRenderPosition();
 
 		if (detectIfObjectOfFocusMoved(bc.getPosition(), bc.getPreviousPosition())) {
 			if (timer.isReversed())
@@ -128,15 +128,18 @@ public class Camera {
 
 		ResourceManager.getSelf().getShader("cube").use();
 		ResourceManager.getSelf().getShader("cube").setMat4("camera", floatBuffer);
+		
+		ResourceManager.getSelf().getShader("ui").use();
+		ResourceManager.getSelf().getShader("ui").setMat4("camera", floatBuffer);
 	}
 
 	public void render() {
-		//renderDebug();
+//		renderDebug();
 	}
 
 	public void renderDebug() {
 		RenderComponent rc = ((RenderComponent) (em.getFirstComponent(focus, RenderComponent.class)));
-		Vec2 position = rc.getCenterPoint();
+		Vec2 position = rc.getRenderPosition();
 
 		// Focus anchor
 		((CubeRenderer) ResourceManager.getSelf().getRenderer("cubeRenderer")).render(position, new Vec2(10, 10), 0,

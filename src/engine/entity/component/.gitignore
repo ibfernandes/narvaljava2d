@@ -8,3 +8,5 @@
 /SightComponent.class
 /TextComponent.class
 /UIComponent.class
+/CombatComponent.class
+/ParticleComponent.class
